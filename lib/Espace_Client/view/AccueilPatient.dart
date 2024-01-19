@@ -1,0 +1,1725 @@
+import 'package:flutter/material.dart';
+import 'package:med_scheduler_front/Medecin.dart';
+import 'package:carousel_slider/carousel_slider.dart';
+import 'dart:math';
+import 'package:icons_plus/icons_plus.dart';
+import 'PriseDeRendezVous.dart';
+import 'package:med_scheduler_front/Utilisateur.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:med_scheduler_front/AuthProvider.dart';
+import 'package:provider/provider.dart';
+import 'package:med_scheduler_front/Specialite.dart';
+import 'dart:io';
+import 'package:med_scheduler_front/CustomAppointment.dart';
+import 'package:jwt_decode/jwt_decode.dart';
+import 'package:med_scheduler_front/Centre.dart';
+import 'AppointmentDetails.dart';
+import 'package:intl/intl.dart';
+import 'package:med_scheduler_front/main.dart';
+import 'package:med_scheduler_front/UrlBase.dart';
+import 'package:med_scheduler_front/Patient.dart';
+import 'package:timezone/data/latest.dart' as tz;
+import 'package:timezone/timezone.dart' as tz;
+import 'package:device_calendar/device_calendar.dart';
+
+class AccueilPatient extends StatefulWidget {
+  final Utilisateur user;
+
+  AccueilPatient({required this.user});
+
+  @override
+  _AccueilPatientState createState() => _AccueilPatientState();
+}
+
+class _AccueilPatientState extends State<AccueilPatient> {
+  Patient? patient;
+
+  late Future<List<Medecin>> medecinsFuture;
+  late Future<List<Specialite>> specialitesFuture;
+
+  TextEditingController searchLastName = TextEditingController();
+  TextEditingController searchCenter = TextEditingController();
+  TextEditingController searchSpecialite = TextEditingController();
+  TextEditingController searchLocation = TextEditingController();
+
+  late AuthProvider authProvider;
+  late String token;
+  late int idUser = 0;
+  bool dataLoaded = false;
+  String baseUrl = UrlBase().baseUrl;
+
+  int currentPage = 1;
+
+  bool isLoading = false;
+
+  ScrollController scrollController = ScrollController();
+
+  Future<List<Medecin>> loadMoreData() async {
+    try {
+      List<Medecin> moreMedecins = await getAllMedecin(currentPage + 1);
+      if (moreMedecins.isNotEmpty) {
+        currentPage++;
+      }
+      return moreMedecins;
+    } catch (e) {
+      // Gérez les erreurs de chargement de données supplémentaires ici
+      print('Erreur lors du chargement de données supplémentaires: $e');
+      return []; // ou lancez une exception appropriée selon votre logique
+    }
+  }
+
+  Future<void> initializeCalendar() async {
+    tz.initializeTimeZones();
+    tz.setLocalLocation(tz.getLocation('Indian/Antananarivo'));
+
+    DeviceCalendarPlugin deviceCalendarPlugin = DeviceCalendarPlugin();
+    var calendars = await deviceCalendarPlugin.retrieveCalendars();
+
+    if (calendars.data!.isEmpty) {
+      print('NULL ILAY CALENDAR');
+      return;
+    }
+
+    var defaultCalendarId = calendars.data!.first.id;
+
+    try {
+      List<CustomAppointment> appoints =
+          await getProcheRendezVous(await getAllAppointment());
+
+      if (appoints.isNotEmpty) {
+        appoints.forEach((element) async {
+          print('THE APPOINT ${element.reason}');
+
+          print(
+              'APPOINT TZTIME: ${tz.TZDateTime.from(element.timeStart, tz.local)}');
+          TZDateTime startTZ = TZDateTime(
+              tz.getLocation('Indian/Antananarivo'),
+              element.startAt.year,
+              element.startAt.month,
+              element.startAt.day,
+              element.timeStart.hour,
+              element.timeStart.minute,
+              element.timeStart.second);
+          TZDateTime endTZ = TZDateTime(
+              tz.getLocation('Indian/Antananarivo'),
+              element.startAt.year,
+              element.startAt.month,
+              element.startAt.day,
+              element.timeEnd.hour,
+              element.timeEnd.minute,
+              element.timeEnd.second);
+
+          print('StartTZ: ${startTZ}');
+          print('EndTZ: ${endTZ}');
+
+          Event event = Event(
+            defaultCalendarId,
+            title: 'Prochain Rendez-vous: ${element.reason.toUpperCase()}',
+            description: (element.medecin != null)
+                ? '${element.reason.toUpperCase()} avec le Dr ${element.medecin!.lastName} ${element.medecin!.firstName}.'
+                : element.reason,
+            start: startTZ,
+            end: endTZ,
+            status: EventStatus.Confirmed,
+            reminders: [
+              Reminder(minutes: 15),
+              Reminder(minutes: 30),
+              Reminder(minutes: 60)
+            ],
+          );
+
+          print('EVENT DESC: ${event.description}');
+
+          // Utiliser RetrieveEventsParams
+          var params = RetrieveEventsParams(
+              startDate: startTZ.subtract(const Duration(minutes: 1)),
+              endDate: endTZ.add(const Duration(minutes: 1)));
+          var existingEvents = await deviceCalendarPlugin.retrieveEvents(
+              defaultCalendarId, params);
+
+          var eventExists = existingEvents.data!.any((existingEvent) =>
+                  existingEvent.title == event.title &&
+                  existingEvent.description == event.description &&
+                  existingEvent.start == startTZ &&
+                  existingEvent.end == endTZ) ??
+              false;
+
+          if (!eventExists) {
+            final result =
+                await deviceCalendarPlugin.createOrUpdateEvent(event);
+            print('RSULTAT ERRORS: ${result!.errors}');
+            print('RSULTAT SUCCES: ${result.data}');
+          }
+
+          print('-- FINISHED --');
+        });
+      }
+    } catch (e, stackTrace) {
+      print(' -- ERROR E: $e \n -- STACK: $stackTrace');
+    }
+  }
+
+  Future<void> getAllAsync() async {
+    medecinsFuture = loadMoreData();
+    specialitesFuture = getAllSpecialite();
+  }
+
+  @override
+  void dispose() {
+    scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    print('-- INIT --');
+    WidgetsFlutterBinding.ensureInitialized();
+    initializeCalendar();
+
+    getAll();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await getAllAsync();
+      Map<String, dynamic> payload = Jwt.parseJwt(token);
+      idUser = payload['id'] ?? '';
+      dataLoaded = true;
+      patient = Patient(
+          id: widget.user.id,
+          type: widget.user.userType,
+          lastName: widget.user.lastName,
+          firstName: widget.user.firstName);
+    });
+  }
+
+  List<CustomAppointment> listAppointment = [];
+
+  ScrollController controller = ScrollController();
+
+  List<CustomAppointment> getProcheRendezVous(
+      List<CustomAppointment> rendezVousList) {
+    List<CustomAppointment> rdvProche = [];
+
+    // Implémentez ici la logique pour récupérer un rendez-vous proche
+    // par rapport à la date actuelle
+    DateTime now = DateTime.now();
+
+    for (int i = 0; i < rendezVousList.length; i++) {
+      CustomAppointment appointment = rendezVousList.elementAt(i);
+      DateTime startDate = DateTime(
+          appointment.startAt.year,
+          appointment.startAt.month,
+          appointment.startAt.day,
+          appointment.timeStart.hour,
+          appointment.timeStart.minute,
+          appointment.timeStart.second);
+      DateTime endDate = DateTime(
+          appointment.startAt.year,
+          appointment.startAt.month,
+          appointment.startAt.day,
+          appointment.timeEnd.hour,
+          appointment.timeEnd.minute,
+          appointment.timeEnd.second);
+
+      if (startDate.isAfter(now) &&
+          isInCurrentWeek(startDate, rendezVousList.elementAt(i).timeStart)) {
+        rdvProche.add(appointment);
+      }
+    }
+    return rdvProche;
+  }
+
+  String extractApiPath(String fullPath) {
+    const String apiPrefix = '/med_scheduler_api/public/api/specialities/';
+    if (fullPath.startsWith(apiPrefix)) {
+      return fullPath.substring(apiPrefix.length);
+    } else {
+      // La chaîne ne commence pas par le préfixe attendu
+      return fullPath;
+    }
+  }
+
+  bool isInCurrentWeek(DateTime startAt, DateTime timeStart) {
+    DateTime now = DateTime.now();
+    DateTime startOfWeek = DateTime(now.year, now.month, now.day, now.hour);
+    DateTime endOfWeek = startOfWeek.add(Duration(days: 7 - now.weekday));
+    bool isIt = false;
+    DateTime formatedStartAt =
+        DateTime.parse(DateFormat('yyyy-MM-dd').format(startAt));
+    DateTime formatedStartOfWeek =
+        DateTime.parse(DateFormat('yyyy-MM-dd').format(startOfWeek));
+    DateTime formatedEndOfWeek =
+        DateTime.parse(DateFormat('yyyy-MM-dd').format(endOfWeek));
+    DateTime TimeDtStart =
+        DateTime(startAt.year, startAt.month, startAt.day, timeStart.hour);
+
+    if ((formatedStartAt.isBefore(formatedEndOfWeek)) &&
+        (now.isBefore(TimeDtStart))) {
+      isIt = true;
+    }
+
+    return isIt;
+  }
+
+  CustomAppointment? getAppointmentToday(List<CustomAppointment> list) {
+    CustomAppointment? appoints;
+    list.forEach((element) {
+      if (DateFormat('yyyy-MM-dd').format(element.startAt) ==
+          DateFormat('yyyy-MM-dd').format(
+              DateTime.now().subtract(const Duration(days: 7, hours: 7)))) {
+        appoints = element;
+      }
+    });
+    return appoints;
+  }
+
+  List<CustomAppointment> filterAppointmentsForCurrentWeek(
+      List<CustomAppointment> appointmentFuture) {
+    DateTime now = DateTime.now();
+    DateTime startOfWeek = DateTime(now.year, now.month, now.day);
+
+    List<CustomAppointment> filteredAppointments = [];
+
+    // Attendre la résolution du Future<List<CustomAppointment>>
+    List<CustomAppointment> appointments = appointmentFuture;
+
+    // Filtrer les appointments de la semaine actuelle
+    List<CustomAppointment> appointmentsInCurrentWeek =
+        appointments.where((appointment) {
+      return isInCurrentWeek(appointment.startAt, appointment.timeStart);
+    }).toList();
+
+    // Ajouter les appointments filtrés à la liste résultante
+    filteredAppointments.addAll(appointmentsInCurrentWeek);
+
+    return filteredAppointments;
+  }
+
+  Future<Specialite> getSpecialite(String uri) async {
+    final url = Uri.parse("https://dev-api-medscheduler.raketa.mg$uri");
+
+    final headers = {'Authorization': 'Bearer $token'};
+
+    try {
+      final response = await http.get(url, headers: headers);
+
+      print('STATUS CODE: ${response.statusCode} \n');
+
+      if (response.statusCode == 200) {
+        final jsonData = jsonDecode(response.body);
+
+        Specialite specialite = Specialite.fromJson(jsonData);
+
+        return specialite;
+      } else {
+        if (response.statusCode == 401) {
+          Navigator.pushReplacement(
+              context, MaterialPageRoute(builder: (context) => const MyApp()));
+        }
+        // Gestion des erreurs HTTP
+        throw Exception(
+            '-- Erreur d\'obtention des données\n vérifier votre connexion internet.');
+      }
+    } catch (e) {
+      //print('Error: $e \nStack trace: $stackTrace');
+      throw Exception(
+          '-- Erreur de connexion.\n Veuillez vérifier votre connexion internet !');
+    }
+  }
+
+  String extractLastNumber(String input) {
+    RegExp regExp = RegExp(r'\d+$');
+    Match? match = regExp.firstMatch(input);
+
+    if (match != null) {
+      String val = match.group(0)!;
+
+      return val;
+    } else {
+      // Aucun nombre trouvé dans la chaîne
+      throw const FormatException("Aucun nombre trouvé dans la chaîne.");
+    }
+  }
+
+  Future<List<CustomAppointment>> getAllAppointment() async {
+    authProvider = Provider.of<AuthProvider>(context, listen: false);
+    token = authProvider.token;
+
+    final url = Uri.parse(
+        "${baseUrl}api/patients/appointments/${extractLastNumber(widget.user.id)}");
+
+    final headers = {'Authorization': 'Bearer $token'};
+
+    try {
+      final response = await http.get(url, headers: headers);
+
+      print('STATUS CODE APPOINTS: ${response.statusCode} \n');
+
+      if (response.statusCode == 200) {
+        final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
+        final datas = jsonData['hydra:member'] as List<dynamic>;
+
+        print('DATAS ALL APPOINTS SIZE:${datas.length}');
+
+        return datas.map((e) => CustomAppointment.fromJson(e)).toList();
+      } else {
+        if (response.statusCode == 401) {
+          Navigator.pushReplacement(
+              context, MaterialPageRoute(builder: (context) => const MyApp()));
+        }
+        // Gestion des erreurs HTTP
+        throw Exception(
+            '-- Erreur d\'obtention des données\n vérifier votre connexion internet.');
+      }
+    } catch (e) {
+      //print('Error: $e \nStack trace: $stackTrace');
+      throw Exception(
+          '-- Erreur de connexion.\n Veuillez vérifier votre connexion internet !');
+    }
+  }
+
+  Future<List<Medecin>> getAllMedecin(int page) async {
+    authProvider = Provider.of<AuthProvider>(context, listen: false);
+    token = authProvider.token;
+
+    // Définir l'URL de base
+    Uri url = Uri.parse("${baseUrl}api/doctors?page=$page");
+
+    // Ajouter les paramètres en fonction des cas
+    if (searchLastName.text.trim().isNotEmpty) {
+      print('ANARANA');
+      if (searchCenter.text.trim().isNotEmpty) {
+        url = Uri.parse(
+            "$url&lastName=${searchLastName.text}&center=${searchCenter.text}");
+      } else if (searchSpecialite.text.isNotEmpty) {
+        url = Uri.parse(
+            "$url&lastName=${searchLastName.text}&speciality=${searchSpecialite.text}");
+      } else if (searchLocation.text.isNotEmpty) {
+        url = Uri.parse(
+            "$url&lastName=${searchLastName.text}&city=${searchLocation.text}");
+      } else {
+        url = Uri.parse("$url&lastName=${searchLastName.text}");
+      }
+    } else if (searchLocation.text.trim().isNotEmpty) {
+      url = Uri.parse("$url&city=${searchLocation.text}");
+    } else if (searchCenter.text.trim().isNotEmpty) {
+      url = Uri.parse("$url&center=${searchCenter.text}");
+    } else if (searchSpecialite.text.trim().isNotEmpty) {
+      url = Uri.parse("$url&speciality=${searchSpecialite.text}");
+    }
+
+    print('URI: $url');
+
+    final headers = {'Authorization': 'Bearer $token'};
+
+    try {
+      final response = await http.get(url, headers: headers);
+      print('STATUS CODE MEDS: ${response.statusCode} \n');
+
+      if (response.statusCode == 200) {
+        final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
+        final datas = jsonData['hydra:member'] as List<dynamic>;
+
+        return datas.map((e) => Medecin.fromJson(e)).toList();
+      } else {
+        if (response.statusCode == 401) {
+          Navigator.pushReplacement(
+              context, MaterialPageRoute(builder: (context) => const MyApp()));
+        }
+        // Gestion des erreurs HTTP
+        throw Exception(
+          '-- Erreur d\'obtention des données\n vérifier votre connexion internet. Code: ${response.statusCode}',
+        );
+      }
+    } catch (e, stackTrace) {
+      print(' -- E: $e --\n STACK: $stackTrace');
+      throw e;
+    }
+  }
+
+  Future<List<Specialite>> getAllSpecialite() async {
+    authProvider = Provider.of<AuthProvider>(context, listen: false);
+    token = authProvider.token;
+    final url = Uri.parse("${baseUrl}api/specialities?page=1");
+
+    final headers = {'Authorization': 'Bearer $token'};
+
+    try {
+      final response = await http.get(url, headers: headers);
+      print('STATUS CODE SPECS: ${response.statusCode} \n');
+
+      if (response.statusCode == 200) {
+        final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
+        final datas = jsonData['hydra:member'] as List<dynamic>;
+
+        return datas.map((e) => Specialite.fromJson(e)).toList();
+      } else {
+        if (response.statusCode == 401) {
+          Navigator.pushReplacement(
+              context, MaterialPageRoute(builder: (context) => const MyApp()));
+        }
+        // Gestion des erreurs HTTP
+        throw Exception(
+            '-- Erreur d\'obtention des données\n vérifier votre connexion internet.');
+      }
+    } catch (e) {
+      //print('Error: $e \nStack trace: $stackTrace');
+      throw Exception(
+          '-- Erreur de connexion.\n Veuillez vérifier votre connexion internet !');
+    }
+  }
+
+  Future<List<Centre>> getAllCenter() async {
+    final url = Uri.parse("${baseUrl}api/centers?page=1");
+
+    final headers = {'Authorization': 'Bearer $token'};
+
+    try {
+      final response = await http.get(url, headers: headers);
+
+      if (response.statusCode == 200) {
+        final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
+        final datas = jsonData['hydra:member'] as List<dynamic>;
+
+        return datas.map((e) => Centre.fromJson(e)).toList();
+      } else {
+        if (response.statusCode == 401) {
+          Navigator.pushReplacement(
+              context, MaterialPageRoute(builder: (context) => const MyApp()));
+        }
+        // Gestion des erreurs HTTP
+        throw Exception(
+            '-- Erreur d\'obtention des données\n vérifier votre connexion internet.');
+      }
+    } catch (e) {
+      //print('Error: $e \nStack trace: $stackTrace');
+      throw Exception(
+          '-- Erreur de connexion.\n Veuillez vérifier votre connexion internet !');
+    }
+  }
+
+  //Fonction pour stocker les categories trouvés
+  void getAll() {
+    getAllAppointment().then((value) => {
+          setState(() {
+            listAppointment = value;
+          })
+        });
+    getAllSpecialite().then((value) => {
+          setState(() {
+            listSpec = value;
+          })
+        });
+
+    getAllCenter().then((value) => {
+          setState(() {
+            listCenter = value;
+          })
+        });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    getAll();
+  }
+
+  String abbreviateName(String fullName) {
+    List<String> nameParts = fullName.split(' ');
+
+    if (nameParts.length == 1) {
+      // Si le nom ne contient qu'un seul mot, renvoyer le nom tel quel
+      return fullName;
+    } else {
+      // Si le nom contient plusieurs mots
+      String firstName = nameParts.first;
+
+      if (nameParts.length > 1) {
+        // Si le prénom contient plus de deux mots, utiliser seulement le premier mot
+        return "$firstName ${nameParts[1]}";
+      } else {
+        // Sinon, construire l'abréviation en prenant la première lettre du premier mot
+        // et le nom complet du deuxième mot
+        String lastName = nameParts.last;
+        String abbreviation = "${firstName[0]}.$lastName";
+        return abbreviation;
+      }
+    }
+  }
+
+  String abreviateRaison(String fullName) {
+    List<String> nameParts = fullName.split(' ');
+
+    if (nameParts.length == 1) {
+      // Si le nom ne contient qu'un seul mot, renvoyer le nom tel quel
+      return fullName;
+    }
+    if (nameParts.length > 1) {
+      // Si le prénom contient plus de deux mots, utiliser seulement le premier mot
+      return "${nameParts[0]}...";
+    } else {
+      return fullName;
+    }
+  }
+
+  String formatDateTime(DateTime startDateTime) {
+    // Liste des jours de la semaine
+    final List<String> jours = [
+      'Lundi',
+      'Mardi',
+      'Mercredi',
+      'Jeudi',
+      'Vendredi',
+      'Samedi',
+      'Dimanche'
+    ];
+
+    // Liste des mois de l'année
+    final List<String> mois = [
+      '',
+      'Janvier',
+      'Février',
+      'Mars',
+      'Avril',
+      'Mai',
+      'Juin',
+      'Juillet',
+      'Août',
+      'Septembre',
+      'Octobre',
+      'Novembre',
+      'Décembre'
+    ];
+
+    // Extraire les composants de la date et de l'heure
+    int jour = startDateTime.day;
+    int moisIndex = startDateTime.month;
+    int annee = startDateTime.year;
+    int heure = startDateTime.hour;
+    int minute = startDateTime.minute;
+
+    // Formater le jour de la semaine
+    String jourSemaine = jours[startDateTime.weekday - 1];
+
+    // Formater le mois
+    String nomMois = mois[moisIndex];
+
+    // Formater l'heure
+    String formatHeure =
+        '${heure.toString().padLeft(2, '0')}h:${minute.toString().padLeft(2, '0')}';
+
+    // Construire la chaîne lisible
+    String resultat = '$jourSemaine, $jour $nomMois  $formatHeure';
+
+    return resultat;
+  }
+
+  String formatDateTimeAppointmentAgenda(
+      DateTime startAt, DateTime startDateTime, DateTime timeEnd) {
+    // Liste des jours de la semaine
+    final List<String> jours = [
+      'Lundi',
+      'Mardi',
+      'Mercredi',
+      'Jeudi',
+      'Vendredi',
+      'Samedi',
+      'Dimanche'
+    ];
+
+    // Liste des mois de l'année
+    final List<String> mois = [
+      '',
+      'Janvier',
+      'Février',
+      'Mars',
+      'Avril',
+      'Mai',
+      'Juin',
+      'Juillet',
+      'Août',
+      'Septembre',
+      'Octobre',
+      'Novembre',
+      'Décembre'
+    ];
+
+    // Extraire les composants de la date et de l'heure
+
+    int jour = startAt.day;
+    int moisIndex = startAt.month;
+    int annee = startDateTime.year;
+    int heureStart = startDateTime.hour;
+    int minuteStart = startDateTime.minute;
+    int heureEnd = timeEnd.hour;
+    int minuteEnd = timeEnd.minute;
+
+    // Formater le jour de la semaine
+    String jourSemaine = jours[startAt.weekday - 1];
+
+    // Formater le mois
+    String nomMois = mois[moisIndex];
+
+    // Formater l'heure
+    String formatHeureStart =
+        '${heureStart.toString().padLeft(2, '0')}:${minuteStart.toString().padLeft(2, '0')}';
+    String formatHeureEnd =
+        '${heureEnd.toString().padLeft(2, '0')}:${minuteEnd.toString().padLeft(2, '0')}';
+
+    // Construire la chaîne lisible
+    String resultat = '$formatHeureStart - $formatHeureEnd';
+
+    return resultat;
+  }
+
+  String formatDateTimeAppointment(
+      DateTime startAt, DateTime startDateTime, DateTime timeEnd) {
+    // Liste des jours de la semaine
+    final List<String> jours = [
+      'Lundi',
+      'Mardi',
+      'Mercredi',
+      'Jeudi',
+      'Vendredi',
+      'Samedi',
+      'Dimanche'
+    ];
+
+    // Liste des mois de l'année
+    final List<String> mois = [
+      '',
+      'Janvier',
+      'Février',
+      'Mars',
+      'Avril',
+      'Mai',
+      'Juin',
+      'Juillet',
+      'Août',
+      'Septembre',
+      'Octobre',
+      'Novembre',
+      'Décembre'
+    ];
+
+    // Extraire les composants de la date et de l'heure
+
+    int jour = startAt.day;
+    int moisIndex = startAt.month;
+    int annee = startDateTime.year;
+    int heureStart = startDateTime.hour;
+    int minuteStart = startDateTime.minute;
+    int heureEnd = timeEnd.hour;
+    int minuteEnd = timeEnd.minute;
+
+    // Formater le jour de la semaine
+    String jourSemaine = jours[startAt.weekday - 1];
+
+    // Formater le mois
+    String nomMois = mois[moisIndex];
+
+    // Formater l'heure
+    String formatHeureStart =
+        '${heureStart.toString().padLeft(2, '0')}:${minuteStart.toString().padLeft(2, '0')}';
+    String formatHeureEnd =
+        '${heureEnd.toString().padLeft(2, '0')}:${minuteEnd.toString().padLeft(2, '0')}';
+
+    // Construire la chaîne lisible
+    String resultat =
+        '$jourSemaine, $jour $nomMois  $formatHeureStart-$formatHeureEnd';
+
+    return resultat;
+  }
+
+  Color generateRandomColor() {
+    Random random = Random();
+
+    // Générer des valeurs aléatoires pour les composants ARGB
+    int alpha = 40; // Opacité maximale
+    int red = random.nextInt(250);
+    int green = random.nextInt(250);
+    int blue = random.nextInt(250);
+
+    // Créer et retourner la couleur générée
+    return Color.fromARGB(alpha, red, green, blue);
+  }
+
+  FocusNode _focusNodeSearch = FocusNode();
+  FocusNode _focusNodeSearchCenter = FocusNode();
+  FocusNode _focusNodeSearchSpec = FocusNode();
+  FocusNode _focusNodeSearchLoc = FocusNode();
+
+  Widget CardNothing() => Container(
+      margin: const EdgeInsets.symmetric(horizontal: 10),
+      child: const Card(
+          color: Color.fromARGB(1000, 60, 70, 120),
+          child: Column(children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                Flexible(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Aucun rendez-vous pour cette semaine',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w500,
+                            fontSize: 15,
+                            letterSpacing: 2),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            Opacity(
+              opacity: 0.4,
+              child: Divider(
+                thickness: 1,
+                indent: 20,
+                endIndent: 20,
+                color: Colors.white70,
+              ),
+            ),
+          ])));
+
+  Widget BuildCard(CustomAppointment appointment) => Container(
+      margin: const EdgeInsets.symmetric(horizontal: 6),
+      child: Card(
+          color: const Color.fromARGB(1000, 60, 70, 120),
+          child: ListView(children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(50),
+                  child: Container(
+                    width: 60,
+                    height: 60,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(60),
+                    ),
+                    child: ((appointment.medecin!.imageName != "") &&
+                            (File(appointment.medecin!.imageName!)
+                                .existsSync()))
+                        ? Image.file(File(appointment.medecin!.imageName!))
+                        : Image.asset(
+                            'assets/images/medecin.png',
+                            fit: BoxFit.fill,
+                          ),
+                  ),
+                ),
+                Flexible(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '${appointment.medecin!.lastName[0]}.${abbreviateName(appointment.medecin!.firstName)}',
+                        style: const TextStyle(
+                            color: Colors.white, fontWeight: FontWeight.w500),
+                      ),
+                      Text(
+                        '${abreviateRaison(appointment.reason)}',
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w300,
+                            fontSize: 15),
+                      )
+                    ],
+                  ),
+                ),
+                const SizedBox(
+                  width: 10,
+                ),
+                IconButton(
+                  onPressed: () {
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => AppointmentDetails(),
+                            settings: RouteSettings(arguments: appointment)));
+                  },
+                  icon: const Icon(
+                    Icons.keyboard_arrow_right_sharp,
+                    size: 50,
+                    color: Colors.white,
+                  ),
+                )
+              ],
+            ),
+            const Opacity(
+              opacity: 0.4,
+              child: Divider(
+                thickness: 1,
+                indent: 20,
+                endIndent: 20,
+                color: Colors.white70,
+              ),
+            ),
+            Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+              Image.asset(
+                'assets/images/date-limite.png',
+                width: 30,
+              ),
+              Text(
+                '${formatDateTimeAppointment(appointment.startAt, appointment.timeStart, appointment.timeEnd)} ',
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Colors.white),
+              )
+            ])
+          ])));
+
+/*  List<Medecin> listPersonne = [];
+
+  final int _perPage = 10;
+  int _currentPage = 1;
+
+  List<Medecin> get _currentDoctors {
+    final startIndex = (_currentPage - 1) * _perPage;
+    final endIndex = startIndex + _perPage;
+    return listPersonne.sublist(
+      startIndex,
+      endIndex > listPersonne.length ? listPersonne.length : endIndex,
+    );
+  }*/
+
+  bool isCenter = false;
+  bool isSpecialite = false;
+  bool isLocation = false;
+
+  bool isloading = false;
+
+  bool medEmpty = false;
+
+  List<Centre> listCenter = [];
+  List<Specialite> listSpec = [];
+
+  String center = "Analamahintsy";
+  String spec = "Dermatologue";
+
+  Specialite? speciality;
+  Centre? centre;
+
+  @override
+  Widget build(BuildContext context) {
+    bool isLandscape =
+        MediaQuery.of(context).orientation == Orientation.landscape;
+
+    return PopScope(
+      canPop: false,
+      child: Scaffold(
+          backgroundColor: const Color.fromARGB(1000, 238, 239, 244),
+          body: ((mounted) && (dataLoaded == true))
+              ? Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    const SizedBox(
+                      height: 30,
+                    ),
+                    Row(
+                      children: [
+                        Padding(
+                            padding: const EdgeInsets.only(left: 20),
+                            child: Column(
+                              children: [
+                                const Opacity(
+                                  opacity: 0.5,
+                                  child: Text(
+                                    textAlign: TextAlign.center,
+                                    textScaler: TextScaler.linear(1.3),
+                                    'Bonjour,',
+                                    style: TextStyle(
+                                        letterSpacing: 2,
+                                        fontWeight: FontWeight.w500),
+                                  ),
+                                ),
+                                Text(
+                                  textAlign: TextAlign.center,
+                                  textScaler: const TextScaler.linear(1.45),
+                                  '${widget.user.firstName ?? 'Chargement...'}',
+                                  style: const TextStyle(
+                                    letterSpacing: 2,
+                                    fontWeight: FontWeight.w600,
+                                    color: Color.fromARGB(230, 20, 20, 90),
+                                  ),
+                                ),
+                              ],
+                            )),
+                        const Spacer(),
+                        Padding(
+                          padding: const EdgeInsets.only(right: 15, top: 20),
+                          child: Image.asset(
+                            'assets/images/Medhome.png',
+                            fit: BoxFit.cover,
+                            width: 50,
+                            height: 50,
+                          ),
+                        )
+                      ],
+                    ),
+                    const SizedBox(
+                      height: 20,
+                    ),
+                    Center(
+                      child: CarouselSlider.builder(
+                        itemCount:
+                            filterAppointmentsForCurrentWeek(listAppointment)
+                                .length,
+                        itemBuilder: (context, i, index) {
+                          return GestureDetector(
+                              onTap: () async {},
+                              child: (filterAppointmentsForCurrentWeek(
+                                          listAppointment)
+                                      .isNotEmpty)
+                                  ? BuildCard(filterAppointmentsForCurrentWeek(
+                                          listAppointment)
+                                      .elementAt(i))
+                                  : CardNothing());
+                        },
+                        options: CarouselOptions(
+                            height: isLandscape ? 60 : 150,
+                            autoPlay: true,
+                            enlargeCenterPage: true,
+                            enlargeStrategy: CenterPageEnlargeStrategy.height),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(
+                          left: 30, right: 30, bottom: 20, top: 20),
+                      child: TextFormField(
+                        onChanged: (nom) {
+                          if (nom.trim().isEmpty) {
+                            setState(() {
+                              searchLastName.text = "";
+                              medecinsFuture = getAllMedecin(currentPage);
+                            });
+                          } else {
+                            setState(() {
+                              searchLastName.text = nom;
+                              medecinsFuture = getAllMedecin(currentPage);
+                              print('LASTNAME: ${searchLastName.text}');
+                            });
+                          }
+                        },
+                        focusNode: _focusNodeSearch,
+                        controller: searchLastName,
+                        keyboardType: TextInputType.emailAddress,
+                        style: const TextStyle(color: Colors.black),
+                        decoration: InputDecoration(
+                          contentPadding:
+                              const EdgeInsets.symmetric(vertical: 0),
+                          focusColor: const Color.fromARGB(255, 20, 20, 100),
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: const BorderSide(
+                                width: 0,
+                                color: Color.fromARGB(255, 20, 20, 100)),
+                            borderRadius: BorderRadius.circular(10.0),
+                          ),
+                          hintStyle: const TextStyle(
+                              color: Colors.black, fontWeight: FontWeight.w300),
+
+                          hintText: 'Rechercher un medecin ',
+                          labelStyle: TextStyle(
+                              color: _focusNodeSearch.hasFocus
+                                  ? Colors.redAccent
+                                  : Colors.black),
+                          border: InputBorder
+                              .none, // Utilisez InputBorder.none pour supprimer la bordure
+                          enabledBorder: OutlineInputBorder(
+                            borderSide:
+                                const BorderSide(width: 0, color: Colors.grey),
+                            borderRadius: BorderRadius.circular(10.0),
+                          ),
+                          prefixIcon: const Icon(Icons.search,
+                              color: Color.fromARGB(1000, 60, 70, 120)),
+                        ),
+                      ),
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        GestureDetector(
+                          onTap: () {
+                            FocusScope.of(context).unfocus();
+                            setState(() {
+                              speciality = null;
+                              searchSpecialite.text = "";
+                              searchLocation.text = "";
+                              isLocation = false;
+                              isSpecialite = false;
+                              isCenter = !isCenter;
+                              if (isCenter == false) {
+                                centre = null;
+                                searchCenter.text = "";
+                                setState(() {
+                                  medecinsFuture = getAllMedecin(currentPage);
+                                });
+                              }
+                            });
+                          },
+                          child: Column(
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(40),
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: const Color.fromARGB(
+                                        1000, 230, 230, 230),
+                                    border: isCenter
+                                        ? Border.all(color: Colors.black)
+                                        : null,
+                                  ),
+                                  width: 80,
+                                  height: 80,
+                                  child: const Icon(
+                                    Icons.home_work_rounded,
+                                    color: Color.fromARGB(1000, 60, 70, 120),
+                                  ),
+                                ),
+                              ),
+                              const Text(
+                                'Centre',
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: () {
+                            FocusScope.of(context).unfocus();
+                            setState(() {
+                              centre = null;
+                              searchCenter.text = "";
+                              isCenter = false;
+                              isLocation = false;
+                              searchLocation.text = "";
+                              isSpecialite = !isSpecialite;
+                              if (isSpecialite == false) {
+                                speciality = null;
+                                searchSpecialite.text = "";
+                                setState(() {
+                                  medecinsFuture = getAllMedecin(currentPage);
+                                });
+                              }
+                            });
+                          },
+                          child: Column(
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(40),
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: const Color.fromARGB(
+                                        1000, 230, 230, 230),
+                                    border: isSpecialite
+                                        ? Border.all(color: Colors.black)
+                                        : null,
+                                  ),
+                                  width: 80,
+                                  height: 80,
+                                  child: const Icon(
+                                    FontAwesome.user_doctor,
+                                    color: Color.fromARGB(1000, 60, 70, 120),
+                                  ),
+                                ),
+                              ),
+                              const Text(
+                                'Specialite',
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: () {
+                            FocusScope.of(context).unfocus();
+                            setState(() {
+                              centre = null;
+                              speciality = null;
+                              searchCenter.text = "";
+                              searchSpecialite.text = "";
+                              isCenter = false;
+                              isSpecialite = false;
+                              isLocation = !isLocation;
+
+                              if (isLocation == false) {
+                                medecinsFuture = getAllMedecin(currentPage);
+                              }
+                            });
+                            print('isLocation: $isLocation');
+                          },
+                          child: Column(
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(40),
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: const Color.fromARGB(
+                                        1000, 230, 230, 230),
+                                    border: isLocation
+                                        ? Border.all(
+                                            color: Colors.black,
+                                          )
+                                        : null,
+                                  ),
+                                  width: 80,
+                                  height: 80,
+                                  child: const Icon(
+                                    FontAwesome.location_dot,
+                                    color: Color.fromARGB(1000, 60, 70, 120),
+                                  ),
+                                ),
+                              ),
+                              const Text(
+                                'Localisation',
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (isCenter) ...[
+                      Expanded(
+                          child: Padding(
+                        padding:
+                            const EdgeInsets.only(right: 30, left: 30, top: 20),
+                        child: DropdownButtonFormField<Centre>(
+                          focusNode: _focusNodeSearchCenter,
+                          icon: const Padding(
+                            padding: EdgeInsets.only(right: 10),
+                            child: Icon(
+                              Icons.arrow_drop_down_circle_outlined,
+                              color: Colors.black,
+                            ),
+                          ),
+                          value: centre,
+                          onChanged: (Centre? newval) {
+                            setState(() {
+                              searchSpecialite.text = "";
+                              centre = newval!;
+                              searchCenter.text = (centre!.label.isNotEmpty)
+                                  ? centre!.label
+                                  : '';
+                              print('CENTER CLICKED: ${searchCenter.text}');
+
+                              medecinsFuture = getAllMedecin(currentPage);
+                            });
+                          },
+                          items: listCenter.map((e) {
+                            return DropdownMenuItem<Centre>(
+                              value: e,
+                              child: Text(e.label),
+                            );
+                          }).toList(),
+                          style: const TextStyle(color: Colors.black),
+                          decoration: InputDecoration(
+                              focusedBorder: OutlineInputBorder(
+                                borderSide: const BorderSide(
+                                    width: 0,
+                                    color: Color.fromARGB(255, 20, 20, 100)),
+                                borderRadius: BorderRadius.circular(10.0),
+                              ),
+                              contentPadding:
+                                  const EdgeInsets.symmetric(vertical: 0),
+                              enabledBorder: OutlineInputBorder(
+                                borderSide: const BorderSide(
+                                    width: 0, color: Colors.grey),
+                                borderRadius: BorderRadius.circular(10.0),
+                              ),
+                              prefixIcon: const Icon(
+                                Icons.people,
+                                color: Color.fromARGB(1000, 60, 70, 120),
+                              ),
+                              labelStyle: TextStyle(
+                                  color: _focusNodeSearchCenter.hasFocus
+                                      ? Colors.redAccent
+                                      : Colors.black),
+                              hintStyle: const TextStyle(
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.w300),
+                              hintText: 'Liste des center',
+                              border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(5.0))),
+                        ),
+                      ))
+                    ] else if (isSpecialite) ...[
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.only(
+                              right: 30, left: 30, top: 20),
+                          child: DropdownButtonFormField<Specialite>(
+                            itemHeight: 50,
+                            focusNode: _focusNodeSearchSpec,
+                            icon: const Padding(
+                              padding: EdgeInsets.only(right: 10),
+                              child: Icon(
+                                Icons.arrow_drop_down_circle_outlined,
+                                color: Colors.black,
+                              ),
+                            ),
+                            value: speciality,
+                            onChanged: (Specialite? newval) {
+                              setState(() {
+                                searchCenter.text = "";
+                                speciality = newval!;
+                                searchSpecialite.text =
+                                    (speciality!.label.isNotEmpty)
+                                        ? speciality!.label
+                                        : '';
+                                print(
+                                    ' SPEC CLICKED: ${searchSpecialite.text}');
+                                medecinsFuture = getAllMedecin(currentPage);
+                              });
+                            },
+                            items: listSpec.map((e) {
+                              return DropdownMenuItem<Specialite>(
+                                value: e,
+                                child: Text(e.label),
+                              );
+                            }).toList(),
+                            style: const TextStyle(color: Colors.black),
+                            decoration: InputDecoration(
+                                contentPadding:
+                                    const EdgeInsets.symmetric(vertical: 0),
+                                focusedBorder: OutlineInputBorder(
+                                  borderSide: const BorderSide(
+                                      width: 0,
+                                      color: Color.fromARGB(255, 20, 20, 100)),
+                                  borderRadius: BorderRadius.circular(10.0),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderSide: const BorderSide(
+                                      width: 0, color: Colors.grey),
+                                  borderRadius: BorderRadius.circular(10.0),
+                                ),
+                                prefixIcon: const Icon(
+                                  Icons.people,
+                                  color: Color.fromARGB(1000, 60, 70, 120),
+                                ),
+                                labelStyle: TextStyle(
+                                    color: _focusNodeSearchSpec.hasFocus
+                                        ? Colors.redAccent
+                                        : Colors.black),
+                                hintStyle: const TextStyle(
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.w300),
+                                hintText: 'Liste des specialites',
+                                border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(5.0))),
+                          ),
+                        ),
+                      )
+                    ] else if (isLocation) ...[
+                      Expanded(
+                        flex: (_focusNodeSearchLoc.hasFocus) ? 8 : 1,
+                        child: Padding(
+                          padding: const EdgeInsets.only(
+                              left: 30, right: 30, top: 20),
+                          child: TextFormField(
+                            onChanged: (nom) {
+                              setState(() {
+                                searchCenter.text = "";
+                                searchSpecialite.text = "";
+                                searchLocation.text =
+                                    (nom.isNotEmpty) ? nom : '';
+
+                                medecinsFuture = getAllMedecin(currentPage);
+                              });
+                            },
+                            focusNode: _focusNodeSearchLoc,
+                            controller: searchLocation,
+                            keyboardType: TextInputType.emailAddress,
+                            style: const TextStyle(color: Colors.black),
+                            decoration: InputDecoration(
+                              contentPadding:
+                                  const EdgeInsets.symmetric(vertical: 0),
+                              focusColor:
+                                  const Color.fromARGB(255, 20, 20, 100),
+                              focusedBorder: OutlineInputBorder(
+                                borderSide: const BorderSide(
+                                    width: 0,
+                                    color: Color.fromARGB(255, 20, 20, 100)),
+                                borderRadius: BorderRadius.circular(10.0),
+                              ),
+                              hintStyle: const TextStyle(
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.w300),
+
+                              hintText: 'Rechercher la localisation ',
+                              labelStyle: TextStyle(
+                                  color: _focusNodeSearch.hasFocus
+                                      ? Colors.redAccent
+                                      : Colors.black),
+                              border: InputBorder
+                                  .none, // Utilisez InputBorder.none pour supprimer la bordure
+                              enabledBorder: OutlineInputBorder(
+                                borderSide: const BorderSide(
+                                    width: 0, color: Colors.grey),
+                                borderRadius: BorderRadius.circular(10.0),
+                              ),
+                              prefixIcon: const Icon(Icons.search,
+                                  color: Color.fromARGB(1000, 60, 70, 120)),
+                            ),
+                          ),
+                        ),
+                      )
+                    ],
+                    Expanded(
+                        flex: 3,
+                        child: FutureBuilder<List<Medecin>>(
+                          future: medecinsFuture,
+                          builder: (context, medecinsSnapshot) {
+                            if (medecinsSnapshot.connectionState ==
+                                ConnectionState.waiting) {
+                              return Center(
+                                  child: ListView(
+                                children: const [
+                                  Center(
+                                    child: CircularProgressIndicator(
+                                      color: Colors.redAccent,
+                                    ),
+                                  ),
+                                  SizedBox(
+                                    height: 30,
+                                  ),
+                                  Text(
+                                    'Chargement des données..\n Assurez-vous d\'avoir une connexion internet',
+                                    textAlign: TextAlign.center,
+                                  )
+                                ],
+                              ));
+                            } else if (medecinsSnapshot.hasError) {
+                              return Center(
+                                child:
+                                    Text('Erreur: ${medecinsSnapshot.error}'),
+                              );
+                            } else {
+                              List<Medecin> medecins = medecinsSnapshot.data!;
+
+                              if (medecins.isEmpty) {
+                                print('NOTHING');
+                                return Padding(
+                                    padding: const EdgeInsets.only(
+                                        right: 18,
+                                        left: 18,
+                                        top: 20,
+                                        bottom: 10),
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(23),
+                                      child: Container(
+                                        height: 170,
+                                        child: Card(
+                                          elevation: 0.5,
+                                          color: Colors.white,
+                                          child: ListView(
+                                            children: [
+                                              Padding(
+                                                padding: const EdgeInsets.only(
+                                                    left: 20,
+                                                    top: 10,
+                                                    right: 50),
+                                                child: Text(
+                                                  'Merci de rechercher les médecins avec les options ci-dessus...',
+                                                  style: TextStyle(
+                                                      fontSize: 17,
+                                                      color: Colors.grey
+                                                          .withOpacity(0.9),
+                                                      letterSpacing: 2),
+                                                ),
+                                              ),
+                                              const Opacity(
+                                                opacity: 0.4,
+                                                child: Divider(
+                                                  thickness: 1,
+                                                  indent: 20,
+                                                  endIndent: 20,
+                                                  color: Colors.grey,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ));
+                              }
+
+                              return NotificationListener(
+                                  onNotification:
+                                      (ScrollNotification scrollInfo) {
+                                    if (scrollInfo is ScrollEndNotification &&
+                                        scrollController.position.extentAfter ==
+                                            0) {
+                                      print('-- FARANY --');
+                                      // L'utilisateur a atteint la fin de la liste, chargez plus de données
+                                      loadMoreData();
+                                    }
+                                    return false;
+                                  },
+                                  child: ListView.builder(
+                                    controller: scrollController,
+                                    itemCount:
+                                        medecins.length + (isLoading ? 1 : 0),
+                                    itemBuilder: (context, index) {
+                                      Medecin medecin = medecins[index];
+
+                                      if (index < medecins.length) {
+                                        return Padding(
+                                            padding: const EdgeInsets.only(
+                                                right: 18,
+                                                left: 18,
+                                                bottom: 10),
+                                            child: ClipRRect(
+                                              borderRadius:
+                                                  BorderRadius.circular(23),
+                                              child: Container(
+                                                height: 200,
+                                                child: Card(
+                                                  elevation: 0.5,
+                                                  color: Colors.white,
+                                                  child: Column(
+                                                    children: [
+                                                      const Spacer(),
+                                                      Row(
+                                                        mainAxisAlignment:
+                                                            MainAxisAlignment
+                                                                .spaceEvenly,
+                                                        children: [
+                                                          const SizedBox(
+                                                            width: 20,
+                                                          ),
+                                                          ClipRRect(
+                                                            borderRadius:
+                                                                BorderRadius
+                                                                    .circular(
+                                                                        50),
+                                                            child: Container(
+                                                              width: 60,
+                                                              height: 60,
+                                                              decoration:
+                                                                  BoxDecoration(
+                                                                borderRadius:
+                                                                    BorderRadius
+                                                                        .circular(
+                                                                            60),
+                                                              ),
+                                                              child: ((medecin.imageName !=
+                                                                          null) &&
+                                                                      (File(medecin
+                                                                              .imageName!)
+                                                                          .existsSync()))
+                                                                  ? Image.file(
+                                                                      File(medecin
+                                                                          .imageName!))
+                                                                  : Image.asset(
+                                                                      'assets/images/medecin.png',
+                                                                      fit: BoxFit
+                                                                          .fill,
+                                                                    ),
+                                                            ),
+                                                          ),
+                                                          const SizedBox(
+                                                            width: 10,
+                                                          ),
+                                                          Column(
+                                                            children: [
+                                                              Text(
+                                                                '${medecin.lastName[0]}.${abbreviateName(medecin.firstName)}',
+                                                                style: const TextStyle(
+                                                                    color: Color
+                                                                        .fromARGB(
+                                                                            1000,
+                                                                            60,
+                                                                            70,
+                                                                            120),
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .w500),
+                                                              ),
+                                                              Text(
+                                                                '${medecin.speciality!.label}',
+                                                                style: const TextStyle(
+                                                                    color: Color
+                                                                        .fromARGB(
+                                                                            1000,
+                                                                            60,
+                                                                            70,
+                                                                            120),
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .w300),
+                                                              )
+                                                            ],
+                                                          ),
+                                                          const Spacer()
+                                                        ],
+                                                      ),
+                                                      const Opacity(
+                                                        opacity: 0.4,
+                                                        child: Divider(
+                                                          thickness: 1,
+                                                          indent: 20,
+                                                          endIndent: 20,
+                                                          color: Colors.grey,
+                                                        ),
+                                                      ),
+                                                      Row(
+                                                        mainAxisAlignment:
+                                                            MainAxisAlignment
+                                                                .center,
+                                                        children: [
+                                                          Padding(
+                                                            padding:
+                                                                const EdgeInsets
+                                                                    .only(
+                                                                    left: 30,
+                                                                    right: 10),
+                                                            child: Image.asset(
+                                                              'assets/images/date-limite.png',
+                                                              width: 30,
+                                                              height: 30,
+                                                            ),
+                                                          ),
+                                                          const Text(
+                                                            '5rdv/jour',
+                                                            textAlign: TextAlign
+                                                                .center,
+                                                            style: TextStyle(
+                                                                color: Color
+                                                                    .fromARGB(
+                                                                        1000,
+                                                                        60,
+                                                                        70,
+                                                                        120)),
+                                                          ),
+                                                          const Spacer(),
+                                                          const Icon(
+                                                            Icons.watch_later,
+                                                            color: Colors
+                                                                .redAccent,
+                                                          ),
+                                                          const Padding(
+                                                            padding:
+                                                                EdgeInsets.only(
+                                                                    left: 5,
+                                                                    right: 15),
+                                                            child: Text(
+                                                              'Disponible de 08:00',
+                                                              textAlign:
+                                                                  TextAlign
+                                                                      .center,
+                                                              style: TextStyle(
+                                                                  color: Color
+                                                                      .fromARGB(
+                                                                          1000,
+                                                                          60,
+                                                                          70,
+                                                                          120)),
+                                                            ),
+                                                          )
+                                                        ],
+                                                      ),
+                                                      Padding(
+                                                          padding:
+                                                              const EdgeInsets
+                                                                  .only(
+                                                                  top: 15.0,
+                                                                  left: 10,
+                                                                  right: 10,
+                                                                  bottom: 15),
+                                                          child: ElevatedButton(
+                                                            style: ButtonStyle(
+                                                              backgroundColor:
+                                                                  MaterialStateProperty.all(
+                                                                      const Color
+                                                                          .fromARGB(
+                                                                          1000,
+                                                                          60,
+                                                                          70,
+                                                                          120)),
+                                                              shape:
+                                                                  MaterialStateProperty
+                                                                      .all(
+                                                                RoundedRectangleBorder(
+                                                                  borderRadius:
+                                                                      BorderRadius
+                                                                          .circular(
+                                                                              8.0), // Définissez le rayon de la bordure ici
+                                                                ),
+                                                              ),
+                                                              minimumSize:
+                                                                  MaterialStateProperty.all(
+                                                                      const Size(
+                                                                          180.0,
+                                                                          40.0)),
+                                                            ),
+                                                            onPressed: () {
+                                                              Navigator.pushReplacement(
+                                                                  context,
+                                                                  MaterialPageRoute(
+                                                                      builder: (context) => PriseDeRendezVous(
+                                                                          patient:
+                                                                              patient!),
+                                                                      settings: RouteSettings(
+                                                                          arguments:
+                                                                              medecin)));
+                                                            },
+                                                            child: const Text(
+                                                              'Prendre un rendez-vous',
+                                                              textScaleFactor:
+                                                                  1.2,
+                                                              style: TextStyle(
+                                                                color: Color
+                                                                    .fromARGB(
+                                                                        255,
+                                                                        253,
+                                                                        253,
+                                                                        253),
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w500,
+                                                              ),
+                                                            ),
+                                                          )),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ),
+                                            ));
+                                      } else if (isLoading) {
+                                        // Affichez l'indicateur de chargement pendant le chargement des données
+                                        return const Center(
+                                            child: CircularProgressIndicator());
+                                      } else {
+                                        return Container(); // ou tout autre widget pour l'espace réservé
+                                      }
+                                    },
+                                  ));
+                            }
+                          },
+                        ))
+                  ],
+                )
+              : const Center(
+                  child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    CircularProgressIndicator(
+                      color: Colors.redAccent,
+                    ),
+                    SizedBox(
+                      height: 30,
+                    ),
+                    Text(
+                      'Chargement des données..\n Assurez-vous d\'avoir une connexion internet',
+                      textAlign: TextAlign.center,
+                    )
+                  ],
+                ))),
+    );
+  }
+}
