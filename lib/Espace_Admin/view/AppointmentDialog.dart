@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:med_scheduler_front/UtilisateurNewPassword.dart';
 import 'package:med_scheduler_front/CustomAppointment.dart';
 import 'dart:convert';
 import 'package:intl/intl.dart';
@@ -13,6 +12,8 @@ import 'Agenda.dart';
 import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:med_scheduler_front/Espace_Client/view/AppointmentDetails.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
+import 'package:med_scheduler_front/Utilitie/Utilities.dart';
+import 'package:med_scheduler_front/Repository/BaseRepository.dart';
 
 
 class AppointmentDialog extends StatefulWidget {
@@ -29,6 +30,9 @@ class _AppointmentDialogState extends State<AppointmentDialog> {
   late AuthProvider authProvider;
   late String token;
 
+  BaseRepository? baseRepository;
+  Utilities? utilities;
+
   String baseUrl = UrlBase().baseUrl;
 
   DateTime? currentJour;
@@ -40,6 +44,17 @@ class _AppointmentDialogState extends State<AppointmentDialog> {
   List<CustomAppointment> appointsList = [];
 
   List<bool> isDisableIndex = List.generate(6, (index) => false);
+
+
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    utilities = Utilities(context: context);
+    baseRepository = BaseRepository(context: context, utilities: utilities!);
+  }
+
 
   bool isDayClicked(DateTime startAt) {
     DateTime now = DateTime.now();
@@ -90,39 +105,7 @@ class _AppointmentDialogState extends State<AppointmentDialog> {
     }
   }
 
-  Future<List<CustomAppointment>> getAllAppointment() async {
-    authProvider = Provider.of<AuthProvider>(context, listen: false);
-    token = authProvider.token;
 
-    final url = Uri.parse(
-        "${baseUrl}api/doctors/appointments/${extractLastNumber(widget.medecin.id)}");
-
-    final headers = {'Authorization': 'Bearer $token'};
-
-    try {
-      final response = await http.get(url, headers: headers);
-
-      if (response.statusCode == 200) {
-        final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
-        final datas = jsonData['hydra:member'] as List<dynamic>;
-
-        return datas.map((e) => CustomAppointment.fromJson(e)).toList();
-      } else {
-
-        if (response.statusCode == 401) {
-          authProvider.logout();
-          Navigator.pushReplacement(
-              context, MaterialPageRoute(builder: (context) => const MyApp()));
-        }
-        // Gestion des erreurs HTTP
-        throw Exception(
-            '-- Erreur d\'obtention des données\n vérifier votre connexion internet.');
-      }
-    } catch (e, stackTrace) {
-      print('Error: $e \nStack trace: $stackTrace');
-      throw e;
-    }
-  }
 
   Future<List<CustomAppointment>> getAllUnavalaibleAppointment() async {
     authProvider = Provider.of<AuthProvider>(context, listen: false);
@@ -195,7 +178,7 @@ class _AppointmentDialogState extends State<AppointmentDialog> {
       listUnavalaibleAppointment = getAllUnavalaibleByDate(
       await getAllUnavalaibleAppointment(), currentJour!);
       setBoolDisabled(listAppointment);
-      appointsList = await getAllAppointment();
+      appointsList = await baseRepository!.getAllAppointmentByMedecin(widget.medecin);
 
       if (mounted) {
       setState(() {
@@ -246,145 +229,6 @@ class _AppointmentDialogState extends State<AppointmentDialog> {
     });
   }
 
-
-
-  Future<void> patchAppointment(
-      CustomAppointment appointment) async {
-    final url = Uri.parse("${baseUrl}api/appointments/${extractLastNumber(appointment.id)}");
-    //final headers = {'Content-Type': 'application/json'};
-
-    final headers = {
-      'Content-Type': 'application/merge-patch+json',
-      'Authorization': 'Bearer $token'
-    };
-
-    try {
-      print('PATCH ISDELETED: ${appointment.isDeleted}');
-      String jsonUser = jsonEncode(appointment.toJsonUnav());
-
-      print('JSOON USER: ${jsonUser}');
-
-      final response = await http.patch(url, headers: headers, body: jsonUser);
-      print('${response.statusCode} \n BODY PATCH: ${response.body} ');
-
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> jsonResponse = json.decode(response.body);
-
-
-        if (jsonResponse.containsKey('error')) {
-          error('Rendez-vous déja existant');
-        } else {}
-      } else {
-
-
-        if (response.statusCode == 401) {
-          authProvider.logout();
-          Navigator.pushReplacement(
-              context, MaterialPageRoute(builder: (context) => const MyApp()));
-        }
-
-        if (response.statusCode == 201) {
-        } else {
-          // Gestion des erreurs HTTP
-
-          error(
-              'Il y a une erreur APPOINTMENT. HTTP Status Code: ${response.statusCode}');
-        }
-      }
-    } catch (e, stackTrace) {
-      print('Error: $e \nStack trace: $stackTrace');
-      throw e;
-    }
-  }
-
-
-
-
-  Future<void> createUnavalaibleAppointment(
-      CustomAppointment appointment) async {
-    final url = Uri.parse("${baseUrl}api/unavailable_appointments");
-    //final headers = {'Content-Type': 'application/json'};
-
-    final headers = {
-      'Content-Type': 'application/ld+json',
-      'Authorization': 'Bearer $token'
-    };
-
-    try {
-      String jsonUser = jsonEncode(appointment.toJsonUnav());
-
-      final response = await http.post(url, headers: headers, body: jsonUser);
-      print('${response.statusCode} \n BODY: ${response.body} ');
-
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> jsonResponse = json.decode(response.body);
-
-
-        if (jsonResponse.containsKey('error')) {
-          error('Rendez-vous déja existant');
-        } else {}
-      } else {
-
-        if (response.statusCode == 401) {
-          authProvider.logout();
-          Navigator.pushReplacement(
-              context, MaterialPageRoute(builder: (context) => const MyApp()));
-        }
-
-        if (response.statusCode == 201) {
-        } else {
-          // Gestion des erreurs HTTP
-
-          error(
-              'Il y a une erreur APPOINTMENT. HTTP Status Code: ${response.statusCode}');
-        }
-      }
-    } catch (e, stackTrace) {
-      print('Error: $e \nStack trace: $stackTrace');
-      throw e;
-    }
-  }
-
-  Future<void> deleteUnavalaibleAppointment(
-      CustomAppointment appointment) async {
-    final url = Uri.parse(
-        "${baseUrl}api/unavailable_appointments/${extractLastNumber(appointment.id)}");
-    //final headers = {'Content-Type': 'application/json'};
-
-    final headers = {'Authorization': 'Bearer $token'};
-
-    try {
-      //print('Request Body: $jsonUser');
-      final response = await http.delete(url, headers: headers);
-      print(response.statusCode);
-
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> jsonResponse = json.decode(response.body);
-
-        if (jsonResponse.containsKey('error')) {
-          error('Rendez-vous déja existant');
-        } else {}
-      } else {
-
-        if (response.statusCode == 401) {
-          authProvider.logout();
-          Navigator.pushReplacement(
-              context, MaterialPageRoute(builder: (context) => const MyApp()));
-        }
-
-        if (response.statusCode == 204) {
-        } else {
-          // Gestion des erreurs HTTP
-
-          error(
-              'Il y a une erreur APPOINTMENT. HTTP Status Code: ${response.statusCode}');
-        }
-      }
-    } catch (e, stackTrace) {
-      print('Error: $e \nStack trace: $stackTrace');
-      throw e;
-    }
-  }
 
   bool areAllAppointmentsDesactiver(List<CustomAppointment> appointments) {
     return appointments
@@ -807,7 +651,7 @@ class _AppointmentDialogState extends State<AppointmentDialog> {
 
 
                                   /// On cree l'appointment avec un type "Desactiver" vers le serveur(On desactive l'appointment)
-                                  createUnavalaibleAppointment(customAppointment);
+                                  baseRepository!.createUnavalaibleAppointment(customAppointment);
 
                                   /// On actualise l'état
                                   didChangeDependencies();
@@ -829,16 +673,16 @@ class _AppointmentDialogState extends State<AppointmentDialog> {
 
                                       CustomAppointment appointmentPatchFalse = CustomAppointment(id: appointmentPrise.id,medecin: appointmentPrise.medecin,patient: appointmentPrise.patient,type: appointmentPrise.type, startAt: appointmentPrise.startAt, timeStart: appointmentPrise.timeStart, timeEnd: appointmentPrise.timeEnd, reason: appointmentPrise.reason, updatedAt: DateTime.now(),createdAt: appointmentPrise.createdAt,isDeleted: false);
 
-                                      patchAppointment(appointmentPatchFalse);
+                              baseRepository!.patchAppointment(appointmentPatchFalse);
 
-                                      deleteUnavalaibleAppointment(appointment);
+                              baseRepository!.deleteUnavalaibleAppointment(appointment);
                                     }else{
                                       /// On supprime l'appointment de type "Desactiver" dans la base de donnée(on reactive le plage horaire)
-                                      deleteUnavalaibleAppointment(appointment);
+                                      baseRepository!.deleteUnavalaibleAppointment(appointment);
                                     }
                                   }else{
                                     /// On supprime l'appointment de type "Desactiver" dans la base de donnée(on reactive le plage horaire)
-                                    deleteUnavalaibleAppointment(appointment);
+                                    baseRepository!.deleteUnavalaibleAppointment(appointment);
                                   }
 
                                   /// On actualise l'état
@@ -938,7 +782,7 @@ class _AppointmentDialogState extends State<AppointmentDialog> {
                                             if (isDisableIndex[i] ==
                                                 true) {
                                               print('TRUE');
-                                              deleteUnavalaibleAppointment(
+                                              baseRepository!.deleteUnavalaibleAppointment(
                                                   appointment);
 
                                               didChangeDependencies();
@@ -970,7 +814,7 @@ class _AppointmentDialogState extends State<AppointmentDialog> {
                                                       ? ""
                                                       : "Desactiver");
 
-                                              createUnavalaibleAppointment(
+                                            baseRepository!.createUnavalaibleAppointment(
                                                   appoint);
                                               didChangeDependencies();
 
@@ -1046,9 +890,9 @@ class _AppointmentDialogState extends State<AppointmentDialog> {
 
                                                 CustomAppointment appointmentPatchFalse = CustomAppointment(id: appointmentPrise!.id,medecin: appointmentPrise.medecin,patient: appointmentPrise.patient,type: appointmentPrise.type, startAt: appointmentPrise.startAt, timeStart: appointmentPrise.timeStart, timeEnd: appointmentPrise.timeEnd, reason: appointmentPrise.reason, updatedAt: DateTime.now(),createdAt: appointmentPrise.createdAt,isDeleted: false);
 
-                                                patchAppointment(appointmentPatchFalse);
+                            baseRepository!.patchAppointment(appointmentPatchFalse);
 
-                                                deleteUnavalaibleAppointment(
+                            baseRepository!.deleteUnavalaibleAppointment(
                                                     unavAppointFindedDesactiver!);
 
                                                 didChangeDependencies();
@@ -1200,9 +1044,9 @@ class _AppointmentDialogState extends State<AppointmentDialog> {
             appointment.createdAt,
             appType:'Desactiver');
 
-        patchAppointment(appointPatch);
+        baseRepository!.patchAppointment(appointPatch);
 
-        createUnavalaibleAppointment(
+        baseRepository!.createUnavalaibleAppointment(
             appoint);
         didChangeDependencies();
       },
@@ -1261,9 +1105,9 @@ class _AppointmentDialogState extends State<AppointmentDialog> {
             createdAt: appointment.createdAt,
             appType:'Desactiver');
 
-        patchAppointment(appointPatch);
+        baseRepository!.patchAppointment(appointPatch);
 
-        createUnavalaibleAppointment(appoint);
+        baseRepository!.createUnavalaibleAppointment(appoint);
         didChangeDependencies();
       },
     ).show();

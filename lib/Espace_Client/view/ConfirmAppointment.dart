@@ -6,11 +6,9 @@ import 'dart:io';
 import 'package:med_scheduler_front/Medecin.dart';
 import 'package:med_scheduler_front/UrlBase.dart';
 import 'dart:async';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
 import 'PriseDeRendezVous.dart';
-import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
-import 'package:med_scheduler_front/main.dart';
+import 'package:med_scheduler_front/Repository/UserRepository.dart';
+import 'package:med_scheduler_front/Utilitie/Utilities.dart';
 
 class ConfirmAppointment extends StatefulWidget {
   final CustomAppointment appointment;
@@ -21,16 +19,21 @@ class ConfirmAppointment extends StatefulWidget {
 }
 
 class _ConfirmAppointmentState extends State<ConfirmAppointment> {
-
   late AuthProvider authProvider;
   late String token;
 
   String baseUrl = UrlBase().baseUrl;
 
+  Utilities? utilities;
+  UserRepository? userRepository;
 
-
-
-
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    utilities = Utilities(context: context);
+    userRepository = UserRepository(context: context, utilities: utilities!);
+  }
 
   void success() {
     showDialog(
@@ -38,7 +41,12 @@ class _ConfirmAppointmentState extends State<ConfirmAppointment> {
       builder: (context) {
         return const AlertDialog(
           title: Text('Succès'),
-          content: Text('Utilisateur créé avec succès.',textScaleFactor: 1.3,style: TextStyle(color: Colors.teal,fontWeight: FontWeight.bold),textAlign: TextAlign.center,),
+          content: Text(
+            'Utilisateur créé avec succès.',
+            textScaleFactor: 1.3,
+            style: TextStyle(color: Colors.teal, fontWeight: FontWeight.bold),
+            textAlign: TextAlign.center,
+          ),
         );
       },
     );
@@ -58,7 +66,12 @@ class _ConfirmAppointmentState extends State<ConfirmAppointment> {
             borderRadius: BorderRadius.circular(8),
           ),
           title: const Text('Error'),
-          content: Text('$description.',textScaleFactor: 1.5,style: const TextStyle(color: Colors.red),textAlign: TextAlign.center,),
+          content: Text(
+            '$description.',
+            textScaleFactor: 1.5,
+            style: const TextStyle(color: Colors.red),
+            textAlign: TextAlign.center,
+          ),
         );
       },
     );
@@ -68,18 +81,20 @@ class _ConfirmAppointmentState extends State<ConfirmAppointment> {
       Navigator.of(context).pop();
     });
   }
+
   void CreationAppointment() {
     SnackBar snackBar = const SnackBar(
       backgroundColor: Colors.redAccent,
       content: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Expanded(child: Text(
-            'Rendez-vous creer!',
-            textScaleFactor: 1.8,
-            style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 4),
-            textAlign: TextAlign.center,
-          ),
+          Expanded(
+            child: Text(
+              'Rendez-vous creer!',
+              textScaleFactor: 1.8,
+              style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 4),
+              textAlign: TextAlign.center,
+            ),
           ),
           Icon(
             Icons.check_circle_outline,
@@ -94,123 +109,6 @@ class _ConfirmAppointmentState extends State<ConfirmAppointment> {
 
     ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
-
-
-  Future<void> addAppointment(CustomAppointment appointment) async {
-    final url = Uri.parse("${baseUrl}api/appointments");
-    //final headers = {'Content-Type': 'application/json'};
-
-    final headers = {'Content-Type': 'application/ld+json','Authorization': 'Bearer $token'};
-
-    try {
-      String jsonUser = jsonEncode(appointment.toJson());
-      print('Request Body: $jsonUser');
-      final response = await http.post(url,headers: headers,body: jsonUser);
-      print(response.statusCode);
-
-
-
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> jsonResponse = json.decode(response.body);
-        print('ERRRR: $jsonResponse');
-
-        if (jsonResponse.containsKey('error')) {
-          error('Rendez-vous déja existant');
-        }else{
-          Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>PriseDeRendezVous(patient: widget.appointment.patient!),settings: RouteSettings(arguments: appointment.medecin)));
-
-        }
-
-
-
-      } else {
-        if(response.statusCode==201){
-
-          Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>PriseDeRendezVous(patient: widget.appointment.patient!),settings: RouteSettings(arguments: appointment.medecin)));
-        }else{
-
-
-          if (response.statusCode == 401) {
-            authProvider.logout();
-            Navigator.pushReplacement(
-                context, MaterialPageRoute(builder: (context) => const MyApp()));
-          }else{
-            error('Il y a une erreur APPOINTMENT. HTTP Status Code: ${response.statusCode}');
-          }
-
-          // Gestion des erreurs HTTP
-          //error('Il y a une erreur APPOINTMENT. HTTP Status Code: ${response.statusCode}');
-
-        }
-
-
-      }
-
-    } catch (e,stackTrace) {
-      print('Error: $e \nStack trace: $stackTrace');
-      throw e;
-    }
-  }
-
-
-
-
-
-  Future<void> addAppointmentUnavailable(CustomAppointment appointment) async {
-    final url = Uri.parse("${baseUrl}api/unavailable_appointments");
-    //final headers = {'Content-Type': 'application/json'};
-
-    final headers = {'Content-Type': 'application/ld+json','Authorization': 'Bearer $token'};
-
-    try {
-      String jsonUser = jsonEncode(appointment.toJson());
-      print('Request Body: $jsonUser');
-      final response = await http.post(url,headers: headers,body: jsonUser);
-      print(response.statusCode);
-
-
-
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> jsonResponse = json.decode(response.body);
-        print('ERRRR: $jsonResponse');
-
-        if (jsonResponse.containsKey('error')) {
-          error('Rendez-vous déja existant');
-        } else {
-
-            Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>PriseDeRendezVous(patient: widget.appointment.patient!),settings: RouteSettings(arguments: appointment.medecin)));
-
-        }
-
-
-
-      } else {
-        if(response.statusCode==201){
-          RdvValider();
-          Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>PriseDeRendezVous(patient: widget.appointment.patient!),settings: RouteSettings(arguments: appointment.medecin)));
-        }else{
-
-
-          if (response.statusCode == 401) {
-            authProvider.logout();
-            Navigator.pushReplacement(
-                context, MaterialPageRoute(builder: (context) => const MyApp()));
-          }
-
-          // Gestion des erreurs HTTP
-          error('Il y a une erreur APPOINTMENT. HTTP Status Code: ${response.statusCode}');
-
-        }
-      }
-
-    }catch (e,stackTrace) {
-      print('Error: $e \nStack trace: $stackTrace');
-      throw e;
-    }
-  }
-
-
-
 
   String abbreviateName(String fullName) {
     fullName = '$fullName En Art';
@@ -382,15 +280,13 @@ class _ConfirmAppointmentState extends State<ConfirmAppointment> {
 
   bool isReady = false;
 
-
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-
 
   @override
   Widget build(BuildContext context) {
     Medecin medecin = ModalRoute.of(context)?.settings.arguments as Medecin;
     return Scaffold(
-      key: _scaffoldKey,
+        key: _scaffoldKey,
         backgroundColor: const Color.fromARGB(1000, 238, 239, 244),
         body: ListView(children: [
           Padding(
@@ -408,7 +304,12 @@ class _ConfirmAppointmentState extends State<ConfirmAppointment> {
                     ],
                   ),
                   onTap: () {
-                    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>PriseDeRendezVous(patient: widget.appointment.patient!),settings: RouteSettings(arguments: medecin)));
+                    Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => PriseDeRendezVous(
+                                patient: widget.appointment.patient!),
+                            settings: RouteSettings(arguments: medecin)));
                   },
                 ),
                 const Spacer(),
@@ -430,8 +331,8 @@ class _ConfirmAppointmentState extends State<ConfirmAppointment> {
             ),
           ),
           Padding(
-              padding:
-                  const EdgeInsets.only(top: 30, right: 15, left: 15, bottom: 20),
+              padding: const EdgeInsets.only(
+                  top: 30, right: 15, left: 15, bottom: 20),
               child: Card(
                   elevation: 0,
                   color: Colors.white,
@@ -440,8 +341,8 @@ class _ConfirmAppointmentState extends State<ConfirmAppointment> {
                       Row(
                         children: [
                           Padding(
-                            padding:
-                                const EdgeInsets.only(top: 20, left: 30, bottom: 50),
+                            padding: const EdgeInsets.only(
+                                top: 20, left: 30, bottom: 50),
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(60),
                               child: Container(
@@ -601,8 +502,9 @@ class _ConfirmAppointmentState extends State<ConfirmAppointment> {
                                 decoration: InputDecoration(
                                   focusedBorder: UnderlineInputBorder(
                                     borderSide: BorderSide(
-                                      color: const Color.fromARGB(230, 20, 20, 90)
-                                          .withOpacity(0.7),
+                                      color:
+                                          const Color.fromARGB(230, 20, 20, 90)
+                                              .withOpacity(0.7),
                                     ),
                                   ),
                                 ),
@@ -636,25 +538,51 @@ class _ConfirmAppointmentState extends State<ConfirmAppointment> {
                               onPressed: () {
                                 FocusScope.of(context).unfocus();
 
-                                if(raison.text.isEmpty){
-
-                                }else{
-
-                                  TimeOfDay timeOfDayStart = TimeOfDay.fromDateTime(widget.appointment.timeStart);
-                                  TimeOfDay timeOfDayEnd = TimeOfDay.fromDateTime(widget.appointment.timeEnd);
+                                if (raison.text.isEmpty) {
+                                } else {
+                                  TimeOfDay timeOfDayStart =
+                                      TimeOfDay.fromDateTime(
+                                          widget.appointment.timeStart);
+                                  TimeOfDay timeOfDayEnd =
+                                      TimeOfDay.fromDateTime(
+                                          widget.appointment.timeEnd);
 
                                   print(' timeOfDayStart: $timeOfDayStart ');
                                   print(' timeOfDayEnd: $timeOfDayEnd ');
 
-                                  CustomAppointment newAppointment = CustomAppointment(id: '', type: '', medecin: medecin,patient: widget.appointment.patient,startAt: widget.appointment.startAt, timeStart: widget.appointment.timeStart, timeEnd: widget.appointment.timeEnd, reason: raison.text, createdAt: DateTime.now());
-                                  CustomAppointment newUnavailableAppointment = CustomAppointment(id: '', type: '',appType: 'Pris', medecin: medecin,patient:widget.appointment.patient,startAt: widget.appointment.startAt, timeStart: widget.appointment.timeStart, timeEnd: widget.appointment.timeEnd, reason: raison.text, createdAt: DateTime.now());
+                                  CustomAppointment newAppointment =
+                                      CustomAppointment(
+                                          id: '',
+                                          type: '',
+                                          medecin: medecin,
+                                          patient: widget.appointment.patient,
+                                          startAt: widget.appointment.startAt,
+                                          timeStart:
+                                              widget.appointment.timeStart,
+                                          timeEnd: widget.appointment.timeEnd,
+                                          reason: raison.text,
+                                          createdAt: DateTime.now());
+                                  CustomAppointment newUnavailableAppointment =
+                                      CustomAppointment(
+                                          id: '',
+                                          type: '',
+                                          appType: 'Pris',
+                                          medecin: medecin,
+                                          patient: widget.appointment.patient,
+                                          startAt: widget.appointment.startAt,
+                                          timeStart:
+                                              widget.appointment.timeStart,
+                                          timeEnd: widget.appointment.timeEnd,
+                                          reason: raison.text,
+                                          createdAt: DateTime.now());
 
-                                  addAppointment(newAppointment);
-                                  addAppointmentUnavailable(newUnavailableAppointment);
+                                  userRepository!
+                                      .addAppointment(newAppointment,widget.appointment);
+                                  userRepository!.addAppointmentUnavailable(
+                                      newUnavailableAppointment,widget.appointment);
 
                                   print('--- APPOINTMENT CREATED ---');
-
-                                  }
+                                }
                               },
                               child: const Text(
                                 'Confirmer',
@@ -667,17 +595,17 @@ class _ConfirmAppointmentState extends State<ConfirmAppointment> {
                             )),
                       ] else ...[
                         Padding(
-                          padding: const EdgeInsets.only(left: 10, right: 10,bottom: 10),
+                          padding: const EdgeInsets.only(
+                              left: 10, right: 10, bottom: 10),
                           child: Center(
                             child: Text(
                               'Veuillez entrer la raison du rendez-vous.',
                               textAlign: TextAlign.center,
                               style: TextStyle(
-                                letterSpacing: 1.5,
-                                fontSize: 16,
-    fontWeight: FontWeight.w400,
-    color: Colors.redAccent.withOpacity(0.8)
-                              ),
+                                  letterSpacing: 1.5,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w400,
+                                  color: Colors.redAccent.withOpacity(0.8)),
                             ),
                           ),
                         )
@@ -685,28 +613,5 @@ class _ConfirmAppointmentState extends State<ConfirmAppointment> {
                     ],
                   )))
         ]));
-  }
-
-
-  void RdvValider() {
-    final materialBanner = MaterialBanner(
-      /// need to set following properties for best effect of awesome_snackbar_content
-      elevation: 0,
-      backgroundColor: Colors.transparent,
-      forceActionsBelow: true,
-      content: AwesomeSnackbarContent(
-        title: 'Succès!!',
-        message:
-        'Rendez-vous enregistré',
-
-        /// change contentType to ContentType.success, ContentType.warning or ContentType.help for variants
-        contentType: ContentType.success,
-        // to configure for material banner
-        inMaterialBanner: true,
-      ),
-      actions: const [SizedBox.shrink()],
-    );
-
-    ScaffoldMessenger.of(context)..hideCurrentMaterialBanner()..showMaterialBanner(materialBanner);
   }
 }

@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
 import 'IndexAcceuilMedecin.dart';
 import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-import 'dart:async';
 import 'package:med_scheduler_front/UtilisateurNewPassword.dart';
 import 'package:med_scheduler_front/Utilisateur.dart';
 import 'package:med_scheduler_front/UrlBase.dart';
 import 'package:med_scheduler_front/AuthProvider.dart';
-import 'package:med_scheduler_front/main.dart';
+import 'package:med_scheduler_front/Utilitie/Utilities.dart';
+import 'package:med_scheduler_front/Repository/MedecinRepository.dart';
 
 class ModificationPassword extends StatefulWidget {
   @override
@@ -23,6 +21,18 @@ class _ModificationPasswordState extends State<ModificationPassword> {
 
   String baseUrl = UrlBase().baseUrl;
 
+
+  MedecinRepository? medecinRepository;
+  Utilities? utilities;
+
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    utilities = Utilities(context: context);
+    medecinRepository = MedecinRepository(context: context, utilities: utilities!);
+  }
 
 
   TextEditingController newmdpController = TextEditingController();
@@ -56,42 +66,6 @@ Utilisateur? user;
     }
   }
 
-
-  Future<void> getUser(int id,String newPassword) async {
-    final url = Uri.parse("${baseUrl}api/change-password/$id");
-
-    print('URL USER: $url');
-
-    //final headers = {'Authorization': 'Bearer $token'};
-
-    final body = {"password": "$newPassword"};
-
-
-    try {
-      final response = await http.patch(url, body: jsonEncode(body));
-      print(' --- ST CODE: ${response.statusCode}');
-
-      if (response.statusCode == 200) {
-        modifPasswordValider();
-
-
-        Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context)=>IndexAcceuilMedecin()), (route) => false);
-
-
-      } else {
-        // Gestion des erreurs HTTP
-        if (response.statusCode == 401) {
-          authProvider.logout();
-          Navigator.pushReplacement(
-              context, MaterialPageRoute(builder: (context) => const MyApp()));
-        }
-        throw Exception('ANOTHER ERROR');
-      }
-    } catch (e, stackTrace) {
-      print('Error: $e \nStack trace: $stackTrace');
-      throw Exception('-- Failed to load data. Error: $e');
-    }
-  }
 
 
 
@@ -267,7 +241,7 @@ Utilisateur? user;
                     /// Si les champs nouveau mot de passe et la confirmation mot de passe sont les mêmes
                     if(newmdpController.text==confirmnewmdpController.text){
 
-                      getUser(utilisateur.id,newmdpController.text);
+                      medecinRepository!.getUserToChangePassword(utilisateur.id,newmdpController.text);
 
                     }else{
                       /// Quand le nouveau mot de passe et confirmation mot de passe ne sont pas les memes

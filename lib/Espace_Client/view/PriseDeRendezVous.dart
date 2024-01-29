@@ -21,6 +21,8 @@ import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:med_scheduler_front/main.dart';
+import 'package:med_scheduler_front/Repository/UserRepository.dart';
+import 'package:med_scheduler_front/Utilitie/Utilities.dart';
 
 class PriseDeRendezVous extends StatefulWidget {
   final Patient patient;
@@ -31,6 +33,12 @@ class PriseDeRendezVous extends StatefulWidget {
 }
 
 class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
+
+
+  UserRepository? userRepository;
+  Utilities? utilities;
+
+
   Future<void> initializeCalendar() async {
     tz.initializeTimeZones();
     tz.setLocalLocation(tz.getLocation('Indian/Antananarivo'));
@@ -267,49 +275,7 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
     }
   }
 
-  Future<List<CustomAppointment>> getAllUnavalaibleAppointment() async {
-    authProvider = Provider.of<AuthProvider>(context, listen: false);
-    token = authProvider.token;
 
-    if (!_isPageActive) {
-      return []; // Page n'est plus active, on retourne une liste vide.
-    }
-
-    print('MED ID: ${medecinCliked!.id}');
-    final url = Uri.parse(
-        "${baseUrl}api/doctors/unavailable/appointments/${extractLastNumber(medecinCliked!.id)}");
-
-    final headers = {'Authorization': 'Bearer $token'};
-
-    try {
-      final response = await http.get(url, headers: headers);
-
-      print('STATUS CODE APPOINTS AGENDA:  ${response.statusCode} \n');
-
-      if (response.statusCode == 200) {
-        final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
-        final datas = jsonData['hydra:member'] as List<dynamic>;
-
-        print('DATS UNAVALAIBLE SIZE: ${datas.length}');
-
-        return datas.map((e) => CustomAppointment.fromJson(e)).toList();
-      } else {
-
-        if (response.statusCode == 401) {
-          authProvider.logout();
-          Navigator.pushAndRemoveUntil(
-            context, MaterialPageRoute(builder: (context) => const MyApp()),(route) => false,);
-        }
-        print('RESP ERROR UNAV: ${response.body}');
-        // Gestion des erreurs HTTP
-        throw Exception(
-            '-- Failed to load data. HTTP Status Code: ${response.statusCode}');
-      }
-    } catch (e, stackTrace) {
-      print('Error: $e \nStack trace: $stackTrace');
-      throw e;
-    }
-  }
 
   Future<List<CustomAppointment>> InitierAppointment(Medecin medecin) async {
     DateTime now = DateTime.now();
@@ -350,7 +316,7 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       //await getAllAsync();
       listAppointment = await InitierAppointment(medecinCliked!);
-      listUnavalaibleAppointment = await getAllUnavalaibleAppointment();
+      listUnavalaibleAppointment = await userRepository!.getAllUnavalaibleAppointment(medecinCliked!);
       if (mounted) {
         if (listAppointment.isEmpty) {
           setState(() {
@@ -408,6 +374,8 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
   @override
   void initState() {
     super.initState();
+    utilities = Utilities(context: context);
+    userRepository = UserRepository(context: context, utilities: utilities!);
     initializeCalendar();
   }
 

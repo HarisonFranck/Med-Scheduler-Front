@@ -8,11 +8,10 @@ import 'package:med_scheduler_front/Utilisateur.dart';
 import 'package:med_scheduler_front/AuthProvider.dart';
 import 'package:provider/provider.dart';
 import 'package:jwt_decode/jwt_decode.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
 import 'package:med_scheduler_front/UrlBase.dart';
-import 'package:med_scheduler_front/main.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
+import 'package:med_scheduler_front/Utilitie/Utilities.dart';
+import 'package:med_scheduler_front/Repository/BaseRepository.dart';
 
 class IndexAccueil extends StatefulWidget {
   @override
@@ -24,37 +23,9 @@ class _IndexAccueilState extends State<IndexAccueil> {
   late String token;
   String baseUrl = UrlBase().baseUrl;
 
-  Future<Utilisateur> getUser(int id) async {
-    final url = Uri.parse("${baseUrl}api/users/$id");
 
-    final headers = {'Authorization': 'Bearer $token'};
-
-    try {
-      final response = await http.get(url, headers: headers);
-
-      if (response.statusCode == 200) {
-        final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
-
-        Utilisateur user = Utilisateur.fromJson(jsonData);
-
-        print('UTILISATEUR: ${user.lastName}');
-
-        return user;
-      } else {
-        // Gestion des erreurs HTTP
-
-        if (response.statusCode == 401) {
-          authProvider.logout();
-          Navigator.pushReplacement(
-              context, MaterialPageRoute(builder: (context) => const MyApp()));
-        }
-        throw Exception('ANOTHER ERROR');
-      }
-    } catch (e, stackTrace) {
-      print('Error: $e \nStack trace: $stackTrace');
-      throw Exception('-- Failed to load data. Error: $e');
-    }
-  }
+  BaseRepository? baseRepository;
+  Utilities? utilities;
 
   List<Map<String, dynamic>>? _pages;
   int _selectedPageIndex = 0;
@@ -75,7 +46,7 @@ class _IndexAccueilState extends State<IndexAccueil> {
     idUser = payload['id'];
     print('ID USER INDEXED: $idUser');
 
-    user = getUser(idUser);
+    user = baseRepository!.getUser(idUser);
     userGetted();
   }
 
@@ -120,6 +91,8 @@ class _IndexAccueilState extends State<IndexAccueil> {
     //userGetted();
 
     super.initState();
+    utilities = Utilities(context: context);
+    baseRepository = BaseRepository(context: context, utilities: utilities!);
   }
 
   void _selectPage(int index) {

@@ -5,15 +5,15 @@ import 'package:med_scheduler_front/Specialite.dart';
 import 'package:med_scheduler_front/Medecin.dart';
 import 'package:med_scheduler_front/AuthProvider.dart';
 import 'package:med_scheduler_front/UrlBase.dart';
-import 'package:http/http.dart' as http;
-import 'package:provider/provider.dart';
 import 'dart:async';
-import 'dart:convert';
-import 'package:med_scheduler_front/main.dart';
 import 'dart:io';
 import 'package:med_scheduler_front/Centre.dart';
 import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
 import 'MedecinDetails.dart';
+import 'package:med_scheduler_front/Repository/BaseRepository.dart';
+import 'package:med_scheduler_front/Repository/AdminRepository.dart';
+import 'package:med_scheduler_front/Utilitie/Utilities.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 class AccueilAdmin extends StatefulWidget {
   final Utilisateur user;
@@ -25,6 +25,18 @@ class AccueilAdmin extends StatefulWidget {
 }
 
 class _AccueilAdminState extends State<AccueilAdmin> {
+  BaseRepository? baseRepository;
+  AdminRepository? adminRepository;
+  Utilities? utilities;
+
+  @override
+  initState() {
+    super.initState();
+    utilities = Utilities(context: context);
+    baseRepository = BaseRepository(context: context, utilities: utilities!);
+    adminRepository = AdminRepository(context: context, utilities: utilities!);
+  }
+
   GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   GlobalKey<FormState> _formKeyUpdMed = GlobalKey<FormState>();
   GlobalKey<FormState> _formKeyUpdSpec = GlobalKey<FormState>();
@@ -51,23 +63,23 @@ class _AccueilAdminState extends State<AccueilAdmin> {
   List<Specialite> listSpec = [];
 
   Future<void> getAllAsync() async {
-    medecinsFuture = getAllMedecin();
-    specialiteFuture = getAllSpecialite();
-    centerFuture = getAllCenter();
+    medecinsFuture = baseRepository!.getAllMedecin();
+    specialiteFuture = baseRepository!.getAllSpecialite();
+    centerFuture = baseRepository!.getAllCenter();
   }
 
   void getAll() {
-    getAllSpecialite().then((value) => {
+    baseRepository!.getAllSpecialite().then((value) => {
           setState(() {
             listSpec = value;
           })
         });
 
-        getAllCenter().then((value) => {
-    setState(() {
-    listCenter = value;
-    })
-    });
+    baseRepository!.getAllCenter().then((value) => {
+          setState(() {
+            listCenter = value;
+          })
+        });
   }
 
   void ReInitDataSpec() {
@@ -103,109 +115,6 @@ class _AccueilAdminState extends State<AccueilAdmin> {
         });
       }
     });
-  }
-
-  Future<List<Medecin>> getAllMedecin() async {
-    authProvider = Provider.of<AuthProvider>(context, listen: false);
-    token = authProvider.token;
-
-    // Définir l'URL de base
-    Uri url = Uri.parse("${baseUrl}api/doctors?page=1");
-
-    print('URI: $url');
-
-    final headers = {'Authorization': 'Bearer $token'};
-
-    try {
-      final response = await http.get(url, headers: headers);
-      print('STATUS CODE MEDS: ${response.statusCode} \n');
-
-      if (response.statusCode == 200) {
-        final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
-        final datas = jsonData['hydra:member'] as List<dynamic>;
-
-        return datas.map((e) => Medecin.fromJson(e)).toList();
-      } else {
-
-        if (response.statusCode == 401) {
-          authProvider.logout();
-          Navigator.pushReplacement(
-              context, MaterialPageRoute(builder: (context) => const MyApp()));
-        }
-        // Gestion des erreurs HTTP
-        throw Exception(
-          '-- Erreur d\'obtention des données\n vérifier votre connexion internet. Code: ${response.statusCode}',
-        );
-      }
-    } catch (e, stackTrace) {
-      print(' -- E: $e --\n STACK: $stackTrace');
-      throw e;
-    }
-  }
-
-  Future<List<Centre>> getAllCenter() async {
-    final url = Uri.parse("${baseUrl}api/centers?page=1");
-
-    final headers = {'Authorization': 'Bearer $token'};
-
-    try {
-      final response = await http.get(url, headers: headers);
-
-      if (response.statusCode == 200) {
-        final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
-        final datas = jsonData['hydra:member'] as List<dynamic>;
-
-        return datas.map((e) => Centre.fromJson(e)).toList();
-      } else {
-
-        if (response.statusCode == 401) {
-          authProvider.logout();
-          Navigator.pushReplacement(
-              context, MaterialPageRoute(builder: (context) => const MyApp()));
-        }
-        // Gestion des erreurs HTTP
-        throw Exception(
-            '-- Erreur d\'obtention des données\n vérifier votre connexion internet.');
-      }
-    } catch (e) {
-      //print('Error: $e \nStack trace: $stackTrace');
-      throw Exception(
-          '-- Erreur de connexion.\n Veuillez vérifier votre connexion internet !');
-    }
-  }
-
-  Future<List<Specialite>> getAllSpecialite() async {
-    authProvider = Provider.of<AuthProvider>(context, listen: false);
-    token = authProvider.token;
-    final url = Uri.parse("${baseUrl}api/specialities?page=1");
-
-    final headers = {'Authorization': 'Bearer $token'};
-
-    try {
-      final response = await http.get(url, headers: headers);
-      print('STATUS CODE SPECS: ${response.statusCode} \n');
-
-      if (response.statusCode == 200) {
-        final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
-        final datas = jsonData['hydra:member'] as List<dynamic>;
-
-        return datas.map((e) => Specialite.fromJson(e)).toList();
-      } else {
-
-        if (response.statusCode == 401) {
-          authProvider.logout();
-          Navigator.pushReplacement(
-              context, MaterialPageRoute(builder: (context) => const MyApp()));
-        }
-        // Gestion des erreurs HTTP
-        throw Exception(
-            '-- Erreur d\'obtention des données\n vérifier votre connexion internet.');
-      }
-    } catch (e) {
-      //print('Error: $e \nStack trace: $stackTrace');
-      throw Exception(
-          '-- Erreur de connexion.\n Veuillez vérifier votre connexion internet !');
-    }
   }
 
   String abbreviateName(String fullName) {
@@ -344,11 +253,9 @@ class _AccueilAdminState extends State<AccueilAdmin> {
                                 ConnectionState.waiting) {
                               return Center(
                                   child: ListView(
-                                children: const [
+                                children: [
                                   Center(
-                                    child: CircularProgressIndicator(
-                                      color: Colors.redAccent,
-                                    ),
+                                    child:loadingWidget(),
                                   ),
                                   SizedBox(
                                     height: 30,
@@ -521,11 +428,9 @@ class _AccueilAdminState extends State<AccueilAdmin> {
                                 ConnectionState.waiting) {
                               return Center(
                                   child: ListView(
-                                children: const [
+                                children: [
                                   Center(
-                                    child: CircularProgressIndicator(
-                                      color: Colors.redAccent,
-                                    ),
+                                    child: loadingWidget(),
                                   ),
                                   SizedBox(
                                     height: 30,
@@ -685,13 +590,11 @@ class _AccueilAdminState extends State<AccueilAdmin> {
                                 ConnectionState.waiting) {
                               return Center(
                                   child: ListView(
-                                children: const [
+                                children: [
                                   Center(
-                                    child: CircularProgressIndicator(
-                                      color: Colors.redAccent,
-                                    ),
+                                    child: loadingWidget(),
                                   ),
-                                  SizedBox(
+                                  const SizedBox(
                                     height: 30,
                                   ),
                                   Text(
@@ -731,7 +634,7 @@ class _AccueilAdminState extends State<AccueilAdmin> {
                                                     top: 10,
                                                     right: 50),
                                                 child: Text(
-                                                  'Aucun medecin...',
+                                                  'Aucun medecin pour le moment...',
                                                   style: TextStyle(
                                                       fontSize: 17,
                                                       color: Colors.grey
@@ -760,7 +663,6 @@ class _AccueilAdminState extends State<AccueilAdmin> {
                                 itemCount: medecins.length,
                                 itemBuilder: (context, index) {
                                   Medecin medecin = medecins[index];
-
 
                                   return Padding(
                                       padding: const EdgeInsets.only(
@@ -853,7 +755,10 @@ class _AccueilAdminState extends State<AccueilAdmin> {
                                                                 .doctorAppointments!
                                                                 .isEmpty) ...[
                                                           IconButton(
-                                                              onPressed: () {},
+                                                              onPressed: () {
+                                                                confirmSuppressionMedecin(
+                                                                    medecin);
+                                                              },
                                                               icon: const Icon(
                                                                 Icons.close,
                                                                 color: Colors
@@ -952,12 +857,11 @@ class _AccueilAdminState extends State<AccueilAdmin> {
                   ]
                 ],
               )
-            : const Center(
-                child: CircularProgressIndicator(),
+            : Center(
+                child: loadingWidget(),
               ),
         floatingActionButton: FloatingActionButton(
           onPressed: () {
-
             if (currentChoice == "Specialite") {
               AjouterSpecialite(context);
             } else if (currentChoice == "Centre") {
@@ -975,6 +879,29 @@ class _AccueilAdminState extends State<AccueilAdmin> {
         ),
       ),
     );
+  }
+
+
+
+  Widget loadingWidget() {
+    return Center(
+        child: Container(
+          width: 100,
+          height: 100,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              LoadingAnimationWidget.hexagonDots(
+                  color: Colors.redAccent, size: 120),
+              Image.asset(
+                'assets/images/logo2.png',
+                width: 80,
+                height: 80,
+                fit: BoxFit.cover,
+              )
+            ],
+          ),
+        ));
   }
 
   bool isClicked = false;
@@ -1067,10 +994,13 @@ class _AccueilAdminState extends State<AccueilAdmin> {
                                   createdAt: DateTime.now(),
                                   description: descCenter,
                                 );
-                                updateCenter(centre);
+                                adminRepository!.updateCenter(centre);
+                                didChangeDependencies();
                                 Navigator.pop(context);
+                                didChangeDependencies();
                               } else {
-                                error("Veuillez compléter le champ 'Centre'. ");
+                                utilities!.error(
+                                    "Veuillez compléter le champ 'Centre'. ");
                               }
                             }
                           },
@@ -1186,11 +1116,14 @@ class _AccueilAdminState extends State<AccueilAdmin> {
                                   createdAt: DateTime.now(),
                                   description: descCenter,
                                 );
-                                addCenter(centre);
+                                adminRepository!.addCenter(centre);
+                                didChangeDependencies();
                                 Navigator.pop(context);
+                                didChangeDependencies();
                                 ReInitDataCenter();
                               } else {
-                                error("Veuillez compléter le champ 'Centre'. ");
+                                utilities!.error(
+                                    "Veuillez compléter le champ 'Centre'. ");
                               }
                             }
                           },
@@ -1280,133 +1213,15 @@ class _AccueilAdminState extends State<AccueilAdmin> {
                     fontWeight: FontWeight.w700),
               ),
               onPressed: () async {
-                deleteCenter(centre.id);
+                adminRepository!.deleteCenter(centre.id);
                 Navigator.pop(context);
+                didChangeDependencies();
               },
             )
           ],
         );
       },
     );
-  }
-
-  Future<void> deleteCenter(String idCenter) async {
-    final url =
-        Uri.parse("${baseUrl}api/centers/${extractLastNumber(idCenter)}");
-    //final headers = {'Content-Type': 'application/merge-patch+json'};
-
-    print('URL DELETE: $url');
-
-    final headers = {
-      'Content-Type': 'application/merge-patch+json',
-      'Authorization': 'Bearer $token'
-    };
-
-    try {
-      final response = await http.delete(url, headers: headers);
-      print(response.statusCode);
-      print('RESP: ${response.body}');
-
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> jsonResponse = json.decode(response.body);
-        print('ERRRR: $jsonResponse');
-
-        if (jsonResponse.containsKey('error')) {
-          error('Specialite déja existant');
-        }
-      } else {
-        if (response.statusCode == 204) {
-          DeleteCenter();
-        } else {
-          // Gestion des erreurs HTTP
-          error('Il y a une erreur.\n Veuillez ressayer ulterieurement.');
-        }
-      }
-    } catch (e, exception) {
-      // Gestion des erreurs autres que HTTP
-      error('Erreur de connexion ou voir ceci: $e');
-      print('EXCPEPT: $exception');
-      throw Exception('-- CATCH Failed to add user. Error: $e');
-    }
-  }
-
-  Future<void> addCenter(Centre centre) async {
-    final url = Uri.parse("${baseUrl}api/centers");
-    //final headers = {'Content-Type': 'application/json'};
-
-    final headers = {
-      'Content-Type': 'application/ld+json',
-      'Authorization': 'Bearer $token'
-    };
-
-    try {
-      String jsonSpec = jsonEncode(centre.toJson());
-      print('Request Body: $jsonSpec');
-      final response = await http.post(url, headers: headers, body: jsonSpec);
-      print(response.statusCode);
-
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> jsonResponse = json.decode(response.body);
-        print('ERRRR: $jsonResponse');
-
-        if (jsonResponse.containsKey('error')) {
-          error('Centre déja existant');
-        }
-      } else {
-        if (response.statusCode == 201) {
-          CreationCentre();
-        } else {
-          // Gestion des erreurs HTTP
-          error('Il y a une erreur.\n Veuillez ressayer ulterieurement.');
-        }
-      }
-    } catch (e, exception) {
-      // Gestion des erreurs autres que HTTP
-      error('Erreur de connexion ou voir ceci: $e');
-      print('EXCPEPT: $exception');
-      throw Exception('-- CATCH Failed to add user. Error: $e');
-    }
-  }
-
-  Future<void> updateCenter(Centre centre) async {
-    print('CENTER ID: ${centre.id}');
-
-    final url =
-        Uri.parse("${baseUrl}api/centers/${extractLastNumber(centre.id)}");
-    //final headers = {'Content-Type': 'application/json'};
-
-    final headers = {
-      'Content-Type': 'application/merge-patch+json',
-      'Authorization': 'Bearer $token'
-    };
-
-    try {
-      String jsonSpec = jsonEncode(centre.toJson());
-      print('Request Body: $jsonSpec');
-      final response = await http.patch(url, headers: headers, body: jsonSpec);
-      print(response.statusCode);
-
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> jsonResponse = json.decode(response.body);
-        print('ERRRR: $jsonResponse');
-
-        if (jsonResponse.containsKey('error')) {
-          error('Centre déja existant');
-        } else {
-          UpdateCenter();
-        }
-      } else {
-        // Gestion des erreurs HTTP
-        error('Il y a une erreur.\n Veuillez ressayer ulterieurement.');
-        throw Exception(
-            '-- Failed to add user. HTTP Status Code: ${response.statusCode}');
-      }
-    } catch (e, exception) {
-      // Gestion des erreurs autres que HTTP
-      error('Erreur de connexion ou voir ceci: $e');
-      print('EXCPEPT: $exception');
-      throw e;
-    }
   }
 
   void AjouterSpecialite(BuildContext context) {
@@ -1479,11 +1294,13 @@ class _AccueilAdminState extends State<AccueilAdmin> {
                                   users: [],
                                   createdAt: DateTime.now(),
                                 );
-                                addSpecialite(newSpecialite);
+                                adminRepository!.addSpecialite(newSpecialite);
+                                didChangeDependencies();
                                 Navigator.pop(context);
+                                didChangeDependencies();
                                 ReInitDataSpec();
                               } else {
-                                error(
+                                utilities!.error(
                                     "Veuillez compléter le champ 'Spécialité'. ");
                               }
                             }
@@ -1606,11 +1423,13 @@ class _AccueilAdminState extends State<AccueilAdmin> {
                                   description: descSpec,
                                   updatedAt: DateTime.now(),
                                 );
-                                updateSpecialite(newSpecialite);
+                                adminRepository!
+                                    .updateSpecialite(newSpecialite);
+                                didChangeDependencies();
                                 Navigator.pop(context);
-
+                                didChangeDependencies();
                               } else {
-                                error(
+                                utilities!.error(
                                     "Veuillez compléter le champ 'Spécialité'. ");
                               }
                             }
@@ -1701,8 +1520,10 @@ class _AccueilAdminState extends State<AccueilAdmin> {
                     fontWeight: FontWeight.w700),
               ),
               onPressed: () async {
-                deleteSpecialite(specialite.id);
+                adminRepository!.deleteSpecialite(specialite.id);
+                didChangeDependencies();
                 Navigator.pop(context);
+                didChangeDependencies();
               },
             )
           ],
@@ -1711,138 +1532,7 @@ class _AccueilAdminState extends State<AccueilAdmin> {
     );
   }
 
-  Future<void> deleteSpecialite(String idSpec) async {
-    final url =
-        Uri.parse("${baseUrl}api/specialities/${extractLastNumber(idSpec)}");
-    //final headers = {'Content-Type': 'application/merge-patch+json'};
-
-    print('URL DELETE: $url');
-
-    final headers = {
-      'Content-Type': 'application/merge-patch+json',
-      'Authorization': 'Bearer $token'
-    };
-
-    try {
-      final response = await http.delete(url, headers: headers);
-      print(response.statusCode);
-      print('RESP: ${response.body}');
-
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> jsonResponse = json.decode(response.body);
-        print('ERRRR: $jsonResponse');
-
-        if (jsonResponse.containsKey('error')) {
-          error('Specialite déja existant');
-        }
-      } else {
-        if (response.statusCode == 204) {
-          DeleteSpecialite();
-        } else {
-          // Gestion des erreurs HTTP
-          error('Il y a une erreur.\n Veuillez ressayer ulterieurement.');
-        }
-      }
-    } catch (e, exception) {
-      // Gestion des erreurs autres que HTTP
-      error('Erreur de connexion ou voir ceci: $e');
-      print('EXCPEPT: $exception');
-      throw Exception('-- CATCH Failed to add user. Error: $e');
-    }
-  }
-
-  Future<void> addSpecialite(Specialite specialite) async {
-    final url = Uri.parse("${baseUrl}api/specialities");
-    //final headers = {'Content-Type': 'application/json'};
-
-    final headers = {
-      'Content-Type': 'application/ld+json',
-      'Authorization': 'Bearer $token'
-    };
-
-    try {
-      String jsonSpec = jsonEncode(specialite.toJson());
-      print('Request Body: $jsonSpec');
-      final response = await http.post(url, headers: headers, body: jsonSpec);
-      print(response.statusCode);
-
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> jsonResponse = json.decode(response.body);
-        print('ERRRR: $jsonResponse');
-
-        if (jsonResponse.containsKey('error')) {
-          error('Specialite déja existant');
-        }
-      } else {
-        if (response.statusCode == 201) {
-          CreationSpecialite();
-        } else {
-          // Gestion des erreurs HTTP
-          error('Il y a une erreur.\n Veuillez ressayer ulterieurement.');
-        }
-      }
-    } catch (e, exception) {
-      // Gestion des erreurs autres que HTTP
-      error('Erreur de connexion ou voir ceci: $e');
-      print('EXCPEPT: $exception');
-      throw Exception('-- CATCH Failed to add user. Error: $e');
-    }
-  }
-
-  String extractLastNumber(String input) {
-    RegExp regExp = RegExp(r'\d+$');
-    Match? match = regExp.firstMatch(input);
-
-    if (match != null) {
-      String val = match.group(0)!;
-      print('VAL: $val');
-      return val;
-    } else {
-      // Aucun nombre trouvé dans la chaîne
-      throw const FormatException("Aucun nombre trouvé dans la chaîne.");
-    }
-  }
-
-  Future<void> updateSpecialite(Specialite specialite) async {
-    final url = Uri.parse(
-        "${baseUrl}api/specialities/${extractLastNumber(specialite.id)}");
-    //final headers = {'Content-Type': 'application/json'};
-
-    final headers = {
-      'Content-Type': 'application/merge-patch+json',
-      'Authorization': 'Bearer $token'
-    };
-
-    try {
-      String jsonSpec = jsonEncode(specialite.toJson());
-      print('Request Body: $jsonSpec');
-      final response = await http.patch(url, headers: headers, body: jsonSpec);
-      print(response.statusCode);
-
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> jsonResponse = json.decode(response.body);
-        print('ERRRR: $jsonResponse');
-
-        if (jsonResponse.containsKey('error')) {
-          error('Specialite déja existant');
-        } else {
-          UpdateSpecialite();
-        }
-      } else {
-        // Gestion des erreurs HTTP
-        error('Il y a une erreur.\n Veuillez ressayer ulterieurement.');
-        throw Exception(
-            '-- Failed to add user. HTTP Status Code: ${response.statusCode}');
-      }
-    } catch (e, exception) {
-      // Gestion des erreurs autres que HTTP
-      error('Erreur de connexion ou voir ceci: $e');
-      print('EXCPEPT: $exception');
-      throw e;
-    }
-  }
-
-  void error(String description) {
+  void confirmSuppressionMedecin(Medecin medecin) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -1850,21 +1540,52 @@ class _AccueilAdminState extends State<AccueilAdmin> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),
           ),
-          title: const Text('Error'),
-          content: Text(
-            '$description.',
-            textScaleFactor: 1.5,
-            style: const TextStyle(color: Colors.red),
+          title: Text(
+            'Confirmation',
+            style: TextStyle(
+                letterSpacing: 2,
+                color: Colors.black.withOpacity(0.8),
+                fontSize: 17),
             textAlign: TextAlign.center,
           ),
+          content: Text(
+            'Voulez-vous vraiment supprimer ce medecin: ${medecin.lastName} ?',
+            textScaleFactor: 1.5,
+            style: TextStyle(color: Colors.black.withOpacity(0.8)),
+            textAlign: TextAlign.center,
+          ),
+          actions: [
+            TextButton(
+              child: const Text(
+                'Annuler',
+                style: TextStyle(
+                    color: Colors.redAccent,
+                    letterSpacing: 2,
+                    fontWeight: FontWeight.w700),
+              ),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: const Text(
+                'Confirmer',
+                style: TextStyle(
+                    color: Colors.green,
+                    letterSpacing: 2,
+                    fontWeight: FontWeight.w700),
+              ),
+              onPressed: () async {
+                adminRepository!.deleteMedecin(medecin);
+                didChangeDependencies();
+                Navigator.pop(context);
+                didChangeDependencies();
+              },
+            )
+          ],
         );
       },
     );
-
-    // Fermer la boîte de dialogue après 5 secondes
-    Future.delayed(const Duration(seconds: 5), () {
-      Navigator.of(context).pop();
-    });
   }
 
   FocusNode _focusNodenom = FocusNode();
@@ -1897,62 +1618,15 @@ class _AccueilAdminState extends State<AccueilAdmin> {
     return null;
   }
 
-
-
-
-
-  Future<void> addMedecin(Utilisateur medecin) async {
-    final url = Uri.parse("${baseUrl}api/users");
-    //final headers = {'Content-Type': 'application/json'};
-
-    final headers = {
-      'Content-Type': 'application/ld+json',
-      'Authorization': 'Bearer $token'
-    };
-
-    try {
-      String jsonSpec = jsonEncode(medecin.toJson());
-      print('Request Body: $jsonSpec');
-      final response = await http.post(url, headers: headers, body: jsonSpec);
-      print(response.statusCode);
-
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> jsonResponse = json.decode(response.body);
-        CreationUtilisateur();
-
-        if (jsonResponse.containsKey('error')) {
-          error('Medecin déja existant');
-        }
-      } else {
-        if (response.statusCode == 201) {
-          CreationUtilisateur();
-        } else {
-          print('REQU BODY: ${response.body}');
-          // Gestion des erreurs HTTP
-          error('Il y a une erreur.\n Veuillez ressayer ulterieurement.');
-        }
-      }
-    } catch (e, exception) {
-      // Gestion des erreurs autres que HTTP
-      error('Erreur de connexion ou voir ceci: $e');
-      print('EXCPEPT: $exception');
-      throw Exception('-- CATCH Failed to add user. Error: $e');
-    }
-  }
-
-
   Centre? center;
 
   List<Centre> listCenter = [];
 
   FocusNode _focusNodeCentre = FocusNode();
 
-
   void AjouterMedecin(BuildContext context) {
-
     spec = null;
     center = null;
-
 
     showDialog(
       context: context,
@@ -2036,10 +1710,10 @@ class _AccueilAdminState extends State<AccueilAdmin> {
                       );
                     }).toList(),
                     onChanged: (Centre? newval) {
-                  setState(() {
-                  center = newval;
-                  });
-                  },
+                      setState(() {
+                        center = newval;
+                      });
+                    },
                     validator: (value) {
                       if (value == null) {
                         return 'Veuillez sélectionner un centre';
@@ -2128,10 +1802,13 @@ class _AccueilAdminState extends State<AccueilAdmin> {
                                     category: null,
                                     createdAt: DateTime.now(),
                                     city: villeController.text.trim());
-                                addMedecin(user);
+                                adminRepository!.addMedecin(user);
+                                didChangeDependencies();
                                 Navigator.of(context).pop();
-                            ReInitDataMedecin();
+                                didChangeDependencies();
+                                ReInitDataMedecin();
                                 if (mounted) {
+                                  //didChangeDependencies();
                                   setState() {
                                     spec = null;
                                   }
@@ -2140,6 +1817,7 @@ class _AccueilAdminState extends State<AccueilAdmin> {
                                 // Gérez le cas où l'e-mail n'est pas valide
                                 emailInvalide();
                               }
+                              didChangeDependencies();
                             }
                           },
                           child: Container(
@@ -2185,56 +1863,6 @@ class _AccueilAdminState extends State<AccueilAdmin> {
     );
   }
 
-  Future<void> updateMedecin(Utilisateur medecin) async {
-    final url =
-        Uri.parse("${baseUrl}api/users/${extractLastNumber(medecin.id)}");
-    //final headers = {'Content-Type': 'application/json'};
-
-    final headers = {
-      'Content-Type': 'application/merge-patch+json',
-      'Authorization': 'Bearer $token'
-    };
-
-    try {
-      String jsonSpec = jsonEncode(medecin.toJson());
-      print('Request Body: $jsonSpec');
-      final response = await http.patch(url, headers: headers, body: jsonSpec);
-      print(response.statusCode);
-
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> jsonResponse = json.decode(response.body);
-        print('ERRRR: $jsonResponse');
-
-        if (jsonResponse.containsKey('error')) {
-          error('Specialite déja existant');
-        } else {
-          UpdateUtilisateur();
-        }
-      } else {
-
-
-        if (response.statusCode == 401) {
-          authProvider.logout();
-          Navigator.pushReplacement(
-              context, MaterialPageRoute(builder: (context) => const MyApp()));
-        }
-        // Gestion des erreurs HTTP
-
-        print('REQ ERROR: ${response.body}');
-
-        error('Il y a une erreur.\n Veuillez ressayer ulterieurement.');
-        throw Exception(
-            '-- Failed to add user. HTTP Status Code: ${response.statusCode}');
-      }
-    } catch (e, stackTrace) {
-      // Gestion des erreurs autres que HTTP
-
-      //error('Erreur de connexion ou voir ceci: $e');
-      print('CATCH: $e,\n EXCPEPT: $stackTrace');
-      throw e;
-    }
-  }
-
   TextEditingController modifNomController = TextEditingController();
   TextEditingController modifPrenomController = TextEditingController();
   TextEditingController modifEmailController = TextEditingController();
@@ -2257,16 +1885,19 @@ class _AccueilAdminState extends State<AccueilAdmin> {
     modifAddresseController.text = medecin.address;
     modifVilleController.text = medecin.city;
 
-    if(medecin.speciality!=null){
+    if (medecin.speciality != null) {
       modifSpec = listSpec
           .firstWhere((element) => medecin.speciality!.label == element.label);
-
-    }else{
+    } else {
       modifSpec = null;
     }
 
-    modifCenter = listCenter
-        .firstWhere((element) => medecin.center!.label == element.label);
+    if (medecin.center != null) {
+      modifCenter = listCenter
+          .firstWhere((element) => medecin.center!.label == element.label);
+    } else {
+      modifCenter = null;
+    }
 
     showDialog(
       context: context,
@@ -2350,10 +1981,10 @@ class _AccueilAdminState extends State<AccueilAdmin> {
                       );
                     }).toList(),
                     onChanged: (Centre? newval) {
-                  setState(() {
-                  modifCenter = newval;
-                  });
-                  },
+                      setState(() {
+                        modifCenter = newval;
+                      });
+                    },
                     validator: (value) {
                       if (value == null) {
                         return 'Veuillez sélectionner un centre';
@@ -2444,12 +2075,15 @@ class _AccueilAdminState extends State<AccueilAdmin> {
                                     category: null,
                                     updatedAt: DateTime.now(),
                                     city: modifVilleController.text.trim());
-                                updateMedecin(user);
+                                adminRepository!.updateMedecin(user);
+                                didChangeDependencies();
                                 Navigator.of(context).pop();
+                                didChangeDependencies();
                               } else {
                                 // Gérez le cas où l'e-mail n'est pas valide
                                 emailInvalide();
                               }
+                              didChangeDependencies();
                             }
                           },
                           child: Container(
@@ -2523,220 +2157,6 @@ class _AccueilAdminState extends State<AccueilAdmin> {
         color: Colors.redAccent,
         title: 'Erreur!',
         message: 'Champs incomplets!',
-
-        /// change contentType to ContentType.success, ContentType.warning or ContentType.help for variants
-        contentType: ContentType.failure,
-      ),
-    );
-
-    ScaffoldMessenger.of(context).showSnackBar(snackBar);
-  }
-
-  void UpdateCenter() {
-    didChangeDependencies();
-    final materialBanner = MaterialBanner(
-      /// need to set following properties for best effect of awesome_snackbar_content
-      elevation: 0,
-      backgroundColor: Colors.transparent,
-      forceActionsBelow: true,
-      content: AwesomeSnackbarContent(
-        title: 'Succès!!',
-        message: 'Centre modifié',
-
-        /// change contentType to ContentType.success, ContentType.warning or ContentType.help for variants
-        contentType: ContentType.success,
-        // to configure for material banner
-        inMaterialBanner: true,
-      ),
-      actions: const [SizedBox.shrink()],
-    );
-
-    ScaffoldMessenger.of(context)
-      ..hideCurrentMaterialBanner()
-      ..showMaterialBanner(materialBanner);
-  }
-
-  void UpdateUtilisateur() {
-    didChangeDependencies();
-    final materialBanner = MaterialBanner(
-      /// need to set following properties for best effect of awesome_snackbar_content
-      elevation: 0,
-      backgroundColor: Colors.transparent,
-      forceActionsBelow: true,
-      content: AwesomeSnackbarContent(
-        title: 'Succès!!',
-        message: 'Médecin modifié',
-
-        /// change contentType to ContentType.success, ContentType.warning or ContentType.help for variants
-        contentType: ContentType.success,
-        // to configure for material banner
-        inMaterialBanner: true,
-      ),
-      actions: const [SizedBox.shrink()],
-    );
-
-    ScaffoldMessenger.of(context)
-      ..hideCurrentMaterialBanner()
-      ..showMaterialBanner(materialBanner);
-  }
-
-  void UpdateSpecialite() {
-    didChangeDependencies();
-    final materialBanner = MaterialBanner(
-      /// need to set following properties for best effect of awesome_snackbar_content
-      elevation: 0,
-      backgroundColor: Colors.transparent,
-      forceActionsBelow: true,
-      content: AwesomeSnackbarContent(
-        title: 'Succès!!',
-        message: 'Specialité modifiée',
-
-        /// change contentType to ContentType.success, ContentType.warning or ContentType.help for variants
-        contentType: ContentType.success,
-        // to configure for material banner
-        inMaterialBanner: true,
-      ),
-      actions: const [SizedBox.shrink()],
-    );
-
-    ScaffoldMessenger.of(context)
-      ..hideCurrentMaterialBanner()
-      ..showMaterialBanner(materialBanner);
-  }
-
-  void CreationCentre() {
-    didChangeDependencies();
-    final materialBanner = MaterialBanner(
-      /// need to set following properties for best effect of awesome_snackbar_content
-      elevation: 0,
-      backgroundColor: Colors.transparent,
-      forceActionsBelow: true,
-      content: AwesomeSnackbarContent(
-        title: 'Succès!!',
-        message: 'Centre crée',
-
-        /// change contentType to ContentType.success, ContentType.warning or ContentType.help for variants
-        contentType: ContentType.success,
-        // to configure for material banner
-        inMaterialBanner: true,
-      ),
-      actions: const [SizedBox.shrink()],
-    );
-
-    ScaffoldMessenger.of(context)
-      ..hideCurrentMaterialBanner()
-      ..showMaterialBanner(materialBanner);
-  }
-
-  void CreationSpecialite() {
-    didChangeDependencies();
-    final materialBanner = MaterialBanner(
-      /// need to set following properties for best effect of awesome_snackbar_content
-      elevation: 0,
-      backgroundColor: Colors.transparent,
-      forceActionsBelow: true,
-      content: AwesomeSnackbarContent(
-        title: 'Succès!!',
-        message: 'Specialité crée',
-
-        /// change contentType to ContentType.success, ContentType.warning or ContentType.help for variants
-        contentType: ContentType.success,
-        // to configure for material banner
-        inMaterialBanner: true,
-      ),
-      actions: const [SizedBox.shrink()],
-    );
-
-    ScaffoldMessenger.of(context)
-      ..hideCurrentMaterialBanner()
-      ..showMaterialBanner(materialBanner);
-  }
-
-  void DeleteCenter() {
-    didChangeDependencies();
-    final materialBanner = MaterialBanner(
-      /// need to set following properties for best effect of awesome_snackbar_content
-      elevation: 0,
-      backgroundColor: Colors.transparent,
-      forceActionsBelow: true,
-      content: AwesomeSnackbarContent(
-        title: 'Succès!!',
-        message: 'Centre supprimé',
-
-        /// change contentType to ContentType.success, ContentType.warning or ContentType.help for variants
-        contentType: ContentType.success,
-        // to configure for material banner
-        inMaterialBanner: true,
-      ),
-      actions: const [SizedBox.shrink()],
-    );
-
-    ScaffoldMessenger.of(context)
-      ..hideCurrentMaterialBanner()
-      ..showMaterialBanner(materialBanner);
-  }
-
-  void DeleteSpecialite() {
-    didChangeDependencies();
-    final materialBanner = MaterialBanner(
-      /// need to set following properties for best effect of awesome_snackbar_content
-      elevation: 0,
-      backgroundColor: Colors.transparent,
-      forceActionsBelow: true,
-      content: AwesomeSnackbarContent(
-        color: Colors.redAccent,
-        title: 'Succès!!',
-        message: 'Specialité supprimée',
-
-        /// change contentType to ContentType.success, ContentType.warning or ContentType.help for variants
-        contentType: ContentType.success,
-        // to configure for material banner
-        inMaterialBanner: true,
-      ),
-      actions: const [SizedBox.shrink()],
-    );
-
-    ScaffoldMessenger.of(context)
-      ..hideCurrentMaterialBanner()
-      ..showMaterialBanner(materialBanner);
-  }
-
-  void CreationUtilisateur() {
-    didChangeDependencies();
-    final materialBanner = MaterialBanner(
-      /// need to set following properties for best effect of awesome_snackbar_content
-      elevation: 0,
-      backgroundColor: Colors.transparent,
-      forceActionsBelow: true,
-
-      content: AwesomeSnackbarContent(
-        title: 'Succès!!',
-        message: 'Medecin crée',
-
-        /// change contentType to ContentType.success, ContentType.warning or ContentType.help for variants
-        contentType: ContentType.success,
-        // to configure for material banner
-        inMaterialBanner: true,
-      ),
-      actions: const [SizedBox.shrink()],
-    );
-
-    ScaffoldMessenger.of(context)
-      ..hideCurrentMaterialBanner()
-      ..showMaterialBanner(materialBanner);
-  }
-
-  void PasswordIsNotTheSame() {
-    SnackBar snackBar = SnackBar(
-      /// need to set following properties for best effect of awesome_snackbar_content
-      elevation: 0,
-      behavior: SnackBarBehavior.floating,
-      backgroundColor: Colors.transparent,
-      content: AwesomeSnackbarContent(
-        color: Colors.redAccent,
-        title: 'Erreur!',
-        message:
-            'Les champs du mot de passe et de confirmation ne correspondent pas.',
 
         /// change contentType to ContentType.success, ContentType.warning or ContentType.help for variants
         contentType: ContentType.failure,
@@ -2832,8 +2252,6 @@ class _AccueilAdminState extends State<AccueilAdmin> {
       ),
     );
   }
-
-
 
   Widget buildDropdownButtonFormFieldCenter({
     required String label,

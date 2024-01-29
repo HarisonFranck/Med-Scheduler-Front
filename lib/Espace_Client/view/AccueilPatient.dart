@@ -23,6 +23,8 @@ import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:device_calendar/device_calendar.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
+import 'package:med_scheduler_front/Repository/UserRepository.dart';
+import 'package:med_scheduler_front/Utilitie/Utilities.dart';
 
 class AccueilPatient extends StatefulWidget {
   final Utilisateur user;
@@ -35,6 +37,9 @@ class AccueilPatient extends StatefulWidget {
 
 class _AccueilPatientState extends State<AccueilPatient> {
   Patient? patient;
+
+  UserRepository? userRepository;
+  Utilities? utilities;
 
   late Future<List<Medecin>> medecinsFuture;
   late Future<List<Specialite>> specialitesFuture;
@@ -58,7 +63,7 @@ class _AccueilPatientState extends State<AccueilPatient> {
 
   Future<List<Medecin>> loadMoreData() async {
     try {
-      List<Medecin> moreMedecins = await getAllMedecin(currentPage + 1);
+      List<Medecin> moreMedecins = await userRepository!.getAllMedecin(currentPage + 1,searchLastName.text,searchCenter.text,searchSpecialite.text,searchLocation.text);
       if (moreMedecins.isNotEmpty) {
         currentPage++;
       }
@@ -86,7 +91,7 @@ class _AccueilPatientState extends State<AccueilPatient> {
 
     try {
       List<CustomAppointment> appoints =
-          await getProcheRendezVous(await getAllAppointment());
+          await getProcheRendezVous(await userRepository!.getAllAppointmentByPatient(widget.user));
 
       if (appoints.isNotEmpty) {
         appoints.forEach((element) async {
@@ -170,6 +175,8 @@ class _AccueilPatientState extends State<AccueilPatient> {
   @override
   void initState() {
     super.initState();
+    utilities = Utilities(context: context);
+    userRepository = UserRepository(context: context, utilities: utilities!);
 
     print('-- INIT --');
     WidgetsFlutterBinding.ensureInitialized();
@@ -338,107 +345,7 @@ class _AccueilPatientState extends State<AccueilPatient> {
     }
   }
 
-  Future<List<CustomAppointment>> getAllAppointment() async {
-    authProvider = Provider.of<AuthProvider>(context, listen: false);
-    token = authProvider.token;
 
-    final url = Uri.parse(
-        "${baseUrl}api/patients/appointments/${extractLastNumber(widget.user.id)}");
-
-    final headers = {'Authorization': 'Bearer $token'};
-
-    try {
-      final response = await http.get(url, headers: headers);
-
-      print('STATUS CODE APPOINTS: ${response.statusCode} \n');
-
-      if (response.statusCode == 200) {
-        final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
-        final datas = jsonData['hydra:member'] as List<dynamic>;
-
-
-
-        final datasAppoints = datas.map((e) => CustomAppointment.fromJson(e)).toList();
-
-         return datasAppoints.where((element) => (element.isDeleted==null||element.isDeleted==false)).toList();
-
-      } else {
-
-        if (response.statusCode == 401) {
-          authProvider.logout();
-          Navigator.pushReplacement(
-              context, MaterialPageRoute(builder: (context) => const MyApp()));
-        }
-        // Gestion des erreurs HTTP
-        throw Exception(
-            '-- Erreur d\'obtention des données\n vérifier votre connexion internet.');
-      }
-    } catch (e) {
-      //print('Error: $e \nStack trace: $stackTrace');
-      throw Exception(
-          '-- Erreur de connexion.\n Veuillez vérifier votre connexion internet !');
-    }
-  }
-
-  Future<List<Medecin>> getAllMedecin(int page) async {
-    authProvider = Provider.of<AuthProvider>(context, listen: false);
-    token = authProvider.token;
-
-    // Définir l'URL de base
-    Uri url = Uri.parse("${baseUrl}api/doctors?page=$page");
-
-    // Ajouter les paramètres en fonction des cas
-    if (searchLastName.text.trim().isNotEmpty) {
-      print('ANARANA');
-      if (searchCenter.text.trim().isNotEmpty) {
-        url = Uri.parse(
-            "$url&lastName=${searchLastName.text}&center=${searchCenter.text}");
-      } else if (searchSpecialite.text.isNotEmpty) {
-        url = Uri.parse(
-            "$url&lastName=${searchLastName.text}&speciality=${searchSpecialite.text}");
-      } else if (searchLocation.text.isNotEmpty) {
-        url = Uri.parse(
-            "$url&lastName=${searchLastName.text}&city=${searchLocation.text}");
-      } else {
-        url = Uri.parse("$url&lastName=${searchLastName.text}");
-      }
-    } else if (searchLocation.text.trim().isNotEmpty) {
-      url = Uri.parse("$url&city=${searchLocation.text}");
-    } else if (searchCenter.text.trim().isNotEmpty) {
-      url = Uri.parse("$url&center=${searchCenter.text}");
-    } else if (searchSpecialite.text.trim().isNotEmpty) {
-      url = Uri.parse("$url&speciality=${searchSpecialite.text}");
-    }
-
-    print('URI: $url');
-
-    final headers = {'Authorization': 'Bearer $token'};
-
-    try {
-      final response = await http.get(url, headers: headers);
-
-      if (response.statusCode == 200) {
-        final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
-        final datas = jsonData['hydra:member'] as List<dynamic>;
-
-        return datas.map((e) => Medecin.fromJson(e)).toList();
-      } else {
-
-        if (response.statusCode == 401) {
-          authProvider.logout();
-          Navigator.pushReplacement(
-              context, MaterialPageRoute(builder: (context) => const MyApp()));
-        }
-        // Gestion des erreurs HTTP
-        throw Exception(
-          '-- Erreur d\'obtention des données\n vérifier votre connexion internet. Code: ${response.statusCode}',
-        );
-      }
-    } catch (e, stackTrace) {
-      print(' -- E: $e --\n STACK: $stackTrace');
-      throw e;
-    }
-  }
 
   Future<List<Specialite>> getAllSpecialite() async {
     authProvider = Provider.of<AuthProvider>(context, listen: false);
@@ -505,7 +412,7 @@ class _AccueilPatientState extends State<AccueilPatient> {
 
   //Fonction pour stocker les categories trouvés
   void getAll() {
-    getAllAppointment().then((value) => {
+    userRepository!.getAllAppointmentByPatient(widget.user).then((value) => {
           setState(() {
             listAppointment = value;
           })
@@ -999,12 +906,12 @@ class _AccueilPatientState extends State<AccueilPatient> {
                           if (nom.trim().isEmpty) {
                             setState(() {
                               searchLastName.text = "";
-                              medecinsFuture = getAllMedecin(currentPage);
+                              medecinsFuture = userRepository!.getAllMedecin(currentPage,searchLastName.text,searchCenter.text,searchSpecialite.text,searchLocation.text);
                             });
                           } else {
                             setState(() {
                               searchLastName.text = nom;
-                              medecinsFuture = getAllMedecin(currentPage);
+                              medecinsFuture = userRepository!.getAllMedecin(currentPage,searchLastName.text,searchCenter.text,searchSpecialite.text,searchLocation.text);
                               print('LASTNAME: ${searchLastName.text}');
                             });
                           }
@@ -1061,7 +968,7 @@ class _AccueilPatientState extends State<AccueilPatient> {
                                 centre = null;
                                 searchCenter.text = "";
                                 setState(() {
-                                  medecinsFuture = getAllMedecin(currentPage);
+                                  medecinsFuture = userRepository!.getAllMedecin(currentPage,searchLastName.text,searchCenter.text,searchSpecialite.text,searchLocation.text);
                                 });
                               }
                             });
@@ -1108,7 +1015,7 @@ class _AccueilPatientState extends State<AccueilPatient> {
                                 speciality = null;
                                 searchSpecialite.text = "";
                                 setState(() {
-                                  medecinsFuture = getAllMedecin(currentPage);
+                                  medecinsFuture = userRepository!.getAllMedecin(currentPage,searchLastName.text,searchCenter.text,searchSpecialite.text,searchLocation.text);
                                 });
                               }
                             });
@@ -1153,7 +1060,7 @@ class _AccueilPatientState extends State<AccueilPatient> {
                               isLocation = !isLocation;
 
                               if (isLocation == false) {
-                                medecinsFuture = getAllMedecin(currentPage);
+                                medecinsFuture = userRepository!.getAllMedecin(currentPage,searchLastName.text,searchCenter.text,searchSpecialite.text,searchLocation.text);
                               }
                             });
                             print('isLocation: $isLocation');
@@ -1212,7 +1119,7 @@ class _AccueilPatientState extends State<AccueilPatient> {
                               searchCenter.text = centre!.label;
                               print('CENTER CLICKED: ${searchCenter.text}');
 
-                              medecinsFuture = getAllMedecin(currentPage);
+                              medecinsFuture = userRepository!.getAllMedecin(currentPage,searchLastName.text,searchCenter.text,searchSpecialite.text,searchLocation.text);
                             });
                           },
                           items: listCenter.map((e) {
@@ -1278,7 +1185,7 @@ class _AccueilPatientState extends State<AccueilPatient> {
                                 searchSpecialite.text = speciality!.label;
                                 print(
                                     ' SPEC CLICKED: ${searchSpecialite.text}');
-                                medecinsFuture = getAllMedecin(currentPage);
+                                medecinsFuture = userRepository!.getAllMedecin(currentPage,searchLastName.text,searchCenter.text,searchSpecialite.text,searchLocation.text);
 
                               });
                             },
@@ -1335,7 +1242,7 @@ class _AccueilPatientState extends State<AccueilPatient> {
                                 searchLocation.text =
                                     (nom.isNotEmpty) ? nom : '';
 
-                                medecinsFuture = getAllMedecin(currentPage);
+                                medecinsFuture = userRepository!.getAllMedecin(currentPage,searchLastName.text,searchCenter.text,searchSpecialite.text,searchLocation.text);
                               });
                             },
                             focusNode: _focusNodeSearchLoc,

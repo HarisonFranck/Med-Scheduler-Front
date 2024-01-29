@@ -1,16 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:med_scheduler_front/Utilisateur.dart';
-import 'package:http/http.dart' as http;
 import 'package:med_scheduler_front/CustomAppointment.dart';
-import 'dart:convert';
 import 'package:med_scheduler_front/AuthProvider.dart';
-import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import 'package:med_scheduler_front/main.dart';
 import 'package:med_scheduler_front/UrlBase.dart';
 import 'dart:io';
 import 'IndexAccueil.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
+import 'package:med_scheduler_front/Repository/UserRepository.dart';
+import 'package:med_scheduler_front/Utilitie/Utilities.dart';
 
 
 class NotificationPatient extends StatefulWidget {
@@ -24,6 +22,18 @@ class NotificationPatient extends StatefulWidget {
 class _NotificationPatientState extends State<NotificationPatient> {
 
 
+
+  UserRepository? userRepository;
+  Utilities? utilities;
+
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    utilities = Utilities(context: context);
+    userRepository = UserRepository(context: context, utilities: utilities!);
+  }
 
 
   late AuthProvider authProvider;
@@ -56,56 +66,7 @@ class _NotificationPatientState extends State<NotificationPatient> {
   }
 
 
-  String extractLastNumber(String input) {
-    RegExp regExp = RegExp(r'\d+$');
-    Match? match = regExp.firstMatch(input);
 
-    if (match != null) {
-      String val = match.group(0)!;
-    print('VAL: $val');
-    return val;
-    } else {
-    // Aucun nombre trouvé dans la chaîne
-    throw const FormatException("Aucun nombre trouvé dans la chaîne.");
-    }
-  }
-
-  Future<List<CustomAppointment>> getAllAppointment() async {
-    authProvider = Provider.of<AuthProvider>(context, listen: false);
-    token = authProvider.token;
-
-    final url = Uri.parse("${baseUrl}api/patients/appointments/${extractLastNumber(widget.user.id)}");
-
-    final headers = {'Authorization': 'Bearer $token'};
-
-    try {
-      final response = await http.get(url, headers: headers);
-
-      print('STATUS CODE APPOINTS: ${response.statusCode} \n');
-
-      if (response.statusCode == 200) {
-        final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
-        final datas = jsonData['hydra:member'] as List<dynamic>;
-
-        print('DATAS SIZE:${datas.length}');
-
-        return datas.map((e) => CustomAppointment.fromJson(e)).toList();
-      } else {
-
-        if (response.statusCode == 401) {
-          authProvider.logout();
-          Navigator.pushReplacement(
-              context, MaterialPageRoute(builder: (context) => const MyApp()));
-        }
-        // Gestion des erreurs HTTP
-        throw Exception(
-            '-- Erreur d\'obtention des données\n vérifier votre connexion internet.');
-      }
-    } catch (e, stackTrace) {
-      print('Error: $e \nStack trace: $stackTrace');
-      throw e;
-    }
-  }
 
   String formatTimeAppointment(
       DateTime startDateTime, DateTime timeStart, DateTime timeEnd) {
@@ -252,7 +213,7 @@ class _NotificationPatientState extends State<NotificationPatient> {
               padding: const EdgeInsets.only(top:20,bottom:20,right:5,left:5),
               child: FutureBuilder<List<CustomAppointment>>(
                 future: filterAppointments(
-                    getAllAppointment()), // Appelez votre fonction de récupération de données ici
+                    userRepository!.getAllAppointmentByPatient(widget.user)), // Appelez votre fonction de récupération de données ici
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     // Affichez un indicateur de chargement pendant le chargement
