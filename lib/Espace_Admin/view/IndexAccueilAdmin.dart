@@ -12,6 +12,8 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:med_scheduler_front/UrlBase.dart';
 import 'SearchMedecin.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
+import 'package:med_scheduler_front/main.dart';
 
 class IndexAccueilAdmin extends StatefulWidget {
   @override
@@ -44,6 +46,12 @@ class _IndexAccueilAdminState extends State<IndexAccueilAdmin> {
 
         return user;
       } else {
+
+        if (response.statusCode == 401) {
+          authProvider.logout();
+          Navigator.pushReplacement(
+              context, MaterialPageRoute(builder: (context) => const MyApp()));
+        }
         // Gestion des erreurs HTTP
         throw Exception(
             '-- Failed to load data. HTTP Status Code: ${response.statusCode}');
@@ -138,17 +146,15 @@ class _IndexAccueilAdminState extends State<IndexAccueilAdmin> {
         backgroundColor: Color.fromARGB(1000, 238, 239, 244),
         body: (utilisateur != null)
             ? _pages![_selectedPageIndex]['page']
-            : const Center(
+            : Center(
                 child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  CircularProgressIndicator(
-                    color: Colors.redAccent,
-                  ),
-                  SizedBox(
+                  loadingWidget(),
+                  const SizedBox(
                     height: 30,
                   ),
-                  Text(
+                  const Text(
                     'Chargement des données..\n Assurez-vous d\'avoir une connexion internet',
                     textAlign: TextAlign.center,
                   )
@@ -193,5 +199,26 @@ class _IndexAccueilAdminState extends State<IndexAccueilAdmin> {
         ),
       ),
     );
+  }
+
+
+
+  Widget loadingWidget(){
+    return Center(
+        child:Container(
+          width: 100,
+          height: 100,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+
+              LoadingAnimationWidget.hexagonDots(
+                  color: Colors.redAccent,
+                  size: 120),
+
+              Image.asset('assets/images/logo2.png',width: 80,height: 80,fit: BoxFit.cover,)
+            ],
+          ),
+        ));
   }
 }

@@ -17,8 +17,10 @@ class CustomAppointment{
   final DateTime timeEnd;   // ex = 2023-12-19 10H
   final String reason;
   final DateTime createdAt;
+  final DateTime? updatedAt;
   final Color color;
   final String? appType;
+  final bool? isDeleted;
 
   CustomAppointment({
     this.medecin,
@@ -27,11 +29,13 @@ class CustomAppointment{
     required this.type,
     required this.startAt,
     required this.timeStart,
+    this.updatedAt,
     required this.timeEnd,
     required this.reason,
     required this.createdAt,
-    this.appType
-  }): color = getRandomColor().withOpacity(0.8);
+    this.appType,
+    this.isDeleted
+  }): color = getRandomColor().withOpacity(0.9);
 
 
   factory CustomAppointment.fromJson(Map<String,dynamic> json){
@@ -60,7 +64,9 @@ class CustomAppointment{
         timeEnd:parseDate(json['timeEnd']),
         reason: json['reason'],
         createdAt: json['createdAt']!=null?DateTime.parse(json['createdAt']):DateTime.now(),
+        updatedAt: json['updatedAt']!=null?DateTime.parse(json['updatedAt']):DateTime.now(),
         appType:json['appType']??'',
+        isDeleted: json['isDeleted']
         );
 }
 
@@ -90,8 +96,10 @@ Map<String,dynamic> toJson()=>{
     "timeStart": timeStart.toIso8601String(),
     "timeEnd": timeEnd.toIso8601String(),
     "reason": reason,
-    "createdAt": createdAt.toIso8601String(),
-    "appType":appType
+    "createdAt": (createdAt!=null)?createdAt.toIso8601String():null,
+    "updatedAt": (updatedAt!=null)?updatedAt!.toIso8601String():null,
+    "appType":appType,
+    "isDeleted": (isDeleted!=null)?isDeleted:null
 
   };
 
@@ -104,6 +112,8 @@ Map<String,dynamic> toJson()=>{
     "timeEnd": timeEnd.toIso8601String(),
     "reason": reason,
     "createdAt": createdAt.toIso8601String(),
+    "updatedAt": (updatedAt!=null)?updatedAt!.toIso8601String():null,
+    "isDeleted": (isDeleted!=null)?isDeleted:null,
     "appType":appType
 
   };

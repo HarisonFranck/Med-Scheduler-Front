@@ -16,6 +16,7 @@ import 'package:med_scheduler_front/UrlBase.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 class PatientDetails extends StatefulWidget {
   _PatientDetailsState createState() => _PatientDetailsState();
@@ -26,6 +27,8 @@ class PatientDetails extends StatefulWidget {
 
 class _PatientDetailsState extends State<PatientDetails> {
   String baseUrl = UrlBase().baseUrl;
+
+  bool isLoading = false;
 
   bool _isPageActive = true;
 
@@ -228,6 +231,7 @@ class _PatientDetailsState extends State<PatientDetails> {
       } else {
         // Gestion des erreurs HTTP
         if (response.statusCode == 401) {
+          authProvider.logout();
           Navigator.pushReplacement(
               context, MaterialPageRoute(builder: (context) => const MyApp()));
         }
@@ -243,6 +247,9 @@ class _PatientDetailsState extends State<PatientDetails> {
 
   @override
   void didChangeDependencies() {
+    setState(() {
+      isLoading = true;
+    });
     // TODO: implement didChangeDependencies
     super.didChangeDependencies();
     print('DID ZAO');
@@ -251,21 +258,20 @@ class _PatientDetailsState extends State<PatientDetails> {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       utilisateur = await getUser(widget.user.id);
       if (mounted) {
-      setState(() {
-        profilImage = (utilisateur.imageName != null)
-            ? File(utilisateur.imageName!)
-            : null;
-        nomController.text = utilisateur.firstName;
-        prenomController.text = utilisateur.lastName;
-        phoneController.text = utilisateur.phone;
-        emailController.text = utilisateur.email;
-        categorieController.text = (utilisateur.category != null)
-            ? categorieSet(utilisateur.category!)
-            : "";
-      });
+        setState(() {
+          profilImage = (utilisateur.imageName != null)
+              ? File(utilisateur.imageName!)
+              : null;
+          nomController.text = utilisateur.firstName;
+          prenomController.text = utilisateur.lastName;
+          phoneController.text = utilisateur.phone;
+          emailController.text = utilisateur.email;
+          categorieController.text = (utilisateur.category != null)
+              ? categorieSet(utilisateur.category!)
+              : "";
+        });
 
-
-        dataLoaded = true;
+        isLoading = false;
       }
     });
   }
@@ -369,6 +375,8 @@ class _PatientDetailsState extends State<PatientDetails> {
                 await localCopyFile
                     .writeAsBytes(await _resizeImage(xfProfilImage.path));
 
+                File fileImage = File(xfProfilImage.path);
+
                 print('Local copy file path: ${localCopyFile.path}');
                 Utilisateur userInterm = Utilisateur(
                     id: utilisateur.id,
@@ -378,14 +386,18 @@ class _PatientDetailsState extends State<PatientDetails> {
                     phone: utilisateur.phone,
                     password: utilisateur.password,
                     email: utilisateur.email,
-                    imageName: localCopyFile.path,
+                    imageName: fileImage.path,
                     category: utilisateur.category,
                     address: utilisateur.address,
                     roles: utilisateur.roles,
                     createdAt: utilisateur.createdAt,
                     city: utilisateur.city);
 
+
+
                 UserUpdate(userInterm);
+                UserUpdateImage(fileImage);
+
 
                 if (mounted) {
                   setState(() {
@@ -419,6 +431,9 @@ class _PatientDetailsState extends State<PatientDetails> {
   }
 
   Future<void> UserUpdate(Utilisateur utilisateur) async {
+    setState(() {
+      isLoading = true;
+    });
     final url =
         Uri.parse("${baseUrl}api/users/${extractLastNumber(utilisateur.id)}");
     //final headers = {'Content-Type': 'application/json'};
@@ -442,16 +457,104 @@ class _PatientDetailsState extends State<PatientDetails> {
         } else {
           ModificationUtilisateur();
           if (mounted) {
-            setState(() {});
+            setState(() {
+              isLoading = false;
+            });
           }
         }
       } else {
+        setState(() {
+          isLoading = false;
+        });
+        if (response.statusCode == 401) {
+          authProvider.logout();
+          Navigator.pushReplacement(
+              context, MaterialPageRoute(builder: (context) => const MyApp()));
+        }
         // Gestion des erreurs HTTP
         error('Il y a une erreur. HTTP Status Code: ${response.statusCode}');
         throw Exception(
             '-- Failed to add user. HTTP Status Code: ${response.statusCode}');
       }
     } catch (e, exception) {
+      setState(() {
+        isLoading = false;
+      });
+      // Gestion des erreurs autres que HTTP
+      error('Erreur de connexion ou voir ceci: $e');
+      print('EXCPEPT: $exception');
+      throw Exception('-- CATCH Failed to add user. Error: $e');
+    }
+  }
+
+
+  Future<void> UserUpdateImage(File file) async {
+    setState(() {
+      isLoading = true;
+    });
+    
+
+    
+    final url =
+    Uri.parse("${baseUrl}api/image-profile/${extractLastNumber(utilisateur.id)}");
+    //final headers = {'Content-Type': 'application/json'};
+
+    final headers = {'Content-Type': 'multipart/form-data'};
+
+
+    print('URL PHOTO UPDATE: $url');
+
+    try {
+      var request = http.MultipartRequest('POST', Uri.parse(url.path));
+
+      // Ajouter le fichier au champ de données multipartes
+      var fileStream = http.ByteStream(file.openRead());
+      var length = await file.length();
+      var multipartFile = http.MultipartFile('file', fileStream, length,
+          filename: file.path.split('/').last);
+      request.files.add(multipartFile);
+
+      //String jsonUser = jsonEncode(utilisateur.toJson());
+      //print('Request Body: $jsonUser');
+
+      var response = await http.Response.fromStream(await request.send());
+
+
+      //final response = await http.patch(url, headers: headers, body: jsonUser);
+      print(response.statusCode);
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> jsonResponse = json.decode(response.body);
+        print('ERRRR: $jsonResponse');
+
+        if (jsonResponse.containsKey('error')) {
+          error('Erreur de modification');
+        } else {
+          ModificationUtilisateur();
+          if (mounted) {
+            setState(() {
+              isLoading = false;
+            });
+          }
+        }
+      } else {
+        setState(() {
+          isLoading = false;
+        });
+        if (response.statusCode == 401) {
+          authProvider.logout();
+          Navigator.pushReplacement(
+              context, MaterialPageRoute(builder: (context) => const MyApp()));
+        }
+        // Gestion des erreurs HTTP
+        error('Il y a une erreur de connexion\n Veuillez verifiez votre connexion!');
+        throw Exception(
+            '-- Erreur de connexion');
+      }
+    } catch (e, exception) {
+      setState(() {
+        isLoading = false;
+      });
       // Gestion des erreurs autres que HTTP
       error('Erreur de connexion ou voir ceci: $e');
       print('EXCPEPT: $exception');
@@ -492,7 +595,7 @@ class _PatientDetailsState extends State<PatientDetails> {
       canPop: false,
       child: Scaffold(
           backgroundColor: const Color.fromARGB(1000, 238, 239, 244),
-          body: (dataLoaded)
+          body: (!isLoading)
               ? ListView(
                   children: [
                     Padding(
@@ -582,6 +685,7 @@ class _PatientDetailsState extends State<PatientDetails> {
                                                             'IMAGE NAME: $imageName');
 
                                                         _pickImage(imageName);
+
                                                       },
                                                       icon: const Icon(
                                                         Icons.add_a_photo,
@@ -715,6 +819,8 @@ class _PatientDetailsState extends State<PatientDetails> {
                                         const Size(100.0, 30.0)),
                                   ),
                                   onPressed: () {
+                                    FocusScope.of(context).unfocus();
+
                                     String email = emailController.text;
                                     if (email.isEmpty) {
                                       ModificationError(
@@ -737,8 +843,11 @@ class _PatientDetailsState extends State<PatientDetails> {
                                             createdAt: utilisateur.createdAt,
                                             city: utilisateur.city);
                                         UserUpdate(userInterm);
+
                                         if (mounted) {
-                                          setState(() {});
+                                          setState(() {
+                                            EditEmail = false;
+                                          });
                                         }
                                       } else {
                                         emailInvalide();
@@ -815,6 +924,8 @@ class _PatientDetailsState extends State<PatientDetails> {
                                         const Size(100.0, 30.0)),
                                   ),
                                   onPressed: () {
+                                    FocusScope.of(context).unfocus();
+
                                     String phone = phoneController.text;
                                     if (phone.length != 10) {
                                       ModificationError(
@@ -836,7 +947,9 @@ class _PatientDetailsState extends State<PatientDetails> {
                                           city: utilisateur.city);
                                       UserUpdate(userInterm);
                                       if (mounted) {
-                                        setState(() {});
+                                        setState(() {
+                                          EditPhone = false;
+                                        });
                                       }
                                     }
                                   },
@@ -917,10 +1030,29 @@ class _PatientDetailsState extends State<PatientDetails> {
                     )
                   ],
                 )
-              : const Center(
-                  child: CircularProgressIndicator(),
-                )),
+              : loadingWidget()),
     );
+  }
+
+  Widget loadingWidget() {
+    return Center(
+        child: Container(
+      width: 100,
+      height: 100,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          LoadingAnimationWidget.hexagonDots(
+              color: Colors.redAccent, size: 120),
+          Image.asset(
+            'assets/images/logo2.png',
+            width: 80,
+            height: 80,
+            fit: BoxFit.cover,
+          )
+        ],
+      ),
+    ));
   }
 
   void ModificationUtilisateur() {
@@ -1006,4 +1138,8 @@ class _PatientDetailsState extends State<PatientDetails> {
       ..hideCurrentMaterialBanner()
       ..showMaterialBanner(materialBanner);
   }
+
+
+
+
 }

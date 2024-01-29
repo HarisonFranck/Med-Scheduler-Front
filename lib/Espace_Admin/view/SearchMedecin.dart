@@ -8,6 +8,7 @@ import 'dart:convert';
 import 'package:provider/provider.dart';
 import 'package:med_scheduler_front/UrlBase.dart';
 import 'package:med_scheduler_front/main.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 class SearchMedecin extends StatefulWidget {
   SearchMedecinState createState() => SearchMedecinState();
@@ -70,7 +71,9 @@ class SearchMedecinState extends State<SearchMedecin> {
 
         return datas.map((e) => Medecin.fromJson(e)).toList();
       } else {
+
         if (response.statusCode == 401) {
+          authProvider.logout();
           Navigator.pushReplacement(
               context, MaterialPageRoute(builder: (context) => const MyApp()));
         }
@@ -106,6 +109,28 @@ class SearchMedecinState extends State<SearchMedecin> {
         return abbreviation;
       }
     }
+  }
+
+
+  Widget loadingWidget() {
+    return Center(
+        child: Container(
+          width: 100,
+          height: 100,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              LoadingAnimationWidget.hexagonDots(
+                  color: Colors.redAccent, size: 120),
+              Image.asset(
+                'assets/images/logo2.png',
+                width: 80,
+                height: 80,
+                fit: BoxFit.cover,
+              )
+            ],
+          ),
+        ));
   }
 
   FocusNode _focusNodeSearch = FocusNode();
@@ -440,7 +465,7 @@ class SearchMedecinState extends State<SearchMedecin> {
                                                               context,
                                                               MaterialPageRoute(
                                                                   builder: (context) =>
-                                                                      Agenda(disconnect:false),
+                                                                      Agenda(),
                                                                   settings: RouteSettings(
                                                                       arguments:
                                                                           medecin)));
@@ -472,8 +497,10 @@ class SearchMedecinState extends State<SearchMedecin> {
                           ))
                     ],
                   )
-                : const Center(
-                    child: CircularProgressIndicator(),
-                  )),);
+                : loadingWidget()),);
   }
+
+
+
+
 }

@@ -12,11 +12,15 @@ import 'package:intl/intl.dart';
 import 'package:med_scheduler_front/CustomAppointmentDataSource.dart';
 import 'dart:io';
 import 'AppointmentDialog.dart';
-
+import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
+import 'package:timezone/data/latest.dart' as tz;
+import 'package:timezone/timezone.dart' as tz;
+import 'package:device_calendar/device_calendar.dart';
+import 'package:med_scheduler_front/main.dart';
 
 class Agenda extends StatefulWidget {
   final Medecin medecin;
-
 
   Agenda({required this.medecin});
 
@@ -30,10 +34,145 @@ class AgendaState extends State<Agenda> {
 
   bool _isPageActive = true;
 
+  Future<void> initializeCalendar() async {
+    tz.initializeTimeZones();
+    tz.setLocalLocation(tz.getLocation('Indian/Antananarivo'));
+
+    DeviceCalendarPlugin deviceCalendarPlugin = DeviceCalendarPlugin();
+    var calendars = await deviceCalendarPlugin.retrieveCalendars();
+
+    if (calendars.data!.isEmpty) {
+      return;
+    }
+
+    var defaultCalendarId = calendars.data!.first.id;
+
+    try {
+      List<CustomAppointment> appoints =
+          await getProcheRendezVous(await getAllAppointment());
+
+      if (appoints.isNotEmpty) {
+        appoints.forEach((element) async {
+          TZDateTime startTZ = TZDateTime(
+              tz.getLocation('Indian/Antananarivo'),
+              element.startAt.year,
+              element.startAt.month,
+              element.startAt.day,
+              element.timeStart.hour,
+              element.timeStart.minute,
+              element.timeStart.second);
+          TZDateTime endTZ = TZDateTime(
+              tz.getLocation('Indian/Antananarivo'),
+              element.startAt.year,
+              element.startAt.month,
+              element.startAt.day,
+              element.timeEnd.hour,
+              element.timeEnd.minute,
+              element.timeEnd.second);
+
+          Event event = Event(
+            defaultCalendarId,
+            title: 'Prochain Rendez-vous: ${element.reason.toUpperCase()}',
+            description: (element.medecin != null)
+                ? '${element.reason.toUpperCase()} avec le patient ${element.patient!.lastName} ${element.patient!.firstName}.'
+                : element.reason,
+            start: startTZ,
+            end: endTZ,
+            status: EventStatus.Confirmed,
+            reminders: [
+              Reminder(minutes: 15),
+              Reminder(minutes: 30),
+              Reminder(minutes: 60)
+            ],
+          );
+
+          // Utiliser RetrieveEventsParams
+          var params = RetrieveEventsParams(
+              startDate: startTZ.subtract(const Duration(minutes: 1)),
+              endDate: endTZ.add(const Duration(minutes: 1)));
+          var existingEvents = await deviceCalendarPlugin.retrieveEvents(
+              defaultCalendarId, params);
+
+          var eventExists = existingEvents.data!.any((existingEvent) =>
+                  existingEvent.title == event.title &&
+                  existingEvent.description == event.description &&
+                  existingEvent.start == startTZ &&
+                  existingEvent.end == endTZ) ??
+              false;
+
+          if (!eventExists) {
+            final result =
+                await deviceCalendarPlugin.createOrUpdateEvent(event);
+          }
+
+          print('-- FINISHED --');
+        });
+      }
+    } catch (e, stackTrace) {
+      print(' -- ERROR E: $e \n -- STACK: $stackTrace');
+    }
+  }
+
+  List<CustomAppointment> getProcheRendezVous(
+      List<CustomAppointment> rendezVousList) {
+    List<CustomAppointment> rdvProche = [];
+
+    // Implémentez ici la logique pour récupérer un rendez-vous proche
+    // par rapport à la date actuelle
+    DateTime now = DateTime.now();
+
+    for (int i = 0; i < rendezVousList.length; i++) {
+      CustomAppointment appointment = rendezVousList.elementAt(i);
+      DateTime startDate = DateTime(
+          appointment.startAt.year,
+          appointment.startAt.month,
+          appointment.startAt.day,
+          appointment.timeStart.hour,
+          appointment.timeStart.minute,
+          appointment.timeStart.second);
+      DateTime endDate = DateTime(
+          appointment.startAt.year,
+          appointment.startAt.month,
+          appointment.startAt.day,
+          appointment.timeEnd.hour,
+          appointment.timeEnd.minute,
+          appointment.timeEnd.second);
+
+      if (startDate.isAfter(now) &&
+          isInCurrentWeek(startDate, rendezVousList.elementAt(i).timeStart)) {
+        rdvProche.add(appointment);
+      }
+    }
+    return rdvProche;
+  }
+
+  bool isInCurrentWeek(DateTime startAt, DateTime timeStart) {
+    DateTime now = DateTime.now();
+    DateTime startOfWeek = DateTime(now.year, now.month, now.day, now.hour);
+    DateTime endOfWeek = startOfWeek.add(Duration(days: 7 - now.weekday));
+    bool isIt = false;
+    DateTime formatedStartAt =
+        DateTime.parse(DateFormat('yyyy-MM-dd').format(startAt));
+    DateTime formatedStartOfWeek =
+        DateTime.parse(DateFormat('yyyy-MM-dd').format(startOfWeek));
+    DateTime formatedEndOfWeek =
+        DateTime.parse(DateFormat('yyyy-MM-dd').format(endOfWeek));
+    DateTime TimeDtStart =
+        DateTime(startAt.year, startAt.month, startAt.day, timeStart.hour);
+
+    if ((formatedStartAt.isBefore(formatedEndOfWeek)) &&
+        (now.isBefore(TimeDtStart))) {
+      isIt = true;
+    }
+
+    return isIt;
+  }
+
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
+    initializeCalendar();
   }
 
   @override
@@ -41,7 +180,6 @@ class AgendaState extends State<Agenda> {
     // TODO: implement dispose
     _isPageActive = false;
     super.dispose();
-
 
     print('--- DESTRUCTION PAGE ---');
   }
@@ -51,35 +189,60 @@ class AgendaState extends State<Agenda> {
 
   String baseUrl = UrlBase().baseUrl;
 
-
   bool dataLoaded = false;
+
+  List<CustomAppointment> getAllAppointmentAfterToday(
+      List<CustomAppointment> appoints) {
+    List<CustomAppointment> appointments = [];
+    for (int a = 0; a < appoints.length; a++) {
+      CustomAppointment appoint = appoints.elementAt(a);
+      if (appoint.startAt.year >= DateTime.now().year &&
+          appoint.startAt.month >= DateTime.now().month &&
+          appoint.startAt.day >= DateTime.now().day) {
+        appointments.add(appoint);
+      }
+    }
+    return appointments;
+  }
+
+  List<CustomAppointment> getAllUnavalaibleDesactivateByDateAndMedecin(
+      List<CustomAppointment> list, DateTime dt) {
+    List<CustomAppointment> filteredList = [];
+    String formatDt = DateFormat('yyyy-MM-dd').format(dt);
+    for (int val = 0; val < list.length; val++) {
+      CustomAppointment appointment = list.elementAt(val);
+      if ((appointment.appType == "Desactiver") &&
+          (DateFormat('yyyy-MM-dd').format(appointment.startAt) == formatDt)) {
+        filteredList.add(appointment);
+      }
+    }
+
+    return filteredList;
+  }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
 
-      print('FETCH DEPENDECIES');
-      authProvider = Provider.of<AuthProvider>(context, listen: false);
-      token = authProvider.token;
+    calculateBlackoutDates();
 
-      WidgetsBinding.instance.addPostFrameCallback((_) async {
-        //await getAllAsync();
+    authProvider = Provider.of<AuthProvider>(context, listen: false);
+    token = authProvider.token;
 
-        listAppointment = await getAllAppointment();
-        listUnavalaibleAppointment = await getAllUnavalaibleAppointment();
-        if (listAppointment.isEmpty) {
-          print('EMPTY O');
-          setState(() {
-            dataLoaded = true;
-          });
-        }
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      //await getAllAsync();
+
+      listAppointment = await getAllAppointment();
+      listUnavalaibleAppointment = await getAllUnavalaibleAppointment();
+      if (listAppointment.isEmpty) {
         setState(() {
           dataLoaded = true;
         });
-
+      }
+      setState(() {
+        dataLoaded = true;
       });
-
-
+    });
   }
 
   String extractLastNumber(String input) {
@@ -95,11 +258,7 @@ class AgendaState extends State<Agenda> {
     }
   }
 
-
-
   Future<List<CustomAppointment>> getAllUnavalaibleAppointment() async {
-
-
     if (!_isPageActive) {
       return []; // Page n'est plus active, on retourne une liste vide.
     }
@@ -116,12 +275,20 @@ class AgendaState extends State<Agenda> {
       print('STATUS CODE APPOINTS AGENDA:  ${response.statusCode} \n');
 
       if (response.statusCode == 200) {
+        
         final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
         final datas = jsonData['hydra:member'] as List<dynamic>;
 
-
         return datas.map((e) => CustomAppointment.fromJson(e)).toList();
       } else {
+
+
+        if (response.statusCode == 401) {
+          authProvider.logout();
+          Navigator.pushReplacement(
+              context, MaterialPageRoute(builder: (context) => const MyApp()));
+        }
+        
         print('RESP ERROR UNAV: ${response.body}');
         // Gestion des erreurs HTTP
         throw Exception(
@@ -133,10 +300,56 @@ class AgendaState extends State<Agenda> {
     }
   }
 
+  Future<List<CustomAppointment>> getAllUnavalaibleAppointmentByDayAndDoctor(
+      DateTime dtClicked, Medecin medecin) async {
+    String formated = DateFormat('yyyy-MM-dd').format(dtClicked);
+    if (!_isPageActive) {
+      return []; // Page n'est plus active, on retourne une liste vide.
+    }
 
+    print('MED ID: ${widget.medecin.id}');
+    final url = Uri.parse(
+        "${baseUrl}api/unavailable_appointments?page=1&startAt[before]=$formated&startAt[after]=$formated");
+
+    final headers = {'Authorization': 'Bearer $token'};
+
+    try {
+      final response = await http.get(url, headers: headers);
+
+      print('STATUS CODE APPOINTS AGENDA:  ${response.statusCode} \n');
+
+      if (response.statusCode == 200) {
+        final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
+        final datas = jsonData['hydra:member'] as List<dynamic>;
+
+        //return datas.map((e) => CustomAppointment.fromJson(e)).toList();
+
+        final unavAppoints = datas.where((e) {
+          final med = Medecin.fromJson(e['doctor']);
+          return med.id == medecin.id;
+        }).toList();
+
+        return unavAppoints.map((e) => CustomAppointment.fromJson(e)).toList();
+      } else {
+
+
+        if (response.statusCode == 401) {
+          authProvider.logout();
+          Navigator.pushReplacement(
+              context, MaterialPageRoute(builder: (context) => const MyApp()));
+        }
+        
+        // Gestion des erreurs HTTP
+        throw Exception(
+            '-- Failed to load data. HTTP Status Code: ${response.statusCode}');
+      }
+    } catch (e, stackTrace) {
+      print('Error: $e \nStack trace: $stackTrace');
+      throw e;
+    }
+  }
 
   Future<List<CustomAppointment>> getAllAppointment() async {
-
     if (!_isPageActive) {
       return []; // Page n'est plus active, on retourne une liste vide.
     }
@@ -145,8 +358,6 @@ class AgendaState extends State<Agenda> {
         "${baseUrl}api/doctors/appointments/${extractLastNumber(widget.medecin.id)}");
 
     final headers = {'Authorization': 'Bearer $token'};
-
-
 
     try {
       final response = await http.get(url, headers: headers);
@@ -157,12 +368,28 @@ class AgendaState extends State<Agenda> {
         final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
         final datas = jsonData['hydra:member'] as List<dynamic>;
 
+        //return datas.map((e) => CustomAppointment.fromJson(e)).toList();
 
-        return datas.map((e) => CustomAppointment.fromJson(e)).toList();
+        // Filtrer les rendez-vous à venir
+        final upcomingAppointments = datas.where((e) {
+          final appointmentDate = DateTime.parse(e['startAt']);
+          return appointmentDate.isAfter(DateTime.now());
+        }).toList();
+
+        return upcomingAppointments
+            .map((e) => CustomAppointment.fromJson(e))
+            .toList();
       } else {
+
+
+        if (response.statusCode == 401) {
+          authProvider.logout();
+          Navigator.pushReplacement(
+              context, MaterialPageRoute(builder: (context) => const MyApp()));
+        }
+        
         // Gestion des erreurs HTTP
-        throw Exception(
-            '-- TOKEN EXPIRED.');
+        throw Exception('-- TOKEN EXPIRED.');
       }
     } catch (e) {
       //print('Error: $e \nStack trace: $stackTrace');
@@ -176,19 +403,19 @@ class AgendaState extends State<Agenda> {
   List<DateTime> blackoutDates = [];
 
   List<CustomAppointment>? getAvailableAppointments(
-      DateTime journeeCliquer,
-      List<CustomAppointment> appointments,
-      Medecin medecin,
-      List<CustomAppointment> listUnavalaibleAppointment,
-      ) {
+    DateTime journeeCliquer,
+    List<CustomAppointment> appointments,
+    Medecin medecin,
+    List<CustomAppointment> listUnavalaibleAppointment,
+  ) {
     /// Verification si la date cliquer en contient déja ou a deja été selectionnée(il y a une tranche déja enregistrée)
 
     bool isDayAlreadySelected = appointments.any((appointment) =>
-    (appointment.startAt.day == journeeCliquer.day) &&
+        (appointment.startAt.day == journeeCliquer.day) &&
         (appointment.startAt.year == journeeCliquer.year) &&
         (appointment.startAt.month == journeeCliquer.month) &&
         ((appointment.medecin != null &&
-            appointment.medecin!.lastName == medecin.lastName) &&
+                appointment.medecin!.lastName == medecin.lastName) &&
             (appointment.medecin != null &&
                 appointment.medecin!.firstName == medecin.firstName)));
 
@@ -207,96 +434,96 @@ class AgendaState extends State<Agenda> {
       if (journeeCliquer.day > now.day) {
         List<CustomAppointment> availableAppointments = defaultTimeSlots
             .map((timeSlot) {
-          DateTime startTime = DateTime(
-            journeeCliquer.year,
-            journeeCliquer.month,
-            journeeCliquer.day,
-            int.parse(timeSlot.substring(0, 2)),
-            0,
-          );
-          DateTime endTime = DateTime(
-            journeeCliquer.year,
-            journeeCliquer.month,
-            journeeCliquer.day,
-            int.parse(timeSlot.substring(6, 8)),
-            0,
-          );
+              DateTime startTime = DateTime(
+                journeeCliquer.year,
+                journeeCliquer.month,
+                journeeCliquer.day,
+                int.parse(timeSlot.substring(0, 2)),
+                0,
+              );
+              DateTime endTime = DateTime(
+                journeeCliquer.year,
+                journeeCliquer.month,
+                journeeCliquer.day,
+                int.parse(timeSlot.substring(6, 8)),
+                0,
+              );
 
-          return CustomAppointment(
-            id: "", // Vous devrez attribuer un identifiant unique ici
-            type: "",
-            medecin: medecin,
-            patient: null,
-            startAt: DateTime(
-              journeeCliquer.year,
-              journeeCliquer.month,
-              journeeCliquer.day,
-            ),
-            timeStart: startTime,
-            timeEnd: endTime,
-            reason: "",
-            createdAt: DateTime.now(),
-            appType: "",
-          );
-        })
+              return CustomAppointment(
+                id: "", // Vous devrez attribuer un identifiant unique ici
+                type: "",
+                medecin: medecin,
+                patient: null,
+                startAt: DateTime(
+                  journeeCliquer.year,
+                  journeeCliquer.month,
+                  journeeCliquer.day,
+                ),
+                timeStart: startTime,
+                timeEnd: endTime,
+                reason: "",
+                createdAt: DateTime.now(),
+                appType: "",
+              );
+            })
             .where((avalaible) => !listUnavalaibleAppointment.any(
-              (unavalaible) => isUnavalaible(unavalaible, avalaible),
-        ))
+                  (unavalaible) => isUnavalaible(unavalaible, avalaible),
+                ))
             .toList();
 
         return availableAppointments;
       } else {
         List<CustomAppointment> availableAppointments = defaultTimeSlots
             .where((timeSlot) {
-          int startHour = int.parse(timeSlot.substring(0, 2));
-          DateTime startTime = DateTime(
-            journeeCliquer.year,
-            journeeCliquer.month,
-            journeeCliquer.day,
-            startHour,
-            0,
-          );
+              int startHour = int.parse(timeSlot.substring(0, 2));
+              DateTime startTime = DateTime(
+                journeeCliquer.year,
+                journeeCliquer.month,
+                journeeCliquer.day,
+                startHour,
+                0,
+              );
 
-          return startTime.isAfter(now) || startTime.hour == now.hour;
-        })
+              return startTime.isAfter(now) || startTime.hour == now.hour;
+            })
             .map((timeSlot) {
-          int startHour = int.parse(timeSlot.substring(0, 2));
-          DateTime startTime = DateTime(
-            journeeCliquer.year,
-            journeeCliquer.month,
-            journeeCliquer.day,
-            startHour,
-            0,
-          );
+              int startHour = int.parse(timeSlot.substring(0, 2));
+              DateTime startTime = DateTime(
+                journeeCliquer.year,
+                journeeCliquer.month,
+                journeeCliquer.day,
+                startHour,
+                0,
+              );
 
-          DateTime endTime = DateTime(
-            journeeCliquer.year,
-            journeeCliquer.month,
-            journeeCliquer.day,
-            int.parse(timeSlot.substring(6, 8)),
-            0,
-          );
+              DateTime endTime = DateTime(
+                journeeCliquer.year,
+                journeeCliquer.month,
+                journeeCliquer.day,
+                int.parse(timeSlot.substring(6, 8)),
+                0,
+              );
 
-          return CustomAppointment(
-            id: "",
-            type: "",
-            medecin: medecin,
-            patient: null,
-            startAt: DateTime(
-              journeeCliquer.year,
-              journeeCliquer.month,
-              journeeCliquer.day,
-            ),
-            timeStart: startTime,
-            timeEnd: endTime,
-            reason: "",
-            createdAt: DateTime.now(),
-            appType: "",
-          );
-        })
+              return CustomAppointment(
+                id: "",
+                type: "",
+                medecin: medecin,
+                patient: null,
+                startAt: DateTime(
+                  journeeCliquer.year,
+                  journeeCliquer.month,
+                  journeeCliquer.day,
+                ),
+                timeStart: startTime,
+                timeEnd: endTime,
+                reason: "",
+                createdAt: DateTime.now(),
+                appType: "",
+              );
+            })
             .where((avalaible) => !listUnavalaibleAppointment.any(
-              (unavalaible) => isUnavalaible(unavalaible, avalaible),
-        ))
+                  (unavalaible) => isUnavalaible(unavalaible, avalaible),
+                ))
             .toList();
 
         return availableAppointments;
@@ -312,41 +539,41 @@ class AgendaState extends State<Agenda> {
       ];
       List<CustomAppointment> availableAppointments = defaultTimeSlots
           .map((timeSlot) {
-        DateTime startTime = DateTime(
-          journeeCliquer.year,
-          journeeCliquer.month,
-          journeeCliquer.day,
-          int.parse(timeSlot.substring(0, 2)),
-          0,
-        );
-        DateTime endTime = DateTime(
-          journeeCliquer.year,
-          journeeCliquer.month,
-          journeeCliquer.day,
-          int.parse(timeSlot.substring(6, 8)),
-          0,
-        );
+            DateTime startTime = DateTime(
+              journeeCliquer.year,
+              journeeCliquer.month,
+              journeeCliquer.day,
+              int.parse(timeSlot.substring(0, 2)),
+              0,
+            );
+            DateTime endTime = DateTime(
+              journeeCliquer.year,
+              journeeCliquer.month,
+              journeeCliquer.day,
+              int.parse(timeSlot.substring(6, 8)),
+              0,
+            );
 
-        return CustomAppointment(
-          id: "", // Vous devrez attribuer un identifiant unique ici
-          type: "",
-          medecin: medecin,
-          patient: null,
-          startAt: DateTime(
-            journeeCliquer.year,
-            journeeCliquer.month,
-            journeeCliquer.day,
-          ),
-          timeStart: startTime,
-          timeEnd: endTime,
-          reason: "",
-          createdAt: DateTime.now(),
-          appType: "",
-        );
-      })
+            return CustomAppointment(
+              id: "", // Vous devrez attribuer un identifiant unique ici
+              type: "",
+              medecin: medecin,
+              patient: null,
+              startAt: DateTime(
+                journeeCliquer.year,
+                journeeCliquer.month,
+                journeeCliquer.day,
+              ),
+              timeStart: startTime,
+              timeEnd: endTime,
+              reason: "",
+              createdAt: DateTime.now(),
+              appType: "",
+            );
+          })
           .where((avalaible) => !appointments.any(
-            (toExclude) => isUnavalaible(toExclude, avalaible),
-      ))
+                (toExclude) => isUnavalaible(toExclude, avalaible),
+              ))
           .toList();
 
       return availableAppointments.isNotEmpty ? availableAppointments : null;
@@ -362,18 +589,16 @@ class AgendaState extends State<Agenda> {
   bool isUnavalaible(
       CustomAppointment unavAppointment, CustomAppointment avAppointment) {
     return (DateFormat('yyyy-MM-dd').format(avAppointment.startAt) ==
-        DateFormat('yyyy-MM-dd').format(unavAppointment.startAt)) &&
+            DateFormat('yyyy-MM-dd').format(unavAppointment.startAt)) &&
         (TimeOfDay.fromDateTime(avAppointment.timeStart) ==
             TimeOfDay.fromDateTime(unavAppointment.timeStart)) &&
         (TimeOfDay.fromDateTime(avAppointment.timeEnd) ==
             TimeOfDay.fromDateTime(unavAppointment.timeEnd)) &&
         ((avAppointment.medecin?.lastName ==
-            unavAppointment.medecin?.lastName) &&
+                unavAppointment.medecin?.lastName) &&
             (avAppointment.medecin?.firstName ==
                 unavAppointment.medecin?.firstName));
   }
-
-
 
   DateTime? isSunday(DateTime dt) {
     if (dt.weekday == 7) {
@@ -383,181 +608,675 @@ class AgendaState extends State<Agenda> {
     }
   }
 
+  List<DateTime> getSundayDates() {
+    List<DateTime> sundays = [];
+    DateTime startDate = DateTime(DateTime.now().year, 1, 1);
+    DateTime endDate = DateTime(DateTime.now().year, 12, 31);
+
+    for (DateTime date = startDate;
+        date.isBefore(endDate);
+        date = date.add(Duration(days: 1))) {
+      if (date.weekday == DateTime.sunday) {
+        sundays.add(date);
+      }
+    }
+
+    return sundays;
+  }
+
+  void calculateBlackoutDates() {
+    DateTime currentDate = DateTime.now().subtract(const Duration(days: 1));
+    blackoutDates.addAll(List.generate(
+        365, (index) => currentDate.subtract(Duration(days: index))));
+
+    for (int dtIndex = 0; dtIndex < getSundayDates().length; dtIndex++) {
+      DateTime dt = getSundayDates().elementAt(dtIndex);
+      if (!blackoutDates.contains(dt)) {
+        blackoutDates.add(dt);
+      }
+    }
+
+    if (DateTime.now().hour > 15) {
+      if (!blackoutDates.contains(DateTime.now())) {
+        blackoutDates.add(DateTime.now());
+      }
+    }
+  }
+
+  bool dateIsAllDisabled(DateTime date) {
+    return (getAvailableAppointments(
+            date, listAppointment, widget.medecin, listUnavalaibleAppointment)!
+        .isEmpty);
+  }
+
+  bool isAppointment = false;
+  bool istoAddAppointment = false;
+  bool isPaste = false;
+
+  List<CustomAppointment> AlltheAppoint = [];
+  DateTime dtCliquer = DateTime.now();
 
   @override
   Widget build(BuildContext context) {
+    return PopScope(
+      canPop: false,
+      child: Scaffold(
+          backgroundColor: Color.fromARGB(1000, 238, 239, 244),
+          body: ListView(children: [
+            Row(
+              children: [
+                Padding(
+                    padding: const EdgeInsets.only(left: 20),
+                    child: Column(
+                      children: [
+                        const Opacity(
+                          opacity: 0.5,
+                          child: Text(
+                            textAlign: TextAlign.center,
+                            textScaler: TextScaler.linear(1.3),
+                            'Bonjour,',
+                            style: TextStyle(
+                                letterSpacing: 2, fontWeight: FontWeight.w500),
+                          ),
+                        ),
+                        Text(
+                          textAlign: TextAlign.center,
+                          textScaler: const TextScaler.linear(1.45),
+                          'Dr ${widget.medecin.firstName ?? 'Chargement...'}',
+                          style: const TextStyle(
+                            letterSpacing: 2,
+                            fontWeight: FontWeight.w600,
+                            color: Color.fromARGB(230, 20, 20, 90),
+                          ),
+                        ),
+                      ],
+                    )),
+                const Spacer(),
+                Padding(
+                  padding: const EdgeInsets.only(right: 15, top: 20),
+                  child: Image.asset(
+                    'assets/images/Medhome.png',
+                    fit: BoxFit.cover,
+                    width: 50,
+                    height: 50,
+                  ),
+                )
+              ],
+            ),
+            Padding(
+                padding: const EdgeInsets.only(
+                    top: 10, right: 10, left: 10, bottom: 10),
+                child: ClipRRect(
+                    borderRadius: BorderRadius.circular(6),
+                    child: Container(
+                        decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(6),
+                            color: Colors.white),
+                        width: MediaQuery.of(context).size.width - 45,
+                        height: MediaQuery.of(context).size.height / 1.38,
+                        child: (dataLoaded)
+                            ? Column(
+                                children: [
+                                  Container(
+                                    height: MediaQuery.of(context).size.height /
+                                        2.2,
+                                    child: SfCalendar(
+                                      blackoutDatesTextStyle: TextStyle(
+                                          color: Colors.grey.withOpacity(0.3)),
+                                      minDate: DateTime(DateTime.now().year,
+                                          DateTime.now().month, 01),
+                                      controller: controller,
+                                      dataSource: CustomAppointmentDataSource(
+                                          listAppointment),
+                                      view: CalendarView.month,
+                                      monthViewSettings:
+                                          const MonthViewSettings(
+                                        appointmentDisplayCount: 3,
+                                      ),
+                                      scheduleViewSettings:
+                                          const ScheduleViewSettings(
+                                              appointmentTextStyle: TextStyle(
+                                                  letterSpacing: 2,
+                                                  color: Colors.green)),
+                                      onTap: (CalendarTapDetails details) {
+                                        setState(() {
+                                          dtCliquer = details.date!;
+                                        });
+                                        if (details.date!.weekday != 7) {
+                                          if ((details.date!.year <=
+                                                  DateTime.now().year) &&
+                                              (details.date!.month <=
+                                                  DateTime.now().month) &&
+                                              (details.date!.day <
+                                                  DateTime.now().day)) {
+                                            jourDisable();
+                                          } else {
+                                            //Navigator.push(context, MaterialPageRoute(builder: (context)=>AppointmentDialog(medecin: medecinClicked!),settings: RouteSettings(arguments: details.date)));
+                                            List<CustomAppointment> list =
+                                                listAppointment
+                                                    .where((element) =>
+                                                        DateFormat('yyyy-MM-dd')
+                                                            .format(element
+                                                                .startAt) ==
+                                                        DateFormat('yyyy-MM-dd')
+                                                            .format(
+                                                                details.date!))
+                                                    .toList();
+                                            if (list.length >= 1) {
+                                              CustomAppointment appoint =
+                                                  list.first;
+                                              setState(() {
+                                                istoAddAppointment = false;
+                                                isAppointment = true;
+                                                AlltheAppoint = list;
+                                              });
+                                            } else {
+                                              String dtClick =
+                                                  DateFormat('yyyy-MM-dd')
+                                                      .format(details.date!);
+                                              String now =
+                                                  DateFormat('yyyy-MM-dd')
+                                                      .format(DateTime.now());
+                                              DateTime dt =
+                                                  DateTime.parse(dtClick);
+                                              DateTime dtNow =
+                                                  DateTime.parse(dtClick);
+                                              if (dt.isBefore(dtNow)) {
+                                                jourDisable();
+                                              } else {
+                                                setState(() {
+                                                  istoAddAppointment = true;
+                                                  isAppointment = false;
+                                                });
+                                              }
+                                            }
+                                          }
+                                        } else {
+                                          jourSundayDisable();
+                                        }
+                                      },
+                                      todayHighlightColor: Colors.redAccent,
+                                      todayTextStyle: const TextStyle(
+                                        fontWeight: FontWeight.w500,
+                                        letterSpacing: 1.6,
+                                        color: Colors.white,
+                                      ),
+                                      blackoutDates: blackoutDates,
+                                    ),
+                                  ),
+                                  SizedBox(
+                                    height: 20,
+                                  ),
+                                  Expanded(
+                                      child: ListView(
+                                    children: [
+                                      if (isAppointment) ...[
+                                        for (int ap = 0;
+                                            ap < AlltheAppoint.length;
+                                            ap++) ...[
+                                          if (ap == 0) ...[
+                                            showAppointment(
+                                                AlltheAppoint.elementAt(ap),
+                                                dtCliquer),
+                                          ] else ...[
+                                            showAppointmentAfterFirst(
+                                                AlltheAppoint.elementAt(ap),
+                                                dtCliquer)
+                                          ]
+                                        ],
+                                        Row(
+                                          children: [
+                                            Spacer(),
+                                            Padding(
+                                              padding: const EdgeInsets.only(
+                                                  left: 10,
+                                                  right: 16,
+                                                  bottom: 10),
+                                              child: ElevatedButton(
+                                                style: ButtonStyle(
+                                                  backgroundColor:
+                                                      MaterialStateProperty.all(
+                                                          const Color.fromARGB(
+                                                              1000,
+                                                              60,
+                                                              70,
+                                                              120)),
+                                                  shape:
+                                                      MaterialStateProperty.all(
+                                                    RoundedRectangleBorder(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              6.0), // Définissez le rayon de la bordure ici
+                                                    ),
+                                                  ),
+                                                  minimumSize:
+                                                      MaterialStateProperty.all(
+                                                          const Size(
+                                                              300.0, 40.0)),
+                                                ),
+                                                onPressed: () {
+                                                  Navigator.push(
+                                                      context,
+                                                      MaterialPageRoute(
+                                                          builder: (context) =>
+                                                              AppointmentDialog(
+                                                                  medecin: widget
+                                                                      .medecin),
+                                                          settings: RouteSettings(
+                                                              arguments:
+                                                                  dtCliquer)));
+                                                },
+                                                child: const Text(
+                                                  'Voir tranches horaires',
+                                                  textAlign: TextAlign.start,
+                                                  textScaleFactor: 1.2,
+                                                  style: TextStyle(
+                                                    color: Color.fromARGB(
+                                                        255, 253, 253, 253),
+                                                    fontWeight: FontWeight.w500,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        )
+                                      ],
+                                      if (istoAddAppointment) ...[
+                                        Row(
+                                          children: [
+                                            Spacer(),
+                                            Padding(
+                                              padding: const EdgeInsets.only(
+                                                  left: 10,
+                                                  right: 16,
+                                                  bottom: 10),
+                                              child: ElevatedButton(
+                                                style: ButtonStyle(
+                                                  backgroundColor:
+                                                      MaterialStateProperty.all(
+                                                          const Color.fromARGB(
+                                                              1000,
+                                                              60,
+                                                              70,
+                                                              120)),
+                                                  shape:
+                                                      MaterialStateProperty.all(
+                                                    RoundedRectangleBorder(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              6.0), // Définissez le rayon de la bordure ici
+                                                    ),
+                                                  ),
+                                                  minimumSize:
+                                                      MaterialStateProperty.all(
+                                                          const Size(
+                                                              300.0, 40.0)),
+                                                ),
+                                                onPressed: () {
+                                                  Navigator.push(
+                                                      context,
+                                                      MaterialPageRoute(
+                                                          builder: (context) =>
+                                                              AppointmentDialog(
+                                                                  medecin: widget
+                                                                      .medecin),
+                                                          settings: RouteSettings(
+                                                              arguments:
+                                                                  dtCliquer)));
+                                                },
+                                                child: const Text(
+                                                  'Voir tranches horaires',
+                                                  textAlign: TextAlign.start,
+                                                  textScaleFactor: 1.2,
+                                                  style: TextStyle(
+                                                    color: Color.fromARGB(
+                                                        255, 253, 253, 253),
+                                                    fontWeight: FontWeight.w500,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        )
+                                      ] else if (!isAppointment &&
+                                          !istoAddAppointment) ...[
+                                        showNothing()
+                                      ]
+                                    ],
+                                  ))
+                                ],
+                              )
+                            : loadingWidget()))),
+          ])),
+    );
+  }
 
+  String formatDT(DateTime Date) {
+    // Liste des jours de la semaine
+    final List<String> jours = [
+      'Lundi',
+      'Mardi',
+      'Mercredi',
+      'Jeudi',
+      'Vendredi',
+      'Samedi',
+      'Dimanche'
+    ];
 
-    DateTime currentDate = DateTime.now().subtract(Duration(days: 1));
+    // Liste des mois de l'année
+    final List<String> mois = [
+      '',
+      'JAN',
+      'FEV',
+      'MAR',
+      'AVR',
+      'MAI',
+      'JUI',
+      'JUI',
+      'AOU',
+      'SEP',
+      'OCT',
+      'NOV',
+      'DEC'
+    ];
 
+    // Extraire les composants de la date et de l'heure
+    int jour = Date.day;
+    int moisIndex = Date.month;
+    int annee = Date.year;
 
-    blackoutDates.addAll(List.generate(365, (index) => currentDate.subtract(Duration(days: index))));
+    // Formater le jour de la semaine
+    String jourSemaine = jours[Date.weekday - 1];
 
-    if(DateTime.now().hour>15){
+    // Formater le mois
+    String nomMois = mois[moisIndex];
 
-      blackoutDates.add(DateTime.now());
-    }
+    // Construire la chaîne lisible
+    String resultat = '$nomMois';
 
-    return PopScope(canPop: false,child: Scaffold(
-        backgroundColor: Color.fromARGB(1000, 238, 239, 244),
-        body: ListView(children:[
+    return resultat;
+  }
 
-          Padding(
-              padding: EdgeInsets.only(top: 20,right: 18,bottom: 10, left: 18),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(23),
-                child:  Row(
-                  children: [
-                    Padding(
-                        padding: const EdgeInsets.only(left: 20),
-                        child: Column(
-                          children: [
-                            const Opacity(
-                              opacity: 0.5,
-                              child: Text(
-                                textAlign: TextAlign.center,
-                                textScaler: TextScaler.linear(1.3),
-                                'Bonjour,',
-                                style: TextStyle(
-                                    letterSpacing: 2,
-                                    fontWeight: FontWeight.w500),
-                              ),
+  Widget showNothing() {
+    return Column(
+      children: [
+        GestureDetector(
+            onTap: () {},
+            child: Row(
+              children: [
+                Padding(
+                  padding: EdgeInsets.only(left: 20, top: 20),
+                  child: Text(
+                    'Veuillez choisir une date',
+                    style: TextStyle(
+                        color: Colors.black.withOpacity(0.4),
+                        letterSpacing: 3,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600),
+                  ),
+                )
+              ],
+            )),
+        Padding(
+          padding: EdgeInsets.only(top: 5),
+          child: Divider(
+            thickness: 2,
+            color: Colors.grey.withOpacity(0.5),
+            indent: 20,
+            endIndent: 20,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget showAppointment(CustomAppointment appoint, DateTime clickedDt) {
+    print('ISDELETED: ${appoint.isDeleted} ');
+
+    return Column(
+      children: [
+        GestureDetector(
+            onTap: () {
+              DetailsAppointment(appoint);
+            },
+            child: Row(
+              children: [
+                Container(
+                  child: Column(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(left: 10, right: 10),
+                        child: Text(
+                          '${clickedDt.day}',
+                          style: TextStyle(
+                              color: Colors.black.withOpacity(0.4),
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.only(left: 10, right: 10),
+                        child: Text(
+                          '${formatDT(clickedDt)}',
+                          style: TextStyle(
+                              color: Colors.black.withOpacity(0.4),
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700),
+                        ),
+                      )
+                    ],
+                  ),
+                ),
+                Container(
+                  width: MediaQuery.of(context).size.width / 1.30,
+                  height:
+                      (appoint.isDeleted != null && appoint.isDeleted == true)
+                          ? 75
+                          : 55,
+                  // ajustez la taille du point en fonction de vos besoins
+
+                  decoration: BoxDecoration(
+                    shape: BoxShape.rectangle,
+                    borderRadius: BorderRadius.circular(6),
+                    color:
+                        (appoint.isDeleted != null && appoint.isDeleted == true)
+                            ? Color.fromARGB(1000, 238, 239, 244)
+                            : Colors.redAccent.withOpacity(
+                                0.7), // utilisez la couleur de l'appointment
+                  ),
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.only(left: 10),
+                            child: Text(
+                              textAlign: TextAlign.start,
+                              '${abreviateRaison(appoint.reason)}',
+                              style: TextStyle(
+                                  fontWeight: FontWeight.w500,
+                                  letterSpacing: 2,
+                                  fontSize: 15,
+                                  color: (appoint.isDeleted != null &&
+                                          appoint.isDeleted == true)
+                                      ? Colors.black.withOpacity(0.4)
+                                      : Colors.white),
                             ),
-                            Text(
-                              textAlign: TextAlign.center,
-                              textScaler: const TextScaler.linear(1.45),
-                              'Dr ${widget.medecin.firstName ?? 'Chargement...'}',
-                              style: const TextStyle(
-                                letterSpacing: 2,
-                                fontWeight: FontWeight.w600,
-                                color: Color.fromARGB(230, 20, 20, 90),
+                          ),
+                        ],
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.only(left: 10),
+                            child: Text(
+                              textAlign: TextAlign.start,
+                              '${formatDateTimeAppointment(appoint.startAt, appoint.timeStart, appoint.timeEnd)}',
+                              style: TextStyle(
+                                  fontWeight: FontWeight.w500,
+                                  fontSize: 12,
+                                  letterSpacing: 2,
+                                  color: (appoint.isDeleted != null &&
+                                          appoint.isDeleted == true)
+                                      ? Colors.black.withOpacity(0.4)
+                                      : Colors.white),
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (appoint.isDeleted != null &&
+                          appoint.isDeleted == true) ...[
+                        const Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            Padding(
+                              padding: EdgeInsets.only(left: 10),
+                              child: Text(
+                                textAlign: TextAlign.start,
+                                'Rendez-vous annulé',
+                                style: TextStyle(
+                                    fontWeight: FontWeight.w500,
+                                    fontSize: 13,
+                                    letterSpacing: 2,
+                                    color: Colors.redAccent),
                               ),
                             ),
                           ],
-                        )),
-                    const Spacer(),
-                    Padding(
-                      padding: const EdgeInsets.only(right: 15, top: 20),
-                      child: Image.asset(
-                        'assets/images/Medhome.png',
-                        fit: BoxFit.cover,
-                        width: 50,
-                        height: 50,
-                      ),
+                        ),
+                      ]
+                    ],
+                  ),
+                ),
+              ],
+            )),
+        Padding(
+          padding: const EdgeInsets.only(top: 5),
+          child: Divider(
+            thickness: 2,
+            color: Colors.grey.withOpacity(0.5),
+            indent: 20,
+            endIndent: 20,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget showAppointmentAfterFirst(
+      CustomAppointment appoint, DateTime clickedDt) {
+    print('ISDELETED: ${appoint.isDeleted} ');
+
+    return Column(
+      children: [
+        GestureDetector(
+            onTap: () {
+              DetailsAppointment(appoint);
+            },
+            child: Padding(
+              padding: const EdgeInsets.only(left: 40),
+              child: Container(
+                width: MediaQuery.of(context).size.width / 1.30,
+                height: 55,
+                // ajustez la taille du point en fonction de vos besoins
+
+                decoration: BoxDecoration(
+                  shape: BoxShape.rectangle,
+                  borderRadius: BorderRadius.circular(6),
+                  color:
+                      (appoint.isDeleted != null && appoint.isDeleted == true)
+                          ? Colors.black.withOpacity(0.3)
+                          : Colors.redAccent.withOpacity(
+                              0.7), // utilisez la couleur de l'appointment
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(left: 10),
+                          child: Text(
+                            textAlign: TextAlign.start,
+                            '${abreviateRaison(appoint.reason)}',
+                            style: const TextStyle(
+                                fontWeight: FontWeight.w500,
+                                letterSpacing: 2,
+                                fontSize: 15,
+                                color: Colors.white),
+                          ),
+                        ),
+                      ],
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(left: 10),
+                          child: Text(
+                            textAlign: TextAlign.start,
+                            '${formatDateTimeAppointment(appoint.startAt, appoint.timeStart, appoint.timeEnd)}',
+                            style: const TextStyle(
+                                fontWeight: FontWeight.w500,
+                                fontSize: 12,
+                                letterSpacing: 2,
+                                color: Colors.white),
+                          ),
+                        ),
+                      ],
                     )
                   ],
                 ),
-              )),
+              ),
+            )),
+        Padding(
+          padding: const EdgeInsets.only(top: 5),
+          child: Divider(
+            thickness: 2,
+            color: Colors.grey.withOpacity(0.5),
+            indent: 20,
+            endIndent: 20,
+          ),
+        ),
+      ],
+    );
+  }
 
+  String abreviateRaison(String fullName) {
+    List<String> nameParts = fullName.split(' ');
 
-          Padding(
-              padding:
-              const EdgeInsets.only(top: 20, right: 10, left: 10, bottom: 10),
-              child: ClipRRect(
-                  borderRadius: BorderRadius.circular(6),
-                  child: Container(
-                    decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(6),
-                        color: Colors.white),
-                    width: MediaQuery.of(context).size.width - 45,
-                    height: MediaQuery.of(context).size.height /1.4,
-                    child: (dataLoaded)
-                        ? SfCalendar(
-                      controller: controller,
-                      dataSource:
-                      CustomAppointmentDataSource(listAppointment),
-                      view: CalendarView.month,
-                      scheduleViewSettings: const ScheduleViewSettings(
-                          appointmentTextStyle: TextStyle(
-                              letterSpacing: 2, color: Colors.green)),
-                      monthCellBuilder:
-                          (BuildContext context, MonthCellDetails details) {
-                        // Personnalisez le contenu de la cellule ici
+    if (nameParts.length == 1) {
+      // Si le nom ne contient qu'un seul mot, renvoyer le nom tel quel
+      return fullName;
+    }
+    if (nameParts.length > 1) {
+      // Si le prénom contient plus de deux mots, utiliser seulement le premier mot
+      return "${nameParts[0]}...";
+    } else {
+      return fullName;
+    }
+  }
 
-                        bool isSundayOrPastDate = (details.date.weekday ==
-                            7) ||
-                            (details.date.isBefore(
-                                DateTime.now().subtract(Duration(days: 1))));
-
-
-                        bool isAllDisabled =
-                          (getAvailableAppointments(
-                              details.date,
-                              listAppointment,
-                              widget.medecin,
-                              listUnavalaibleAppointment)!.isEmpty);
-
-                          bool dt = blackoutDates.any(
-                                  (element) => element == details.date);
-
-                          if (dt == false) {
-                            isAllDisabled
-                                ? blackoutDates.add(details.date)
-                                : null;
-                          }
-
-                        if (isSunday(details.date) != null) {
-                          blackoutDates.add(details.date);
-                        }
-
-                        bool isBlackoutDate = isInBlackOutDay(
-                            blackoutDates, details.date);
-
-                        return Container(
-                          decoration: BoxDecoration(
-                            color: isBlackoutDate
-                                ? Colors.grey.withOpacity(0.3)
-                                :Colors.transparent,
-                            border:
-                            Border.all(width: 0.3, color: Colors.grey),
-                          ),
-                          child: Column(
-                              children: [
-                          Center(
-                          child: Text(
-                          details.date.day.toString(),
-                          style: TextStyle(
-                            fontWeight: FontWeight.w500,
-                            letterSpacing: 1.6,
-                            color: isBlackoutDate
-                                ? Colors.grey.withOpacity(0.3)
-                                : Colors.black,
-                          ),
-                        ),
-                        ),
-                        // Exclure l'affichage des rendez-vous pour les blackoutDates
-                        if (!isBlackoutDate && !isSundayOrPastDate)
-                        ...listAppointment
-                            .where((appointment) =>
-                        appointment.startAt.year ==
-                        details.date.year &&
-                        appointment.startAt.month ==
-                        details.date.month &&
-                        appointment.startAt.day ==
-                        details.date.day)
-                            .map((appointment) =>
-                        buildAppointmentWidget(appointment)),
-                        ],
-                        ),
-                        );
-                      },
-                      onTap: (CalendarTapDetails details) {
-
-
-                         Navigator.push(context, MaterialPageRoute(builder: (context)=>AppointmentDialog(medecin: widget.medecin),settings: RouteSettings(arguments: details.date)));
-
-                      },
-                      todayTextStyle: const TextStyle(
-                        fontWeight: FontWeight.w500,
-                        letterSpacing: 1.6,
-                        color: Color.fromARGB(230, 20, 20, 90),
-                      ),
-                      blackoutDates: blackoutDates,
-                    )
-                        : Center(child: CircularProgressIndicator()),
-                  ))),
-        ])
-    ),);
+  Widget loadingWidget() {
+    return Center(
+        child: Container(
+      width: 100,
+      height: 100,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          LoadingAnimationWidget.hexagonDots(
+              color: Colors.redAccent, size: 120),
+          Image.asset(
+            'assets/images/logo2.png',
+            width: 80,
+            height: 80,
+            fit: BoxFit.cover,
+          )
+        ],
+      ),
+    ));
   }
 
   String formatDateTime(DateTime dateTime) {
@@ -611,14 +1330,6 @@ class AgendaState extends State<Agenda> {
 
     return resultat;
   }
-
-
-
-
-
-
-
-
 
   Widget buildAppointmentWidget(CustomAppointment appointment) {
     return Container(
@@ -1083,8 +1794,51 @@ class AgendaState extends State<Agenda> {
     ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 
+  void jourDisable() {
+    final materialBanner = MaterialBanner(
+      /// need to set following properties for best effect of awesome_snackbar_content
+      elevation: 0,
+      backgroundColor: Colors.transparent,
+      forceActionsBelow: true,
+      surfaceTintColor: Color.fromARGB(230, 20, 20, 90),
+      content: AwesomeSnackbarContent(
+        title: 'Aide!!',
+        message: 'Cette  n\'est plus disponible.',
 
+        /// change contentType to ContentType.success, ContentType.warning or ContentType.help for variants
+        contentType: ContentType.help,
+        // to configure for material banner
+        inMaterialBanner: true,
+      ),
+      actions: const [SizedBox.shrink()],
+    );
+
+    ScaffoldMessenger.of(context)
+      ..hideCurrentMaterialBanner()
+      ..showMaterialBanner(materialBanner);
+  }
+
+  void jourSundayDisable() {
+    final materialBanner = MaterialBanner(
+      /// need to set following properties for best effect of awesome_snackbar_content
+      elevation: 0,
+      backgroundColor: Colors.transparent,
+      forceActionsBelow: true,
+      surfaceTintColor: Color.fromARGB(230, 20, 20, 90),
+      content: AwesomeSnackbarContent(
+        title: 'Aide!!',
+        message: 'Dimanche n\'est pas disponible.',
+
+        /// change contentType to ContentType.success, ContentType.warning or ContentType.help for variants
+        contentType: ContentType.help,
+        // to configure for material banner
+        inMaterialBanner: true,
+      ),
+      actions: const [SizedBox.shrink()],
+    );
+
+    ScaffoldMessenger.of(context)
+      ..hideCurrentMaterialBanner()
+      ..showMaterialBanner(materialBanner);
+  }
 }
-
-
-

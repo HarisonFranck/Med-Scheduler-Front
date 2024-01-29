@@ -16,13 +16,16 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'IndexAcceuilMedecin.dart';
 import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
-
+import 'package:med_scheduler_front/Centre.dart';
+import 'ModificationPassword.dart';
+import 'package:med_scheduler_front/UtilisateurNewPassword.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 class MedecinDetails extends StatefulWidget {
-
   @override
   _MedecinDetailsState createState() => _MedecinDetailsState();
-  final Utilisateur user;
+
+  Utilisateur user;
 
   MedecinDetails({required this.user});
 }
@@ -31,6 +34,53 @@ class _MedecinDetailsState extends State<MedecinDetails> {
   String baseUrl = UrlBase().baseUrl;
 
   bool _isPageActive = true;
+
+  List<Centre> listCenter = [];
+
+  Centre? center;
+
+  Widget buildDropdownButtonFormFieldCenter({
+    required String label,
+    required Centre? value,
+    required FocusNode focusNode,
+    required List<DropdownMenuItem<Centre>> items,
+    required ValueChanged<Centre?> onChanged,
+    required FormFieldValidator<Centre?> validator,
+  }) {
+    value = null;
+    return Padding(
+      padding: const EdgeInsets.only(left: 10, right: 10, bottom: 10),
+      child: DropdownButtonFormField<Centre>(
+        focusNode: focusNode,
+        icon: const Icon(
+          Icons.arrow_drop_down_circle_outlined,
+          color: Colors.black,
+        ),
+        value: value,
+        onChanged: onChanged,
+        items: items,
+        style: const TextStyle(color: Colors.black),
+        decoration: InputDecoration(
+          enabledBorder: const UnderlineInputBorder(
+            borderSide: BorderSide(color: Colors.grey),
+          ),
+          labelStyle: TextStyle(
+            color: focusNode.hasFocus ? Colors.redAccent : Colors.black,
+          ),
+          hintStyle: const TextStyle(
+            color: Colors.black,
+            fontWeight: FontWeight.w300,
+          ),
+          labelText: label,
+          hintText: '-- Plus d\'options --',
+          border: UnderlineInputBorder(
+            borderRadius: BorderRadius.circular(5.0),
+          ),
+        ),
+        validator: validator,
+      ),
+    );
+  }
 
   @override
   void dispose() {
@@ -171,6 +221,7 @@ class _MedecinDetailsState extends State<MedecinDetails> {
   TextEditingController emailController = TextEditingController();
   TextEditingController phoneController = TextEditingController();
   TextEditingController categorieController = TextEditingController();
+  TextEditingController centreController = TextEditingController();
 
   final _emailValidator =
       RegExp(r"^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$");
@@ -187,27 +238,12 @@ class _MedecinDetailsState extends State<MedecinDetails> {
 
   bool EditEmail = false;
   bool EditPhone = false;
+  bool EditCenter = false;
 
   File? profilImage;
 
   late Utilisateur utilisateur;
 
-  @override
-  void initState() {
-    super.initState();
-    print('INIT ZAO');
-    utilisateur = widget.user;
-
-    profilImage =
-        (utilisateur.imageName != null) ? File(utilisateur.imageName!) : null;
-    nomController.text = utilisateur.firstName;
-    prenomController.text = utilisateur.lastName;
-    phoneController.text = utilisateur.phone;
-    emailController.text = utilisateur.email;
-    categorieController.text = (utilisateur.category != null)
-        ? categorieSet(utilisateur.category!)
-        : "";
-  }
 
   Future<Utilisateur> getUser(String id) async {
     final url = Uri.parse("${baseUrl}api/users/${extractLastNumber(id)}");
@@ -230,8 +266,9 @@ class _MedecinDetailsState extends State<MedecinDetails> {
         return user;
       } else {
         // Gestion des erreurs HTTP
+
         if (response.statusCode == 401) {
-          print('DETAILS ADMIN GET USER');
+          authProvider.logout();
           Navigator.pushReplacement(
               context, MaterialPageRoute(builder: (context) => const MyApp()));
         }
@@ -243,17 +280,61 @@ class _MedecinDetailsState extends State<MedecinDetails> {
     }
   }
 
+  Future<List<Centre>> getAllCenter() async {
+    final url = Uri.parse("${baseUrl}api/centers?page=1");
+
+    final headers = {'Authorization': 'Bearer $token'};
+
+    try {
+      final response = await http.get(url, headers: headers);
+
+      if (response.statusCode == 200) {
+        final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
+        final datas = jsonData['hydra:member'] as List<dynamic>;
+
+        return datas.map((e) => Centre.fromJson(e)).toList();
+      } else {
+
+        if (response.statusCode == 401) {
+          authProvider.logout();
+          Navigator.pushReplacement(
+              context, MaterialPageRoute(builder: (context) => const MyApp()));
+        }
+        // Gestion des erreurs HTTP
+        throw Exception(
+            '-- Erreur d\'obtention des données\n vérifier votre connexion internet.');
+      }
+    } catch (e) {
+      //print('Error: $e \nStack trace: $stackTrace');
+      throw Exception(
+          '-- Erreur de connexion.\n Veuillez vérifier votre connexion internet !');
+    }
+  }
+
+  void getAll() {
+    getAllCenter().then((value) => {
+          setState(() {
+            listCenter = value;
+          })
+        });
+  }
+
   bool dataLoaded = false;
 
   @override
   void didChangeDependencies() {
+
     // TODO: implement didChangeDependencies
     super.didChangeDependencies();
     print('DID ZAO');
-    authProvider = Provider.of<AuthProvider>(context);
+
+    //utilisateur = widget.user;
+    authProvider = Provider.of<AuthProvider>(context, listen: false);
     token = authProvider.token;
     WidgetsBinding.instance.addPostFrameCallback((_) async {
+      getAll();
       utilisateur = await getUser(widget.user.id);
+
       if (mounted) {
         setState(() {
           profilImage = (utilisateur.imageName != null)
@@ -263,11 +344,13 @@ class _MedecinDetailsState extends State<MedecinDetails> {
           prenomController.text = utilisateur.lastName;
           phoneController.text = utilisateur.phone;
           emailController.text = utilisateur.email;
+          centreController.text =
+              (utilisateur.center != null) ? utilisateur.center!.label : '';
           categorieController.text = (utilisateur.category != null)
               ? categorieSet(utilisateur.category!)
               : "";
 
-          dataLoaded = true;
+          isLoading = false;
         });
       }
     });
@@ -287,6 +370,7 @@ class _MedecinDetailsState extends State<MedecinDetails> {
 
   FocusNode nodeEmail = FocusNode();
   FocusNode nodePhone = FocusNode();
+  FocusNode nodeCenter = FocusNode();
 
   void AjouterImage(XFile xfProfilImage, String imageName) {
     showDialog(
@@ -381,6 +465,8 @@ class _MedecinDetailsState extends State<MedecinDetails> {
                     phone: utilisateur.phone,
                     password: utilisateur.password,
                     email: utilisateur.email,
+                    center: utilisateur.center,
+                    speciality: utilisateur.speciality,
                     imageName: localCopyFile.path,
                     category: utilisateur.category,
                     address: utilisateur.address,
@@ -421,7 +507,12 @@ class _MedecinDetailsState extends State<MedecinDetails> {
     }
   }
 
+  bool isLoading = true;
+
   Future<void> UserUpdate(Utilisateur utilisateur) async {
+    setState(() {
+      isLoading = true;
+    });
     final url =
         Uri.parse("${baseUrl}api/users/${extractLastNumber(utilisateur.id)}");
     //final headers = {'Content-Type': 'application/json'};
@@ -439,22 +530,39 @@ class _MedecinDetailsState extends State<MedecinDetails> {
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonResponse = json.decode(response.body);
         print('ERRRR: $jsonResponse');
+        setState(() {
+          isLoading = false;
+        });
 
         if (jsonResponse.containsKey('error')) {
           error('Erreur de modification');
         } else {
           ModificationUtilisateur();
           if (mounted) {
-            setState(() {});
+            setState(() {
+              isLoading = false;
+            });
           }
         }
       } else {
+        setState(() {
+          isLoading = false;
+        });
+
+        if (response.statusCode == 401) {
+          authProvider.logout();
+          Navigator.pushReplacement(
+              context, MaterialPageRoute(builder: (context) => const MyApp()));
+        }
         // Gestion des erreurs HTTP
         error('Il y a une erreur. HTTP Status Code: ${response.statusCode}');
         throw Exception(
             '-- Failed to add user. HTTP Status Code: ${response.statusCode}');
       }
     } catch (e, exception) {
+      setState(() {
+        isLoading = false;
+      });
       // Gestion des erreurs autres que HTTP
       error('Erreur de connexion ou voir ceci: $e');
       print('EXCPEPT: $exception');
@@ -495,7 +603,7 @@ class _MedecinDetailsState extends State<MedecinDetails> {
       canPop: false,
       child: Scaffold(
           backgroundColor: const Color.fromARGB(1000, 238, 239, 244),
-          body: (dataLoaded)
+          body: (!isLoading)
               ? ListView(
                   children: [
                     Padding(
@@ -517,7 +625,7 @@ class _MedecinDetailsState extends State<MedecinDetails> {
                                   context,
                                   MaterialPageRoute(
                                       builder: (context) =>
-                                          IndexAcceuilMedecin()));
+                                          const IndexAcceuilMedecin()));
                             },
                           ),
                           const Spacer(),
@@ -540,7 +648,7 @@ class _MedecinDetailsState extends State<MedecinDetails> {
                     ),
                     Padding(
                       padding: const EdgeInsets.only(
-                          top: 30, right: 15, left: 15, bottom: 20),
+                          right: 15, left: 15, bottom: 20),
                       child: Card(
                         elevation: 0,
                         color: Colors.white,
@@ -735,6 +843,8 @@ class _MedecinDetailsState extends State<MedecinDetails> {
                                             phone: utilisateur.phone,
                                             password: utilisateur.password,
                                             email: email,
+                                            center: utilisateur.center,
+                                            speciality: utilisateur.speciality,
                                             imageName: utilisateur.imageName,
                                             category: utilisateur.category,
                                             address: utilisateur.address,
@@ -832,6 +942,8 @@ class _MedecinDetailsState extends State<MedecinDetails> {
                                           firstName: utilisateur.firstName,
                                           userType: utilisateur.userType,
                                           phone: phone,
+                                          center: utilisateur.center,
+                                          speciality: utilisateur.speciality,
                                           password: utilisateur.password,
                                           email: utilisateur.email,
                                           imageName: utilisateur.imageName,
@@ -857,9 +969,193 @@ class _MedecinDetailsState extends State<MedecinDetails> {
                                 ),
                               ),
                             ],
+                            if (!EditCenter) ...[
+                              Row(
+                                children: [
+                                  const Padding(
+                                    padding: EdgeInsets.only(left: 27),
+                                    child: Text('Centre:'),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.only(left: 10),
+                                    child: Container(
+                                      width: MediaQuery.of(context).size.width /
+                                          1.89,
+                                      child: TextField(
+                                        maxLength: 10,
+                                        keyboardType: TextInputType.name,
+                                        decoration: const InputDecoration(
+                                          focusedBorder: UnderlineInputBorder(
+                                            borderSide: BorderSide(
+                                              color: Color.fromARGB(
+                                                  230, 20, 20, 90),
+                                            ),
+                                          ),
+                                        ),
+                                        controller: centreController,
+                                        readOnly: true,
+                                      ),
+                                    ),
+                                  ),
+                                  IconButton(
+                                      onPressed: () {
+                                        setState(() {
+                                          EditCenter = !EditCenter;
+                                          EditEmail = false;
+                                          EditPhone = false;
+                                        });
+                                      },
+                                      icon: const Icon(Icons.edit))
+                                ],
+                              ),
+                            ] else ...[
+                              Row(
+                                children: [
+                                  const Padding(
+                                    padding: EdgeInsets.only(left: 26),
+                                    child: Text('Centre:'),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.only(left: 7),
+                                    child: Container(
+                                      width: MediaQuery.of(context).size.width /
+                                          1.80,
+                                      child: buildDropdownButtonFormFieldCenter(
+                                        label: 'Centre',
+                                        value: center,
+                                        focusNode: nodeCenter,
+                                        items: listCenter.map((e) {
+                                          return DropdownMenuItem<Centre>(
+                                            value: e,
+                                            child: Text('${e.label}'),
+                                          );
+                                        }).toList(),
+                                        onChanged: (Centre? newval) {
+                                          setState(() {
+                                            EditCenter = true;
+                                            center = newval;
+                                          });
+                                        },
+                                        validator: (value) {
+                                          if (value == null) {
+                                            return 'Veuillez sélectionner un centre';
+                                          }
+                                          return null;
+                                        },
+                                      ),
+                                    ),
+                                  ),
+                                  IconButton(
+                                      onPressed: () {
+                                        setState(() {
+                                          EditCenter = !EditCenter;
+                                          EditEmail = false;
+                                          EditPhone = false;
+                                        });
+                                      },
+                                      icon: const Icon(Icons.edit))
+                                ],
+                              ),
+                            ],
+                            if (EditCenter) ...[
+                              Padding(
+                                padding:
+                                    const EdgeInsets.only(left: 160, right: 10),
+                                child: ElevatedButton(
+                                  style: ButtonStyle(
+                                    backgroundColor: MaterialStateProperty.all(
+                                        const Color.fromARGB(
+                                            1000, 60, 70, 120)),
+                                    shape: MaterialStateProperty.all(
+                                      RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(
+                                            8.0), // Définissez le rayon de la bordure ici
+                                      ),
+                                    ),
+                                    minimumSize: MaterialStateProperty.all(
+                                        const Size(100.0, 30.0)),
+                                  ),
+                                  onPressed: () {
+                                    String phone = phoneController.text;
+                                    if (center == null) {
+                                      ModificationError(
+                                          'Veuillez inserer votre centre');
+                                    } else {
+                                      FocusScope.of(context).unfocus();
+                                      Utilisateur userInterm = Utilisateur(
+                                          id: utilisateur.id,
+                                          lastName: utilisateur.lastName,
+                                          firstName: utilisateur.firstName,
+                                          userType: utilisateur.userType,
+                                          phone: utilisateur.phone,
+                                          center: center!,
+                                          speciality: utilisateur.speciality,
+                                          password: utilisateur.password,
+                                          email: utilisateur.email,
+                                          imageName: utilisateur.imageName,
+                                          category: utilisateur.category,
+                                          address: utilisateur.address,
+                                          roles: utilisateur.roles,
+                                          createdAt: utilisateur.createdAt,
+                                          city: utilisateur.city);
+                                      UserUpdate(userInterm);
+                                      setState(() {
+                                        centreController.text =
+                                            userInterm.center!.label;
+                                        center = null;
+                                        EditCenter = false;
+                                        didChangeDependencies();
+                                      });
+                                    }
+                                  },
+                                  child: const Text(
+                                    'Enregistrer',
+                                    textScaleFactor: 1.2,
+                                    style: TextStyle(
+                                      color: Color.fromARGB(255, 253, 253, 253),
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                            Padding(
+                              padding:
+                                  const EdgeInsets.only(top: 10,left: 10, right: 10),
+                              child: ElevatedButton(
+                                style: ButtonStyle(
+                                  backgroundColor: MaterialStateProperty.all(
+                                      const Color.fromARGB(1000, 60, 70, 120)),
+                                  shape: MaterialStateProperty.all(
+                                    RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(
+                                          8.0), // Définissez le rayon de la bordure ici
+                                    ),
+                                  ),
+                                  minimumSize: MaterialStateProperty.all(
+                                      const Size(100.0, 40.0)),
+                                ),
+                                onPressed: () {
+
+                                  UtilisateurNewPassword utilisateurNewPassword = UtilisateurNewPassword(id: int.parse(extractLastNumber(utilisateur.id)), lastName: utilisateur.lastName, firstName: utilisateur.firstName, userType: utilisateur.userType, phone: utilisateur.phone, password: utilisateur.password, email: utilisateur.email, imageName: utilisateur.imageName, category: utilisateur.category, address: utilisateur.address, roles: utilisateur.roles, city: utilisateur.city);
+
+
+                                  Navigator.push(context, MaterialPageRoute(builder: (context)=>ModificationPassword(),settings: RouteSettings(arguments: utilisateurNewPassword)));
+
+                                },
+                                child: const Text(
+                                  'Changer mot de passe',
+                                  textScaleFactor: 1.2,
+                                  style: TextStyle(
+                                    color: Color.fromARGB(255, 253, 253, 253),
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                            ),
                             Padding(
                                 padding: const EdgeInsets.only(
-                                    top: 40, left: 30, bottom: 30),
+                                    top: 30, left: 10, bottom: 30),
                                 child: GestureDetector(
                                   onTap: () {
                                     authProvider.logout();
@@ -882,7 +1178,7 @@ class _MedecinDetailsState extends State<MedecinDetails> {
                                         size: 25,
                                       ),
                                       SizedBox(
-                                        width: 20,
+                                        width: 10,
                                       ),
                                       Text(
                                         'Se deconnecter',
@@ -894,17 +1190,38 @@ class _MedecinDetailsState extends State<MedecinDetails> {
                                     ],
                                   ),
                                 )),
+
                           ],
                         ),
                       ),
                     )
                   ],
                 )
-              : const Center(
-                  child: CircularProgressIndicator(),
-                )),
+              : loadingWidget()),
     );
   }
+
+
+  Widget loadingWidget(){
+    return Center(
+        child:Container(
+          width: 100,
+          height: 100,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+
+              LoadingAnimationWidget.hexagonDots(
+                  color: Colors.redAccent,
+                  size: 120),
+
+              Image.asset('assets/images/logo2.png',width: 80,height: 80,fit: BoxFit.cover,)
+            ],
+          ),
+        ));
+  }
+
+
 
   void ModificationUtilisateur() {
     final materialBanner = MaterialBanner(

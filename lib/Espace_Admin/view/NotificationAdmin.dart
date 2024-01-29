@@ -10,6 +10,7 @@ import 'package:med_scheduler_front/main.dart';
 import 'package:med_scheduler_front/UrlBase.dart';
 import 'dart:io';
 import 'IndexAccueilAdmin.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 class NotificationAdmin extends StatefulWidget {
   final Utilisateur user;
@@ -87,7 +88,9 @@ class _NotificationAdminState extends State<NotificationAdmin> {
 
         return datas.map((e) => CustomAppointment.fromJson(e)).toList();
       } else {
+
         if (response.statusCode == 401) {
+          authProvider.logout();
           Navigator.pushReplacement(
               context, MaterialPageRoute(builder: (context) => const MyApp()));
         }
@@ -255,7 +258,7 @@ class _NotificationAdminState extends State<NotificationAdmin> {
                         return Padding(
                           padding: EdgeInsets.only(
                               top: MediaQuery.of(context).size.height / 3),
-                          child: const Center(child: CircularProgressIndicator()),
+                          child: Center(child: loadingWidget()),
                         );
                       } else if (snapshot.hasError) {
                         // Gérez les erreurs de requête ici
@@ -552,4 +555,25 @@ class _NotificationAdminState extends State<NotificationAdmin> {
               ],
             )),);
   }
+
+  Widget loadingWidget(){
+    return Center(
+        child:Container(
+          width: 100,
+          height: 100,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+
+              LoadingAnimationWidget.hexagonDots(
+                  color: Colors.redAccent,
+                  size: 120),
+
+              Image.asset('assets/images/logo2.png',width: 80,height: 80,fit: BoxFit.cover,)
+            ],
+          ),
+        ));
+  }
+
+
 }

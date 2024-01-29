@@ -40,6 +40,7 @@ class CustomAppointmentDataSource extends CalendarDataSource{
 
 
   DateTime getStartAt(int index) {
+
     return _getMeetingData(index).startAt;
   }
 
@@ -48,7 +49,7 @@ class CustomAppointmentDataSource extends CalendarDataSource{
     DateTime start = _getMeetingData(index).timeStart;
     DateTime startDate = DateTime(getStartAt(index).year,getStartAt(index).month,getStartAt(index).day,start.hour,start.minute);
 
-    return start;
+    return startDate;
   }
 
   @override

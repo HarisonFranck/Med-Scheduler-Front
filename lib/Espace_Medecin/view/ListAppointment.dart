@@ -11,6 +11,8 @@ import 'AppointmentDetails.dart';
 import 'package:med_scheduler_front/UrlBase.dart';
 import 'dart:io';
 import 'package:intl/intl.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
+import 'package:med_scheduler_front/main.dart';
 
 class ListAppointment extends StatefulWidget {
   final Utilisateur user;
@@ -41,6 +43,12 @@ class _ListAppointmentState extends State<ListAppointment> {
 
         return user;
       } else {
+
+        if (response.statusCode == 401) {
+          authProvider.logout();
+          Navigator.pushReplacement(
+              context, MaterialPageRoute(builder: (context) => const MyApp()));
+        }
         // Gestion des erreurs HTTP
         throw Exception(
             '-- Failed to load data. HTTP Status Code: ${response.statusCode}');
@@ -200,7 +208,7 @@ class _ListAppointmentState extends State<ListAppointment> {
 
     if (match != null) {
       String val = match.group(0)!;
-      print('VAL: $val');
+
       return val;
     } else {
       // Aucun nombre trouvé dans la chaîne
@@ -217,14 +225,18 @@ class _ListAppointmentState extends State<ListAppointment> {
     try {
       final response = await http.get(url, headers: headers);
 
-      print('STATUS CODE: ${response.statusCode} \n');
-
       if (response.statusCode == 200) {
         final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
         final datas = jsonData['hydra:member'] as List<dynamic>;
 
         return datas.map((e) => CustomAppointment.fromJson(e)).toList();
       } else {
+
+        if (response.statusCode == 401) {
+          authProvider.logout();
+          Navigator.pushReplacement(
+              context, MaterialPageRoute(builder: (context) => const MyApp()));
+        }
         // Gestion des erreurs HTTP
         throw Exception(
             '-- Failed to load data. HTTP Status Code: ${response.statusCode}');
@@ -392,7 +404,7 @@ class _ListAppointmentState extends State<ListAppointment> {
                         if (snapshot.connectionState ==
                             ConnectionState.waiting) {
                           // Affichez un indicateur de chargement pendant le chargement
-                          return const Center(child: CircularProgressIndicator());
+                          return Center(child:loadingWidget());
                         } else if (snapshot.hasError) {
                           // Gérez les erreurs de requête ici
                           return const Center(
@@ -605,7 +617,7 @@ class _ListAppointmentState extends State<ListAppointment> {
                         if (snapshot.connectionState ==
                             ConnectionState.waiting) {
                           // Affichez un indicateur de chargement pendant le chargement
-                          return const Center(child: CircularProgressIndicator());
+                          return Center(child:loadingWidget());
                         } else if (snapshot.hasError) {
                           // Gérez les erreurs de requête ici
                           return const Center(
@@ -817,7 +829,7 @@ class _ListAppointmentState extends State<ListAppointment> {
                         if (snapshot.connectionState ==
                             ConnectionState.waiting) {
                           // Affichez un indicateur de chargement pendant le chargement
-                          return const Center(child: CircularProgressIndicator());
+                          return Center(child:  loadingWidget());
                         } else if (snapshot.hasError) {
                           // Gérez les erreurs de requête ici
                           return const Center(
@@ -1024,5 +1036,25 @@ class _ListAppointmentState extends State<ListAppointment> {
                 ],
               ],
             )),);
+  }
+
+
+  Widget loadingWidget(){
+    return Center(
+        child:Container(
+          width: 100,
+          height: 100,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+
+              LoadingAnimationWidget.hexagonDots(
+                  color: Colors.redAccent,
+                  size: 120),
+
+              Image.asset('assets/images/logo2.png',width: 80,height: 80,fit: BoxFit.cover,)
+            ],
+          ),
+        ));
   }
 }

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'Login.dart';
+import 'IndexAcceuilMedecin.dart';
 import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -9,22 +9,19 @@ import 'package:med_scheduler_front/Utilisateur.dart';
 import 'package:med_scheduler_front/UrlBase.dart';
 import 'package:med_scheduler_front/AuthProvider.dart';
 import 'package:med_scheduler_front/main.dart';
-import 'package:loading_animation_widget/loading_animation_widget.dart';
 
-class Modification_MotdePasse extends StatefulWidget {
+class ModificationPassword extends StatefulWidget {
   @override
-  _Modification_MotdePasseState createState() => _Modification_MotdePasseState();
+  _ModificationPasswordState createState() => _ModificationPasswordState();
 }
 
-class _Modification_MotdePasseState extends State<Modification_MotdePasse> {
+class _ModificationPasswordState extends State<ModificationPassword> {
 
 
   late AuthProvider authProvider;
   late String token;
 
   String baseUrl = UrlBase().baseUrl;
-
-  bool isLoading = false;
 
 
 
@@ -36,12 +33,13 @@ class _Modification_MotdePasseState extends State<Modification_MotdePasse> {
   bool obscureconfirmpwd = true;
 
 
+
   FocusNode _focusNodemail = FocusNode();
 
 
   final GlobalKey<ScaffoldState> scafkey = GlobalKey<ScaffoldState>();
 
-
+Utilisateur? user;
 
 
   String extractLastNumber(String input) {
@@ -59,12 +57,7 @@ class _Modification_MotdePasseState extends State<Modification_MotdePasse> {
   }
 
 
-  Future<void> patchUser(int id,String newPassword) async {
-
-    setState(() {
-      isLoading = true;
-    });
-
+  Future<void> getUser(int id,String newPassword) async {
     final url = Uri.parse("${baseUrl}api/change-password/$id");
 
     print('URL USER: $url');
@@ -79,22 +72,14 @@ class _Modification_MotdePasseState extends State<Modification_MotdePasse> {
       print(' --- ST CODE: ${response.statusCode}');
 
       if (response.statusCode == 200) {
-
         modifPasswordValider();
 
-        setState(() {
-          isLoading = false;
-        });
 
-        Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context)=>Login()), (route) => false);
+        Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context)=>IndexAcceuilMedecin()), (route) => false);
 
 
       } else {
-        setState(() {
-          isLoading = false;
-        });
         // Gestion des erreurs HTTP
-
         if (response.statusCode == 401) {
           authProvider.logout();
           Navigator.pushReplacement(
@@ -103,9 +88,6 @@ class _Modification_MotdePasseState extends State<Modification_MotdePasse> {
         throw Exception('ANOTHER ERROR');
       }
     } catch (e, stackTrace) {
-      setState(() {
-        isLoading = false;
-      });
       print('Error: $e \nStack trace: $stackTrace');
       throw Exception('-- Failed to load data. Error: $e');
     }
@@ -117,7 +99,7 @@ class _Modification_MotdePasseState extends State<Modification_MotdePasse> {
   @override
   Widget build(BuildContext context) {
 
-    UtilisateurNewPassword user = ModalRoute.of(context)?.settings.arguments as UtilisateurNewPassword;
+    UtilisateurNewPassword utilisateur = ModalRoute.of(context)?.settings.arguments as UtilisateurNewPassword;
 
     return PopScope(canPop: false,child: Scaffold(
 
@@ -125,7 +107,7 @@ class _Modification_MotdePasseState extends State<Modification_MotdePasse> {
       key: scafkey,
 
 
-      body: (!isLoading)?ListView(
+      body: ListView(
 
         children: [
 
@@ -134,7 +116,8 @@ class _Modification_MotdePasseState extends State<Modification_MotdePasse> {
           Padding(padding: const EdgeInsets.only(top: 10,left: 10),child:  GestureDetector(
 
             onTap: (){
-              Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>Login()));
+
+              Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>IndexAcceuilMedecin()));
             },
             child: Row(
               children: [
@@ -284,8 +267,7 @@ class _Modification_MotdePasseState extends State<Modification_MotdePasse> {
                     /// Si les champs nouveau mot de passe et la confirmation mot de passe sont les mêmes
                     if(newmdpController.text==confirmnewmdpController.text){
 
-
-                      patchUser(user.id,newmdpController.text);
+                      getUser(utilisateur.id,newmdpController.text);
 
                     }else{
                       /// Quand le nouveau mot de passe et confirmation mot de passe ne sont pas les memes
@@ -312,7 +294,7 @@ class _Modification_MotdePasseState extends State<Modification_MotdePasse> {
 
 
         ],
-      ):loadingWidget(),
+      ),
     ),);
   }
 
@@ -321,13 +303,14 @@ class _Modification_MotdePasseState extends State<Modification_MotdePasse> {
     SnackBar snackBar = SnackBar(
       /// need to set following properties for best effect of awesome_snackbar_content
       elevation: 0,
+      margin: EdgeInsets.only(bottom: 40),
       behavior: SnackBarBehavior.floating,
       backgroundColor: Colors.transparent,
       content: AwesomeSnackbarContent(
         color: Colors.redAccent,
         title: 'Erreur!',
         message:
-        'Le nouveau mot de passe et confirmation ne correspond pas.',
+        'Les mots de passe ne correspondent pas.',
 
         /// change contentType to ContentType.success, ContentType.warning or ContentType.help for variants
         contentType: ContentType.failure,
@@ -379,28 +362,6 @@ class _Modification_MotdePasseState extends State<Modification_MotdePasse> {
     ScaffoldMessenger.of(context)
       ..hideCurrentMaterialBanner()
       ..showMaterialBanner(materialBanner);
-  }
-
-
-  Widget loadingWidget() {
-    return Center(
-        child: Container(
-          width: 100,
-          height: 100,
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              LoadingAnimationWidget.hexagonDots(
-                  color: Colors.redAccent, size: 120),
-              Image.asset(
-                'assets/images/logo2.png',
-                width: 80,
-                height: 80,
-                fit: BoxFit.cover,
-              )
-            ],
-          ),
-        ));
   }
 
 

@@ -22,6 +22,7 @@ import 'package:med_scheduler_front/Patient.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:device_calendar/device_calendar.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 class AccueilPatient extends StatefulWidget {
   final Utilisateur user;
@@ -77,7 +78,7 @@ class _AccueilPatientState extends State<AccueilPatient> {
     var calendars = await deviceCalendarPlugin.retrieveCalendars();
 
     if (calendars.data!.isEmpty) {
-      print('NULL ILAY CALENDAR');
+
       return;
     }
 
@@ -89,10 +90,8 @@ class _AccueilPatientState extends State<AccueilPatient> {
 
       if (appoints.isNotEmpty) {
         appoints.forEach((element) async {
-          print('THE APPOINT ${element.reason}');
 
-          print(
-              'APPOINT TZTIME: ${tz.TZDateTime.from(element.timeStart, tz.local)}');
+
           TZDateTime startTZ = TZDateTime(
               tz.getLocation('Indian/Antananarivo'),
               element.startAt.year,
@@ -110,8 +109,7 @@ class _AccueilPatientState extends State<AccueilPatient> {
               element.timeEnd.minute,
               element.timeEnd.second);
 
-          print('StartTZ: ${startTZ}');
-          print('EndTZ: ${endTZ}');
+
 
           Event event = Event(
             defaultCalendarId,
@@ -129,7 +127,6 @@ class _AccueilPatientState extends State<AccueilPatient> {
             ],
           );
 
-          print('EVENT DESC: ${event.description}');
 
           // Utiliser RetrieveEventsParams
           var params = RetrieveEventsParams(
@@ -148,8 +145,7 @@ class _AccueilPatientState extends State<AccueilPatient> {
           if (!eventExists) {
             final result =
                 await deviceCalendarPlugin.createOrUpdateEvent(event);
-            print('RSULTAT ERRORS: ${result!.errors}');
-            print('RSULTAT SUCCES: ${result.data}');
+
           }
 
           print('-- FINISHED --');
@@ -304,8 +300,6 @@ class _AccueilPatientState extends State<AccueilPatient> {
     try {
       final response = await http.get(url, headers: headers);
 
-      print('STATUS CODE: ${response.statusCode} \n');
-
       if (response.statusCode == 200) {
         final jsonData = jsonDecode(response.body);
 
@@ -313,7 +307,9 @@ class _AccueilPatientState extends State<AccueilPatient> {
 
         return specialite;
       } else {
+
         if (response.statusCode == 401) {
+          authProvider.logout();
           Navigator.pushReplacement(
               context, MaterialPageRoute(builder: (context) => const MyApp()));
         }
@@ -360,11 +356,16 @@ class _AccueilPatientState extends State<AccueilPatient> {
         final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
         final datas = jsonData['hydra:member'] as List<dynamic>;
 
-        print('DATAS ALL APPOINTS SIZE:${datas.length}');
 
-        return datas.map((e) => CustomAppointment.fromJson(e)).toList();
+
+        final datasAppoints = datas.map((e) => CustomAppointment.fromJson(e)).toList();
+
+         return datasAppoints.where((element) => (element.isDeleted==null||element.isDeleted==false)).toList();
+
       } else {
+
         if (response.statusCode == 401) {
+          authProvider.logout();
           Navigator.pushReplacement(
               context, MaterialPageRoute(builder: (context) => const MyApp()));
         }
@@ -415,7 +416,6 @@ class _AccueilPatientState extends State<AccueilPatient> {
 
     try {
       final response = await http.get(url, headers: headers);
-      print('STATUS CODE MEDS: ${response.statusCode} \n');
 
       if (response.statusCode == 200) {
         final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
@@ -423,7 +423,9 @@ class _AccueilPatientState extends State<AccueilPatient> {
 
         return datas.map((e) => Medecin.fromJson(e)).toList();
       } else {
+
         if (response.statusCode == 401) {
+          authProvider.logout();
           Navigator.pushReplacement(
               context, MaterialPageRoute(builder: (context) => const MyApp()));
         }
@@ -447,7 +449,6 @@ class _AccueilPatientState extends State<AccueilPatient> {
 
     try {
       final response = await http.get(url, headers: headers);
-      print('STATUS CODE SPECS: ${response.statusCode} \n');
 
       if (response.statusCode == 200) {
         final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
@@ -456,6 +457,7 @@ class _AccueilPatientState extends State<AccueilPatient> {
         return datas.map((e) => Specialite.fromJson(e)).toList();
       } else {
         if (response.statusCode == 401) {
+          authProvider.logout();
           Navigator.pushReplacement(
               context, MaterialPageRoute(builder: (context) => const MyApp()));
         }
@@ -484,7 +486,9 @@ class _AccueilPatientState extends State<AccueilPatient> {
 
         return datas.map((e) => Centre.fromJson(e)).toList();
       } else {
+
         if (response.statusCode == 401) {
+          authProvider.logout();
           Navigator.pushReplacement(
               context, MaterialPageRoute(builder: (context) => const MyApp()));
         }
@@ -1047,6 +1051,7 @@ class _AccueilPatientState extends State<AccueilPatient> {
                             FocusScope.of(context).unfocus();
                             setState(() {
                               speciality = null;
+                              searchCenter.text = "";
                               searchSpecialite.text = "";
                               searchLocation.text = "";
                               isLocation = false;
@@ -1093,6 +1098,7 @@ class _AccueilPatientState extends State<AccueilPatient> {
                             FocusScope.of(context).unfocus();
                             setState(() {
                               centre = null;
+                              searchSpecialite.text = "";
                               searchCenter.text = "";
                               isCenter = false;
                               isLocation = false;
@@ -1200,11 +1206,10 @@ class _AccueilPatientState extends State<AccueilPatient> {
                           value: centre,
                           onChanged: (Centre? newval) {
                             setState(() {
+
                               searchSpecialite.text = "";
                               centre = newval!;
-                              searchCenter.text = (centre!.label.isNotEmpty)
-                                  ? centre!.label
-                                  : '';
+                              searchCenter.text = centre!.label;
                               print('CENTER CLICKED: ${searchCenter.text}');
 
                               medecinsFuture = getAllMedecin(currentPage);
@@ -1212,6 +1217,7 @@ class _AccueilPatientState extends State<AccueilPatient> {
                           },
                           items: listCenter.map((e) {
                             return DropdownMenuItem<Centre>(
+                              key: Key(e.id),
                               value: e,
                               child: Text(e.label),
                             );
@@ -1242,7 +1248,7 @@ class _AccueilPatientState extends State<AccueilPatient> {
                               hintStyle: const TextStyle(
                                   color: Colors.black,
                                   fontWeight: FontWeight.w300),
-                              hintText: 'Liste des center',
+                              hintText: (searchCenter.text!="")?'':'Liste des center',
                               border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(5.0))),
                         ),
@@ -1264,20 +1270,21 @@ class _AccueilPatientState extends State<AccueilPatient> {
                             ),
                             value: speciality,
                             onChanged: (Specialite? newval) {
+                              //print('SPEC CHANGE: ${speciality!.label}');
                               setState(() {
+
                                 searchCenter.text = "";
                                 speciality = newval!;
-                                searchSpecialite.text =
-                                    (speciality!.label.isNotEmpty)
-                                        ? speciality!.label
-                                        : '';
+                                searchSpecialite.text = speciality!.label;
                                 print(
                                     ' SPEC CLICKED: ${searchSpecialite.text}');
                                 medecinsFuture = getAllMedecin(currentPage);
+
                               });
                             },
                             items: listSpec.map((e) {
                               return DropdownMenuItem<Specialite>(
+                                key: Key(e.id),
                                 value: e,
                                 child: Text(e.label),
                               );
@@ -1308,7 +1315,7 @@ class _AccueilPatientState extends State<AccueilPatient> {
                                 hintStyle: const TextStyle(
                                     color: Colors.black,
                                     fontWeight: FontWeight.w300),
-                                hintText: 'Liste des specialites',
+                                hintText: (searchSpecialite.text!="")?'':'Liste des specialites',
                                 border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(5.0))),
                           ),
@@ -1380,9 +1387,7 @@ class _AccueilPatientState extends State<AccueilPatient> {
                                   child: ListView(
                                 children: const [
                                   Center(
-                                    child: CircularProgressIndicator(
-                                      color: Colors.redAccent,
-                                    ),
+                                    child:CircularProgressIndicator(color: Colors.redAccent,)
                                   ),
                                   SizedBox(
                                     height: 30,
@@ -1541,7 +1546,7 @@ class _AccueilPatientState extends State<AccueilPatient> {
                                                                             .w500),
                                                               ),
                                                               Text(
-                                                                '${medecin.speciality!.label}',
+                                                                '${(medecin.speciality!=null)?medecin.speciality!.label:''}',
                                                                 style: const TextStyle(
                                                                     color: Color
                                                                         .fromARGB(
@@ -1692,8 +1697,8 @@ class _AccueilPatientState extends State<AccueilPatient> {
                                             ));
                                       } else if (isLoading) {
                                         // Affichez l'indicateur de chargement pendant le chargement des données
-                                        return const Center(
-                                            child: CircularProgressIndicator());
+                                        return Center(
+                                            child: LoadingAnimationWidget.fourRotatingDots(color: Colors.redAccent, size: 120));
                                       } else {
                                         return Container(); // ou tout autre widget pour l'espace réservé
                                       }
@@ -1704,22 +1709,39 @@ class _AccueilPatientState extends State<AccueilPatient> {
                         ))
                   ],
                 )
-              : const Center(
+              : Center(
                   child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    CircularProgressIndicator(
-                      color: Colors.redAccent,
-                    ),
-                    SizedBox(
+                  loadingWidget(),
+                    const SizedBox(
                       height: 30,
                     ),
-                    Text(
+                    const Text(
                       'Chargement des données..\n Assurez-vous d\'avoir une connexion internet',
                       textAlign: TextAlign.center,
                     )
                   ],
                 ))),
     );
+  }
+
+  Widget loadingWidget(){
+    return Center(
+        child:Container(
+          width: 100,
+          height: 100,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+
+              LoadingAnimationWidget.hexagonDots(
+                  color: Colors.redAccent,
+                  size: 120),
+
+              Image.asset('assets/images/logo2.png',width: 80,height: 80,fit: BoxFit.cover,)
+            ],
+          ),
+        ));
   }
 }

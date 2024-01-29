@@ -13,6 +13,8 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:med_scheduler_front/UrlBase.dart';
 import 'ListAppointment.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
+import 'package:med_scheduler_front/main.dart';
 
 class IndexAcceuilMedecin extends StatefulWidget {
   const IndexAcceuilMedecin({super.key});
@@ -45,6 +47,12 @@ class _IndexAcceuilMedecinState extends State<IndexAcceuilMedecin> {
 
         return user;
       } else {
+
+        if (response.statusCode == 401) {
+          authProvider.logout();
+          Navigator.pushReplacement(
+              context, MaterialPageRoute(builder: (context) => const MyApp()));
+        }
         // Gestion des erreurs HTTP
         throw Exception(
             '-- Failed to load data. HTTP Status Code: ${response.statusCode}');
@@ -141,13 +149,11 @@ class _IndexAcceuilMedecinState extends State<IndexAcceuilMedecin> {
         backgroundColor: Color.fromARGB(1000, 238, 239, 244),
         body: (utilisateur != null)
             ? _pages![_selectedPageIndex]['page']
-            : const Center(
+            : Center(
                 child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  CircularProgressIndicator(
-                    color: Colors.redAccent,
-                  ),
+                  loadingWidget(),
                   SizedBox(
                     height: 30,
                   ),
@@ -197,4 +203,26 @@ class _IndexAcceuilMedecinState extends State<IndexAcceuilMedecin> {
       ),
     );
   }
+
+
+
+  Widget loadingWidget(){
+    return Center(
+        child:Container(
+          width: 100,
+          height: 100,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+
+              LoadingAnimationWidget.hexagonDots(
+                  color: Colors.redAccent,
+                  size: 120),
+
+              Image.asset('assets/images/logo2.png',width: 80,height: 80,fit: BoxFit.cover,)
+            ],
+          ),
+        ));
+  }
+
 }

@@ -8,20 +8,16 @@ import 'dart:async';
 import 'package:med_scheduler_front/AuthProvider.dart';
 import 'package:provider/provider.dart';
 import 'package:med_scheduler_front/UrlBase.dart';
-import 'package:med_scheduler_front/main.dart';
 import 'package:intl/intl.dart';
 import 'package:med_scheduler_front/CustomAppointmentDataSource.dart';
 import 'dart:io';
 import 'IndexAccueilAdmin.dart';
 import 'AppointmentDialog.dart';
-import 'package:med_scheduler_front/DisablingAppointment.dart';
+import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
+import 'package:med_scheduler_front/main.dart';
 
 class Agenda extends StatefulWidget {
-  final bool disconnect;
-
-
-  Agenda({required this.disconnect});
-
   AgendaState createState() => AgendaState();
 }
 
@@ -35,10 +31,6 @@ class AgendaState extends State<Agenda> {
   void initState() {
     // TODO: implement initState
     super.initState();
-    if(widget.disconnect){
-        print('DECOONECTTTTT');
-      dispose();
-    }
   }
 
   @override
@@ -46,7 +38,6 @@ class AgendaState extends State<Agenda> {
     // TODO: implement dispose
     _isPageActive = false;
     super.dispose();
-
 
     print('--- DESTRUCTION PAGE ---');
   }
@@ -60,33 +51,45 @@ class AgendaState extends State<Agenda> {
 
   bool dataLoaded = false;
 
+  List<CustomAppointment> getAllUnavalaibleDesactivateByDateAndMedecin(
+      List<CustomAppointment> list, DateTime dt) {
+    List<CustomAppointment> filteredList = [];
+    String formatDt = DateFormat('yyyy-MM-dd').format(dt);
+    for (int val = 0; val < list.length; val++) {
+      CustomAppointment appointment = list.elementAt(val);
+      if ((appointment.appType == "Desactiver") &&
+          (DateFormat('yyyy-MM-dd').format(appointment.startAt) == formatDt)) {
+        filteredList.add(appointment);
+      }
+    }
+
+    return filteredList;
+  }
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if(widget.disconnect==false){
-      print('FETCH DEPENDECIES');
-      authProvider = Provider.of<AuthProvider>(context, listen: false);
-      token = authProvider.token;
+    calculateBlackoutDates();
+    print('FETCH DEPENDECIES');
+    authProvider = Provider.of<AuthProvider>(context, listen: false);
+    token = authProvider.token;
 
-      medecinClicked = ModalRoute.of(context)?.settings.arguments as Medecin;
-      WidgetsBinding.instance.addPostFrameCallback((_) async {
-        //await getAllAsync();
+    medecinClicked = ModalRoute.of(context)?.settings.arguments as Medecin;
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      //await getAllAsync();
 
-        listAppointment = await getAllAppointment();
-        listUnavalaibleAppointment = await getAllUnavalaibleAppointment();
-        if (listAppointment.isEmpty) {
-          print('EMPTY O');
-          setState(() {
-            dataLoaded = true;
-          });
-        }
+      listAppointment = await getAllAppointment();
+      listUnavalaibleAppointment = await getAllUnavalaibleAppointment();
+      if (listAppointment.isEmpty) {
+        print('EMPTY O');
         setState(() {
           dataLoaded = true;
         });
-
+      }
+      setState(() {
+        dataLoaded = true;
       });
-    }
-
+    });
   }
 
   String extractLastNumber(String input) {
@@ -98,15 +101,11 @@ class AgendaState extends State<Agenda> {
       return val;
     } else {
       // Aucun nombre trouvé dans la chaîne
-      throw FormatException("Aucun nombre trouvé dans la chaîne.");
+      throw const FormatException("Aucun nombre trouvé dans la chaîne.");
     }
   }
 
-
-
   Future<List<CustomAppointment>> getAllUnavalaibleAppointment() async {
-
-
     if (!_isPageActive) {
       return []; // Page n'est plus active, on retourne une liste vide.
     }
@@ -126,9 +125,16 @@ class AgendaState extends State<Agenda> {
         final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
         final datas = jsonData['hydra:member'] as List<dynamic>;
 
-
         return datas.map((e) => CustomAppointment.fromJson(e)).toList();
       } else {
+
+
+        if (response.statusCode == 401) {
+          authProvider.logout();
+          Navigator.pushReplacement(
+              context, MaterialPageRoute(builder: (context) => const MyApp()));
+        }
+
         print('RESP ERROR UNAV: ${response.body}');
         // Gestion des erreurs HTTP
         throw Exception(
@@ -140,10 +146,7 @@ class AgendaState extends State<Agenda> {
     }
   }
 
-
-
   Future<List<CustomAppointment>> getAllAppointment() async {
-
     if (!_isPageActive) {
       return []; // Page n'est plus active, on retourne une liste vide.
     }
@@ -152,8 +155,6 @@ class AgendaState extends State<Agenda> {
         "${baseUrl}api/doctors/appointments/${extractLastNumber(medecinClicked!.id)}");
 
     final headers = {'Authorization': 'Bearer $token'};
-
-
 
     try {
       final response = await http.get(url, headers: headers);
@@ -164,12 +165,28 @@ class AgendaState extends State<Agenda> {
         final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
         final datas = jsonData['hydra:member'] as List<dynamic>;
 
+        //return datas.map((e) => CustomAppointment.fromJson(e)).toList();
 
-        return datas.map((e) => CustomAppointment.fromJson(e)).toList();
+        // Filtrer les rendez-vous à venir
+        final upcomingAppointments = datas.where((e) {
+          final appointmentDate = DateTime.parse(e['startAt']);
+          return appointmentDate.isAfter(DateTime.now());
+        }).toList();
+
+        return upcomingAppointments
+            .map((e) => CustomAppointment.fromJson(e))
+            .toList();
       } else {
+
+
+        if (response.statusCode == 401) {
+          authProvider.logout();
+          Navigator.pushReplacement(
+              context, MaterialPageRoute(builder: (context) => const MyApp()));
+        }
+
         // Gestion des erreurs HTTP
-        throw Exception(
-            '-- TOKEN EXPIRED.');
+        throw Exception('-- TOKEN EXPIRED.');
       }
     } catch (e) {
       //print('Error: $e \nStack trace: $stackTrace');
@@ -183,19 +200,19 @@ class AgendaState extends State<Agenda> {
   List<DateTime> blackoutDates = [];
 
   List<CustomAppointment>? getAvailableAppointments(
-      DateTime journeeCliquer,
-      List<CustomAppointment> appointments,
-      Medecin medecin,
-      List<CustomAppointment> listUnavalaibleAppointment,
-      ) {
+    DateTime journeeCliquer,
+    List<CustomAppointment> appointments,
+    Medecin medecin,
+    List<CustomAppointment> listUnavalaibleAppointment,
+  ) {
     /// Verification si la date cliquer en contient déja ou a deja été selectionnée(il y a une tranche déja enregistrée)
 
     bool isDayAlreadySelected = appointments.any((appointment) =>
-    (appointment.startAt.day == journeeCliquer.day) &&
+        (appointment.startAt.day == journeeCliquer.day) &&
         (appointment.startAt.year == journeeCliquer.year) &&
         (appointment.startAt.month == journeeCliquer.month) &&
         ((appointment.medecin != null &&
-            appointment.medecin!.lastName == medecin.lastName) &&
+                appointment.medecin!.lastName == medecin.lastName) &&
             (appointment.medecin != null &&
                 appointment.medecin!.firstName == medecin.firstName)));
 
@@ -214,96 +231,96 @@ class AgendaState extends State<Agenda> {
       if (journeeCliquer.day > now.day) {
         List<CustomAppointment> availableAppointments = defaultTimeSlots
             .map((timeSlot) {
-          DateTime startTime = DateTime(
-            journeeCliquer.year,
-            journeeCliquer.month,
-            journeeCliquer.day,
-            int.parse(timeSlot.substring(0, 2)),
-            0,
-          );
-          DateTime endTime = DateTime(
-            journeeCliquer.year,
-            journeeCliquer.month,
-            journeeCliquer.day,
-            int.parse(timeSlot.substring(6, 8)),
-            0,
-          );
+              DateTime startTime = DateTime(
+                journeeCliquer.year,
+                journeeCliquer.month,
+                journeeCliquer.day,
+                int.parse(timeSlot.substring(0, 2)),
+                0,
+              );
+              DateTime endTime = DateTime(
+                journeeCliquer.year,
+                journeeCliquer.month,
+                journeeCliquer.day,
+                int.parse(timeSlot.substring(6, 8)),
+                0,
+              );
 
-          return CustomAppointment(
-            id: "", // Vous devrez attribuer un identifiant unique ici
-            type: "",
-            medecin: medecin,
-            patient: null,
-            startAt: DateTime(
-              journeeCliquer.year,
-              journeeCliquer.month,
-              journeeCliquer.day,
-            ),
-            timeStart: startTime,
-            timeEnd: endTime,
-            reason: "",
-            createdAt: DateTime.now(),
-            appType: "",
-          );
-        })
+              return CustomAppointment(
+                id: "", // Vous devrez attribuer un identifiant unique ici
+                type: "",
+                medecin: medecin,
+                patient: null,
+                startAt: DateTime(
+                  journeeCliquer.year,
+                  journeeCliquer.month,
+                  journeeCliquer.day,
+                ),
+                timeStart: startTime,
+                timeEnd: endTime,
+                reason: "",
+                createdAt: DateTime.now(),
+                appType: "",
+              );
+            })
             .where((avalaible) => !listUnavalaibleAppointment.any(
-              (unavalaible) => isUnavalaible(unavalaible, avalaible),
-        ))
+                  (unavalaible) => isUnavalaible(unavalaible, avalaible),
+                ))
             .toList();
 
         return availableAppointments;
       } else {
         List<CustomAppointment> availableAppointments = defaultTimeSlots
             .where((timeSlot) {
-          int startHour = int.parse(timeSlot.substring(0, 2));
-          DateTime startTime = DateTime(
-            journeeCliquer.year,
-            journeeCliquer.month,
-            journeeCliquer.day,
-            startHour,
-            0,
-          );
+              int startHour = int.parse(timeSlot.substring(0, 2));
+              DateTime startTime = DateTime(
+                journeeCliquer.year,
+                journeeCliquer.month,
+                journeeCliquer.day,
+                startHour,
+                0,
+              );
 
-          return startTime.isAfter(now) || startTime.hour == now.hour;
-        })
+              return startTime.isAfter(now) || startTime.hour == now.hour;
+            })
             .map((timeSlot) {
-          int startHour = int.parse(timeSlot.substring(0, 2));
-          DateTime startTime = DateTime(
-            journeeCliquer.year,
-            journeeCliquer.month,
-            journeeCliquer.day,
-            startHour,
-            0,
-          );
+              int startHour = int.parse(timeSlot.substring(0, 2));
+              DateTime startTime = DateTime(
+                journeeCliquer.year,
+                journeeCliquer.month,
+                journeeCliquer.day,
+                startHour,
+                0,
+              );
 
-          DateTime endTime = DateTime(
-            journeeCliquer.year,
-            journeeCliquer.month,
-            journeeCliquer.day,
-            int.parse(timeSlot.substring(6, 8)),
-            0,
-          );
+              DateTime endTime = DateTime(
+                journeeCliquer.year,
+                journeeCliquer.month,
+                journeeCliquer.day,
+                int.parse(timeSlot.substring(6, 8)),
+                0,
+              );
 
-          return CustomAppointment(
-            id: "",
-            type: "",
-            medecin: medecin,
-            patient: null,
-            startAt: DateTime(
-              journeeCliquer.year,
-              journeeCliquer.month,
-              journeeCliquer.day,
-            ),
-            timeStart: startTime,
-            timeEnd: endTime,
-            reason: "",
-            createdAt: DateTime.now(),
-            appType: "",
-          );
-        })
+              return CustomAppointment(
+                id: "",
+                type: "",
+                medecin: medecin,
+                patient: null,
+                startAt: DateTime(
+                  journeeCliquer.year,
+                  journeeCliquer.month,
+                  journeeCliquer.day,
+                ),
+                timeStart: startTime,
+                timeEnd: endTime,
+                reason: "",
+                createdAt: DateTime.now(),
+                appType: "",
+              );
+            })
             .where((avalaible) => !listUnavalaibleAppointment.any(
-              (unavalaible) => isUnavalaible(unavalaible, avalaible),
-        ))
+                  (unavalaible) => isUnavalaible(unavalaible, avalaible),
+                ))
             .toList();
 
         return availableAppointments;
@@ -319,41 +336,41 @@ class AgendaState extends State<Agenda> {
       ];
       List<CustomAppointment> availableAppointments = defaultTimeSlots
           .map((timeSlot) {
-        DateTime startTime = DateTime(
-          journeeCliquer.year,
-          journeeCliquer.month,
-          journeeCliquer.day,
-          int.parse(timeSlot.substring(0, 2)),
-          0,
-        );
-        DateTime endTime = DateTime(
-          journeeCliquer.year,
-          journeeCliquer.month,
-          journeeCliquer.day,
-          int.parse(timeSlot.substring(6, 8)),
-          0,
-        );
+            DateTime startTime = DateTime(
+              journeeCliquer.year,
+              journeeCliquer.month,
+              journeeCliquer.day,
+              int.parse(timeSlot.substring(0, 2)),
+              0,
+            );
+            DateTime endTime = DateTime(
+              journeeCliquer.year,
+              journeeCliquer.month,
+              journeeCliquer.day,
+              int.parse(timeSlot.substring(6, 8)),
+              0,
+            );
 
-        return CustomAppointment(
-          id: "", // Vous devrez attribuer un identifiant unique ici
-          type: "",
-          medecin: medecin,
-          patient: null,
-          startAt: DateTime(
-            journeeCliquer.year,
-            journeeCliquer.month,
-            journeeCliquer.day,
-          ),
-          timeStart: startTime,
-          timeEnd: endTime,
-          reason: "",
-          createdAt: DateTime.now(),
-          appType: "",
-        );
-      })
+            return CustomAppointment(
+              id: "", // Vous devrez attribuer un identifiant unique ici
+              type: "",
+              medecin: medecin,
+              patient: null,
+              startAt: DateTime(
+                journeeCliquer.year,
+                journeeCliquer.month,
+                journeeCliquer.day,
+              ),
+              timeStart: startTime,
+              timeEnd: endTime,
+              reason: "",
+              createdAt: DateTime.now(),
+              appType: "",
+            );
+          })
           .where((avalaible) => !appointments.any(
-            (toExclude) => isUnavalaible(toExclude, avalaible),
-      ))
+                (toExclude) => isUnavalaible(toExclude, avalaible),
+              ))
           .toList();
 
       return availableAppointments.isNotEmpty ? availableAppointments : null;
@@ -369,18 +386,16 @@ class AgendaState extends State<Agenda> {
   bool isUnavalaible(
       CustomAppointment unavAppointment, CustomAppointment avAppointment) {
     return (DateFormat('yyyy-MM-dd').format(avAppointment.startAt) ==
-        DateFormat('yyyy-MM-dd').format(unavAppointment.startAt)) &&
+            DateFormat('yyyy-MM-dd').format(unavAppointment.startAt)) &&
         (TimeOfDay.fromDateTime(avAppointment.timeStart) ==
             TimeOfDay.fromDateTime(unavAppointment.timeStart)) &&
         (TimeOfDay.fromDateTime(avAppointment.timeEnd) ==
             TimeOfDay.fromDateTime(unavAppointment.timeEnd)) &&
         ((avAppointment.medecin?.lastName ==
-            unavAppointment.medecin?.lastName) &&
+                unavAppointment.medecin?.lastName) &&
             (avAppointment.medecin?.firstName ==
                 unavAppointment.medecin?.firstName));
   }
-
-
 
   DateTime? isSunday(DateTime dt) {
     if (dt.weekday == 7) {
@@ -390,249 +405,723 @@ class AgendaState extends State<Agenda> {
     }
   }
 
+  List<DateTime> getSundayDates() {
+    List<DateTime> sundays = [];
+    DateTime startDate = DateTime(DateTime.now().year, 1, 1);
+    DateTime endDate = DateTime(DateTime.now().year, 12, 31);
+
+    for (DateTime date = startDate;
+        date.isBefore(endDate);
+        date = date.add(const Duration(days: 1))) {
+      if (date.weekday == DateTime.sunday) {
+        sundays.add(date);
+      }
+    }
+
+    return sundays;
+  }
+
+  void calculateBlackoutDates() {
+    DateTime currentDate = DateTime.now().subtract(const Duration(days: 1));
+    blackoutDates.addAll(List.generate(
+        365, (index) => currentDate.subtract(Duration(days: index))));
+
+    for (int dtIndex = 0; dtIndex < getSundayDates().length; dtIndex++) {
+      DateTime dt = getSundayDates().elementAt(dtIndex);
+      if (!blackoutDates.contains(dt)) {
+        blackoutDates.add(dt);
+      }
+    }
+
+    if (DateTime.now().hour > 15) {
+      if (!blackoutDates.contains(DateTime.now())) {
+        blackoutDates.add(DateTime.now());
+      }
+    }
+  }
+
+  bool dateIsAllDisabled(DateTime date) {
+    return (getAvailableAppointments(
+            date, listAppointment, medecinClicked!, listUnavalaibleAppointment)!
+        .isEmpty);
+  }
+
+  bool isAppointment = false;
+  bool istoAddAppointment = false;
+  bool isPaste = false;
+
+  List<CustomAppointment> AlltheAppoint = [];
+  DateTime dtCliquer = DateTime.now();
 
   @override
   Widget build(BuildContext context) {
-
-
-    DateTime currentDate = DateTime.now().subtract(Duration(days: 1));
-
-
-    blackoutDates.addAll(List.generate(365, (index) => currentDate.subtract(Duration(days: index))));
-
-    if(DateTime.now().hour>15){
-
-      blackoutDates.add(DateTime.now());
-    }
-
-    return PopScope(canPop: false,child: Scaffold(
-        backgroundColor: Color.fromARGB(1000, 238, 239, 244),
-        body: ListView(children:[
-          Padding(
-            padding: EdgeInsets.only(top: 10, left: 10),
-            child: Row(
-              children: [
-                GestureDetector(
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.keyboard_arrow_left,
-                        size: 40,
-                      ),
-                      Text('Retour'),
-                    ],
+    return PopScope(
+      canPop: false,
+      child: Scaffold(
+          backgroundColor: const Color.fromARGB(1000, 238, 239, 244),
+          body: ListView(children: [
+            Padding(
+              padding: const EdgeInsets.only(top: 10, left: 10),
+              child: Row(
+                children: [
+                  GestureDetector(
+                    child: const Row(
+                      children: [
+                        Icon(
+                          Icons.keyboard_arrow_left,
+                          size: 40,
+                        ),
+                        Text('Retour'),
+                      ],
+                    ),
+                    onTap: () {
+                      Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => IndexAccueilAdmin()));
+                    },
                   ),
-                  onTap: () {
-                    Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => IndexAccueilAdmin()));
-                  },
-                ),
-                Spacer(),
-                Center(
-                  child: Container(
-                    width: 60,
-                    height: 60,
-                    child: Card(
-                      color: Colors.transparent,
-                      elevation: 0,
-                      child: Image.asset(
-                        "assets/images/logo2.png",
-                        fit: BoxFit.cover,
+                  const Spacer(),
+                  Center(
+                    child: Container(
+                      width: 60,
+                      height: 60,
+                      child: Card(
+                        color: Colors.transparent,
+                        elevation: 0,
+                        child: Image.asset(
+                          "assets/images/logo2.png",
+                          fit: BoxFit.cover,
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          Padding(
-              padding: EdgeInsets.only(right: 18, left: 18),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(23),
-                child: Container(
-                  height: 100,
-                  child: Card(
-                    elevation: 0.5,
-                    color: Colors.white,
-                    child: Column(
-                      children: [
-                        const Spacer(),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            SizedBox(
-                              width: 20,
-                            ),
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(50),
-                              child: Container(
-                                width: 60,
-                                height: 60,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(60),
-                                ),
-                                child: ((medecinClicked!.imageName != null) &&
-                                    (File(medecinClicked!.imageName!)
-                                        .existsSync()))
-                                    ? Image.file(
-                                    File(medecinClicked!.imageName!))
-                                    : Image.asset(
-                                  'assets/images/medecin.png',
-                                  fit: BoxFit.fill,
+            Padding(
+                padding: const EdgeInsets.only(right: 18, left: 18),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(23),
+                  child: Container(
+                    height: 85,
+                    child: Card(
+                      elevation: 0.5,
+                      color: Colors.white,
+                      child: Column(
+                        children: [
+                          const Spacer(),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              const SizedBox(
+                                width: 20,
+                              ),
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(50),
+                                child: Container(
+                                  width: 60,
+                                  height: 60,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(60),
+                                  ),
+                                  child: ((medecinClicked!.imageName != null) &&
+                                          (File(medecinClicked!.imageName!)
+                                              .existsSync()))
+                                      ? Image.file(
+                                          File(medecinClicked!.imageName!))
+                                      : Image.asset(
+                                          'assets/images/medecin.png',
+                                          fit: BoxFit.fill,
+                                        ),
                                 ),
                               ),
+                              Column(
+                                children: [
+                                  Text(
+                                    ' Dr ${abbreviateName(medecinClicked!.lastName)}.${abbreviateName(medecinClicked!.firstName)}',
+                                    style: const TextStyle(
+                                        color:
+                                            Color.fromARGB(1000, 60, 70, 120),
+                                        fontWeight: FontWeight.w500,
+                                        fontSize: 16,
+                                        letterSpacing: 2),
+                                  ),
+                                  Text(
+                                    '${(medecinClicked!.speciality != null) ? medecinClicked!.speciality!.label : ''}',
+                                    style: const TextStyle(
+                                        color:
+                                            Color.fromARGB(1000, 60, 70, 120),
+                                        fontWeight: FontWeight.w300,
+                                        letterSpacing: 2,
+                                        fontSize: 16),
+                                  )
+                                ],
+                              ),
+                              const Spacer()
+                            ],
+                          ),
+                          const Opacity(
+                            opacity: 0.4,
+                            child: Divider(
+                              thickness: 1,
+                              indent: 20,
+                              endIndent: 20,
+                              color: Colors.grey,
                             ),
-                            Column(
-                              children: [
-                                Text(
-                                  ' Dr ${abbreviateName(medecinClicked!.lastName)}.${abbreviateName(medecinClicked!.firstName)}',
-                                  style: TextStyle(
-                                      color:
-                                      Color.fromARGB(1000, 60, 70, 120),
-                                      fontWeight: FontWeight.w500,
-                                      fontSize: 16,
-                                      letterSpacing: 2),
-                                ),
-                                Text(
-                                  '${medecinClicked!.speciality!.label}',
-                                  style: const TextStyle(
-                                      color:
-                                      Color.fromARGB(1000, 60, 70, 120),
-                                      fontWeight: FontWeight.w300,
-                                      letterSpacing: 2,
-                                      fontSize: 16),
-                                )
-                              ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                )),
+            Padding(
+                padding: const EdgeInsets.only(
+                    top: 10, right: 10, left: 10, bottom: 10),
+                child: ClipRRect(
+                    borderRadius: BorderRadius.circular(6),
+                    child: Container(
+                        decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(6),
+                            color: Colors.white),
+                        width: MediaQuery.of(context).size.width - 45,
+                        height: MediaQuery.of(context).size.height / 1.38,
+                        child: (dataLoaded)
+                            ? Column(
+                                children: [
+                                  Container(
+                                    height: MediaQuery.of(context).size.height /
+                                        2.2,
+                                    child: SfCalendar(
+                                      blackoutDatesTextStyle: TextStyle(
+                                          color: Colors.grey.withOpacity(0.3)),
+                                      minDate: DateTime(DateTime.now().year,
+                                          DateTime.now().month, 01),
+                                      controller: controller,
+                                      dataSource: CustomAppointmentDataSource(
+                                          listAppointment),
+                                      view: CalendarView.month,
+                                      monthViewSettings:
+                                          const MonthViewSettings(
+                                        appointmentDisplayCount: 3,
+                                      ),
+                                      scheduleViewSettings:
+                                          const ScheduleViewSettings(
+                                              appointmentTextStyle: TextStyle(
+                                                  letterSpacing: 2,
+                                                  color: Colors.green)),
+                                      onTap: (CalendarTapDetails details) {
+                                        setState(() {
+                                          dtCliquer = details.date!;
+                                        });
+                                        if (details.date!.weekday != 7) {
+                                          if ((details.date!.year <=
+                                                  DateTime.now().year) &&
+                                              (details.date!.month <=
+                                                  DateTime.now().month) &&
+                                              (details.date!.day <
+                                                  DateTime.now().day)) {
+                                            jourDisable();
+                                          } else {
+                                            //Navigator.push(context, MaterialPageRoute(builder: (context)=>AppointmentDialog(medecin: medecinClicked!),settings: RouteSettings(arguments: details.date)));
+                                            List<CustomAppointment> list =
+                                                listAppointment
+                                                    .where((element) =>
+                                                        DateFormat('yyyy-MM-dd')
+                                                            .format(element
+                                                                .startAt) ==
+                                                        DateFormat('yyyy-MM-dd')
+                                                            .format(
+                                                                details.date!))
+                                                    .toList();
+                                            if (list.length >= 1) {
+                                              CustomAppointment appoint =
+                                                  list.first;
+                                              setState(() {
+                                                istoAddAppointment = false;
+                                                isAppointment = true;
+                                                AlltheAppoint = list;
+                                              });
+                                            } else {
+                                              String dtClick =
+                                                  DateFormat('yyyy-MM-dd')
+                                                      .format(details.date!);
+                                              String now =
+                                                  DateFormat('yyyy-MM-dd')
+                                                      .format(DateTime.now());
+                                              DateTime dt =
+                                                  DateTime.parse(dtClick);
+                                              DateTime dtNow =
+                                                  DateTime.parse(dtClick);
+                                              if (dt.isBefore(dtNow)) {
+                                                jourDisable();
+                                              } else {
+                                                setState(() {
+                                                  istoAddAppointment = true;
+                                                  isAppointment = false;
+                                                });
+                                              }
+                                            }
+                                          }
+                                        } else {
+                                          jourSundayDisable();
+                                        }
+                                      },
+                                      todayHighlightColor: Colors.redAccent,
+                                      todayTextStyle: const TextStyle(
+                                        fontWeight: FontWeight.w500,
+                                        letterSpacing: 1.6,
+                                        color: Colors.white,
+                                      ),
+                                      blackoutDates: blackoutDates,
+                                    ),
+                                  ),
+                                  const SizedBox(
+                                    height: 20,
+                                  ),
+                                  Expanded(
+                                      child: ListView(
+                                    children: [
+                                      if (isAppointment) ...[
+                                        for (int ap = 0;
+                                            ap < AlltheAppoint.length;
+                                            ap++) ...[
+                                          if (ap == 0) ...[
+                                            showAppointment(
+                                                AlltheAppoint.elementAt(ap),
+                                                dtCliquer),
+                                          ] else ...[
+                                            showAppointmentAfterFirst(
+                                                AlltheAppoint.elementAt(ap),
+                                                dtCliquer)
+                                          ]
+                                        ],
+                                        Row(
+                                          children: [
+                                            const Spacer(),
+                                            Padding(
+                                              padding: const EdgeInsets.only(
+                                                  left: 10,
+                                                  right: 16,
+                                                  bottom: 10),
+                                              child: ElevatedButton(
+                                                style: ButtonStyle(
+                                                  backgroundColor:
+                                                      MaterialStateProperty.all(
+                                                          const Color.fromARGB(
+                                                              1000,
+                                                              60,
+                                                              70,
+                                                              120)),
+                                                  shape:
+                                                      MaterialStateProperty.all(
+                                                    RoundedRectangleBorder(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              6.0), // Définissez le rayon de la bordure ici
+                                                    ),
+                                                  ),
+                                                  minimumSize:
+                                                      MaterialStateProperty.all(
+                                                          const Size(
+                                                              300.0, 40.0)),
+                                                ),
+                                                onPressed: () {
+                                                  Navigator.push(
+                                                      context,
+                                                      MaterialPageRoute(
+                                                          builder: (context) =>
+                                                              AppointmentDialog(
+                                                                  medecin:
+                                                                      medecinClicked!),
+                                                          settings: RouteSettings(
+                                                              arguments:
+                                                                  dtCliquer)));
+                                                },
+                                                child: const Text(
+                                                  'Voir tranches horaires',
+                                                  textAlign: TextAlign.start,
+                                                  textScaleFactor: 1.2,
+                                                  style: TextStyle(
+                                                    color: Color.fromARGB(
+                                                        255, 253, 253, 253),
+                                                    fontWeight: FontWeight.w500,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        )
+                                      ],
+                                      if (istoAddAppointment) ...[
+                                        Row(
+                                          children: [
+                                            const Spacer(),
+                                            Padding(
+                                              padding: const EdgeInsets.only(
+                                                  left: 10,
+                                                  right: 16,
+                                                  bottom: 10),
+                                              child: ElevatedButton(
+                                                style: ButtonStyle(
+                                                  backgroundColor:
+                                                      MaterialStateProperty.all(
+                                                          const Color.fromARGB(
+                                                              1000,
+                                                              60,
+                                                              70,
+                                                              120)),
+                                                  shape:
+                                                      MaterialStateProperty.all(
+                                                    RoundedRectangleBorder(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              6.0), // Définissez le rayon de la bordure ici
+                                                    ),
+                                                  ),
+                                                  minimumSize:
+                                                      MaterialStateProperty.all(
+                                                          const Size(
+                                                              300.0, 40.0)),
+                                                ),
+                                                onPressed: () {
+                                                  Navigator.push(
+                                                      context,
+                                                      MaterialPageRoute(
+                                                          builder: (context) =>
+                                                              AppointmentDialog(
+                                                                  medecin:
+                                                                      medecinClicked!),
+                                                          settings: RouteSettings(
+                                                              arguments:
+                                                                  dtCliquer)));
+                                                },
+                                                child: const Text(
+                                                  'Voir tranches horaires',
+                                                  textAlign: TextAlign.start,
+                                                  textScaleFactor: 1.2,
+                                                  style: TextStyle(
+                                                    color: Color.fromARGB(
+                                                        255, 253, 253, 253),
+                                                    fontWeight: FontWeight.w500,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        )
+                                      ] else if (!isAppointment &&
+                                          !istoAddAppointment) ...[
+                                        showNothing()
+                                      ]
+                                    ],
+                                  ))
+                                ],
+                              )
+                            : loadingWidget()))),
+          ])),
+    );
+  }
+
+  String formatDT(DateTime Date) {
+    // Liste des jours de la semaine
+    final List<String> jours = [
+      'Lundi',
+      'Mardi',
+      'Mercredi',
+      'Jeudi',
+      'Vendredi',
+      'Samedi',
+      'Dimanche'
+    ];
+
+    // Liste des mois de l'année
+    final List<String> mois = [
+      '',
+      'JAN',
+      'FEV',
+      'MAR',
+      'AVR',
+      'MAI',
+      'JUI',
+      'JUI',
+      'AOU',
+      'SEP',
+      'OCT',
+      'NOV',
+      'DEC'
+    ];
+
+    // Extraire les composants de la date et de l'heure
+    int jour = Date.day;
+    int moisIndex = Date.month;
+    int annee = Date.year;
+
+    // Formater le jour de la semaine
+    String jourSemaine = jours[Date.weekday - 1];
+
+    // Formater le mois
+    String nomMois = mois[moisIndex];
+
+    // Construire la chaîne lisible
+    String resultat = '$nomMois';
+
+    return resultat;
+  }
+
+  Widget showNothing() {
+    return Column(
+      children: [
+        GestureDetector(
+            onTap: () {},
+            child: Row(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(left: 20, top: 20),
+                  child: Text(
+                    'Veuillez choisir une date',
+                    style: TextStyle(
+                        color: Colors.black.withOpacity(0.4),
+                        letterSpacing: 3,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600),
+                  ),
+                )
+              ],
+            )),
+        Padding(
+          padding: const EdgeInsets.only(top: 5),
+          child: Divider(
+            thickness: 2,
+            color: Colors.grey.withOpacity(0.5),
+            indent: 20,
+            endIndent: 20,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget showAppointment(CustomAppointment appoint, DateTime clickedDt) {
+    print('ISDELETED: ${appoint.isDeleted} ');
+
+    return Column(
+      children: [
+        GestureDetector(
+            onTap: () {
+              DetailsAppointment(appoint);
+            },
+            child: Row(
+              children: [
+                Container(
+                  child: Column(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(left: 10, right: 10),
+                        child: Text(
+                          '${clickedDt.day}',
+                          style: TextStyle(
+                              color: Colors.black.withOpacity(0.4),
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.only(left: 10, right: 10),
+                        child: Text(
+                          '${formatDT(clickedDt)}',
+                          style: TextStyle(
+                              color: Colors.black.withOpacity(0.4),
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700),
+                        ),
+                      )
+                    ],
+                  ),
+                ),
+                Container(
+                  width: MediaQuery.of(context).size.width / 1.30,
+                  height:
+                      (appoint.isDeleted != null && appoint.isDeleted == true)
+                          ? 75
+                          : 55,
+                  // ajustez la taille du point en fonction de vos besoins
+
+                  decoration: BoxDecoration(
+                    shape: BoxShape.rectangle,
+                    borderRadius: BorderRadius.circular(6),
+                    color:
+                        (appoint.isDeleted != null && appoint.isDeleted == true)
+                            ? Color.fromARGB(1000, 238, 239, 244)
+                            : Colors.redAccent.withOpacity(
+                                0.7), // utilisez la couleur de l'appointment
+                  ),
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.only(left: 10),
+                            child: Text(
+                              textAlign: TextAlign.start,
+                              '${abreviateRaison(appoint.reason)}',
+                              style: TextStyle(
+                                  fontWeight: FontWeight.w500,
+                                  letterSpacing: 2,
+                                  fontSize: 15,
+                                  color: (appoint.isDeleted != null && appoint.isDeleted == true)?Colors.black.withOpacity(0.4):Colors.white),
                             ),
-                            Spacer()
+                          ),
+                        ],
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.only(left: 10),
+                            child: Text(
+                              textAlign: TextAlign.start,
+                              '${formatDateTimeAppointment(appoint.startAt, appoint.timeStart, appoint.timeEnd)}',
+                              style: TextStyle(
+                                  fontWeight: FontWeight.w500,
+                                  fontSize: 12,
+                                  letterSpacing: 2,
+                                  color: (appoint.isDeleted != null && appoint.isDeleted == true)?Colors.black.withOpacity(0.4):Colors.white),
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (appoint.isDeleted != null &&
+                          appoint.isDeleted == true) ...[
+                        const Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            Padding(
+                              padding: EdgeInsets.only(left: 10),
+                              child: Text(
+                                textAlign: TextAlign.start,
+                                'Rendez-vous annulé',
+                                style: TextStyle(
+                                    fontWeight: FontWeight.w500,
+                                    fontSize: 13,
+                                    letterSpacing: 2,
+                                    color: Colors.redAccent),
+                              ),
+                            ),
                           ],
                         ),
-                        const Opacity(
-                          opacity: 0.4,
-                          child: Divider(
-                            thickness: 1,
-                            indent: 20,
-                            endIndent: 20,
-                            color: Colors.grey,
+                      ]
+                    ],
+                  ),
+                ),
+              ],
+            )),
+        Padding(
+          padding: const EdgeInsets.only(top: 5),
+          child: Divider(
+            thickness: 2,
+            color: Colors.grey.withOpacity(0.5),
+            indent: 20,
+            endIndent: 20,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget showAppointmentAfterFirst(
+      CustomAppointment appoint, DateTime clickedDt) {
+    print('ISDELETED: ${appoint.isDeleted} ');
+
+    return Column(
+      children: [
+        GestureDetector(
+            onTap: () {
+              DetailsAppointment(appoint);
+            },
+            child: Padding(
+              padding: const EdgeInsets.only(left: 40),
+              child: Container(
+                width: MediaQuery.of(context).size.width / 1.30,
+                height: 55,
+                // ajustez la taille du point en fonction de vos besoins
+
+                decoration: BoxDecoration(
+                  shape: BoxShape.rectangle,
+                  borderRadius: BorderRadius.circular(6),
+                  color:
+                      (appoint.isDeleted != null && appoint.isDeleted == true)
+                          ? Colors.black.withOpacity(0.3)
+                          : Colors.redAccent.withOpacity(
+                              0.7), // utilisez la couleur de l'appointment
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(left: 10),
+                          child: Text(
+                            textAlign: TextAlign.start,
+                            '${abreviateRaison(appoint.reason)}',
+                            style: const TextStyle(
+                                fontWeight: FontWeight.w500,
+                                letterSpacing: 2,
+                                fontSize: 15,
+                                color: Colors.white),
                           ),
                         ),
                       ],
                     ),
-                  ),
-                ),
-              )),
-
-
-          Padding(
-              padding:
-              const EdgeInsets.only(top: 20, right: 10, left: 10, bottom: 10),
-              child: ClipRRect(
-                  borderRadius: BorderRadius.circular(6),
-                  child: Container(
-                    decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(6),
-                        color: Colors.white),
-                    width: MediaQuery.of(context).size.width - 45,
-                    height: MediaQuery.of(context).size.height /1.4,
-                    child: (dataLoaded)
-                        ? SfCalendar(
-                      controller: controller,
-                      dataSource:
-                      CustomAppointmentDataSource(listAppointment),
-                      view: CalendarView.month,
-                      scheduleViewSettings: const ScheduleViewSettings(
-                          appointmentTextStyle: TextStyle(
-                              letterSpacing: 2, color: Colors.green)),
-                      monthCellBuilder:
-                          (BuildContext context, MonthCellDetails details) {
-                        // Personnalisez le contenu de la cellule ici
-
-                        bool isSundayOrPastDate = (details.date.weekday ==
-                            7) ||
-                            (details.date.isBefore(
-                                DateTime.now().subtract(Duration(days: 1))));
-
-
-                        bool isAllDisabled =
-                          (getAvailableAppointments(
-                              details.date,
-                              listAppointment,
-                              medecinClicked!,
-                              listUnavalaibleAppointment)!.isEmpty);
-
-                          bool dt = blackoutDates.any(
-                                  (element) => element == details.date);
-
-                          if (dt == false) {
-                            isAllDisabled
-                                ? blackoutDates.add(details.date)
-                                : null;
-                          }
-
-                        if (isSunday(details.date) != null) {
-                          blackoutDates.add(details.date);
-                        }
-
-                        bool isBlackoutDate = isInBlackOutDay(
-                            blackoutDates, details.date);
-
-                        return Container(
-                          decoration: BoxDecoration(
-                            color: isBlackoutDate
-                                ? Colors.grey.withOpacity(0.3)
-                                :Colors.transparent,
-                            border:
-                            Border.all(width: 0.3, color: Colors.grey),
-                          ),
-                          child: Column(
-                              children: [
-                          Center(
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(left: 10),
                           child: Text(
-                          details.date.day.toString(),
-                          style: TextStyle(
-                            fontWeight: FontWeight.w500,
-                            letterSpacing: 1.6,
-                            color: isBlackoutDate
-                                ? Colors.grey.withOpacity(0.3)
-                                : Colors.black,
+                            textAlign: TextAlign.start,
+                            '${formatDateTimeAppointment(appoint.startAt, appoint.timeStart, appoint.timeEnd)}',
+                            style: const TextStyle(
+                                fontWeight: FontWeight.w500,
+                                fontSize: 12,
+                                letterSpacing: 2,
+                                color: Colors.white),
                           ),
                         ),
-                        ),
-                        // Exclure l'affichage des rendez-vous pour les blackoutDates
-                        if (!isBlackoutDate && !isSundayOrPastDate)
-                        ...listAppointment
-                            .where((appointment) =>
-                        appointment.startAt.year ==
-                        details.date.year &&
-                        appointment.startAt.month ==
-                        details.date.month &&
-                        appointment.startAt.day ==
-                        details.date.day)
-                            .map((appointment) =>
-                        buildAppointmentWidget(appointment)),
-                        ],
-                        ),
-                        );
-                      },
-                      onTap: (CalendarTapDetails details) {
-
-
-                         Navigator.push(context, MaterialPageRoute(builder: (context)=>AppointmentDialog(medecin: medecinClicked!),settings: RouteSettings(arguments: details.date)));
-
-                      },
-                      todayTextStyle: const TextStyle(
-                        fontWeight: FontWeight.w500,
-                        letterSpacing: 1.6,
-                        color: Color.fromARGB(230, 20, 20, 90),
-                      ),
-                      blackoutDates: blackoutDates,
+                      ],
                     )
-                        : Center(child: CircularProgressIndicator()),
-                  ))),
-        ])
-    ),);
+                  ],
+                ),
+              ),
+            )),
+        Padding(
+          padding: const EdgeInsets.only(top: 5),
+          child: Divider(
+            thickness: 2,
+            color: Colors.grey.withOpacity(0.5),
+            indent: 20,
+            endIndent: 20,
+          ),
+        ),
+      ],
+    );
+  }
+
+  String abreviateRaison(String fullName) {
+    List<String> nameParts = fullName.split(' ');
+
+    if (nameParts.length == 1) {
+      // Si le nom ne contient qu'un seul mot, renvoyer le nom tel quel
+      return fullName;
+    }
+    if (nameParts.length > 1) {
+      // Si le prénom contient plus de deux mots, utiliser seulement le premier mot
+      return "${nameParts[0]}...";
+    } else {
+      return fullName;
+    }
   }
 
   String formatDateTime(DateTime dateTime) {
@@ -686,14 +1175,6 @@ class AgendaState extends State<Agenda> {
 
     return resultat;
   }
-
-
-
-
-
-
-
-
 
   Widget buildAppointmentWidget(CustomAppointment appointment) {
     return Container(
@@ -802,7 +1283,7 @@ class AgendaState extends State<Agenda> {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(6),
             ),
-            contentPadding: EdgeInsets.all(0),
+            contentPadding: const EdgeInsets.all(0),
             content: ClipRRect(
               borderRadius: BorderRadius.circular(6),
               child: Container(
@@ -814,7 +1295,7 @@ class AgendaState extends State<Agenda> {
                       children: [
                         Padding(
                           padding:
-                              EdgeInsets.only(top: 20, left: 20, bottom: 50),
+                              const EdgeInsets.only(top: 20, left: 20, bottom: 50),
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(50),
                             child: Container(
@@ -839,7 +1320,7 @@ class AgendaState extends State<Agenda> {
                             children: [
                               Text(
                                 'Dr ${abbreviateName(appointment.medecin!.lastName)} \n ${abbreviateName(appointment.medecin!.firstName)}',
-                                style: TextStyle(fontSize: 20),
+                                style: const TextStyle(fontSize: 20),
                                 textAlign: TextAlign.start,
                                 maxLines:
                                     2, // Nombre maximal de lignes avant de tronquer
@@ -853,7 +1334,7 @@ class AgendaState extends State<Agenda> {
                         )
                       ],
                     ),
-                    Padding(
+                    const Padding(
                         padding:
                             EdgeInsets.only(top: 20, right: 20, bottom: 20),
                         child: Row(
@@ -875,10 +1356,10 @@ class AgendaState extends State<Agenda> {
                           ],
                         )),
                     Padding(
-                        padding: EdgeInsets.only(top: 20, right: 20),
+                        padding: const EdgeInsets.only(top: 20, right: 20),
                         child: Row(
                           children: [
-                            Padding(
+                            const Padding(
                               padding: EdgeInsets.only(left: 10),
                               child: Text(
                                 'Raison:',
@@ -888,11 +1369,11 @@ class AgendaState extends State<Agenda> {
                                     fontWeight: FontWeight.w500),
                               ),
                             ),
-                            Spacer(),
+                            const Spacer(),
                             Expanded(
                               child: Text(
                                 '${appointment.reason}',
-                                style: TextStyle(
+                                style: const TextStyle(
                                     color: Color.fromARGB(230, 20, 20, 90),
                                     fontSize: 14,
                                     fontWeight: FontWeight.w500),
@@ -907,11 +1388,11 @@ class AgendaState extends State<Agenda> {
                       endIndent: 10,
                     ),
                     Padding(
-                        padding: EdgeInsets.only(top: 30, right: 20),
+                        padding: const EdgeInsets.only(top: 30, right: 20),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Padding(
+                            const Padding(
                               padding: EdgeInsets.only(left: 10),
                               child: Text(
                                 'Le:',
@@ -921,10 +1402,10 @@ class AgendaState extends State<Agenda> {
                                     fontWeight: FontWeight.w500),
                               ),
                             ),
-                            Spacer(),
+                            const Spacer(),
                             Text(
                               '  ${formatDateTimeAppointment(appointment.startAt.toLocal(), appointment.timeStart, appointment.timeEnd.toLocal())}',
-                              style: TextStyle(
+                              style: const TextStyle(
                                   color: Color.fromARGB(230, 20, 20, 90),
                                   fontSize: 14,
                                   fontWeight: FontWeight.w500),
@@ -938,10 +1419,10 @@ class AgendaState extends State<Agenda> {
                       endIndent: 10,
                     ),
                     Padding(
-                        padding: EdgeInsets.only(top: 20, right: 20),
+                        padding: const EdgeInsets.only(top: 20, right: 20),
                         child: Row(
                           children: [
-                            Padding(
+                            const Padding(
                               padding: EdgeInsets.only(left: 10),
                               child: Text(
                                 'De:',
@@ -951,10 +1432,10 @@ class AgendaState extends State<Agenda> {
                                     fontWeight: FontWeight.w500),
                               ),
                             ),
-                            Spacer(),
+                            const Spacer(),
                             Text(
                               '${DateTimeFormatAppointment(appointment.startAt, appointment.timeEnd)}',
-                              style: TextStyle(
+                              style: const TextStyle(
                                   color: Color.fromARGB(230, 20, 20, 90),
                                   fontSize: 14,
                                   fontWeight: FontWeight.w500),
@@ -968,7 +1449,7 @@ class AgendaState extends State<Agenda> {
                       endIndent: 10,
                     ),
                     Padding(
-                      padding: EdgeInsets.only(
+                      padding: const EdgeInsets.only(
                         top: 20,
                         left: 200,
                       ),
@@ -976,7 +1457,7 @@ class AgendaState extends State<Agenda> {
                         onPressed: () {
                           Navigator.pop(context);
                         },
-                        child: Text(
+                        child: const Text(
                           'Fermer',
                           style: TextStyle(
                             letterSpacing: 2,
@@ -1131,7 +1612,7 @@ class AgendaState extends State<Agenda> {
   }
 
   void RdvDesactiver() {
-    SnackBar snackBar = SnackBar(
+    SnackBar snackBar = const SnackBar(
       content: Flex(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         direction: Axis.horizontal,
@@ -1158,8 +1639,72 @@ class AgendaState extends State<Agenda> {
     ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 
+  void jourDisable() {
+    final materialBanner = MaterialBanner(
+      /// need to set following properties for best effect of awesome_snackbar_content
+      elevation: 0,
+      backgroundColor: Colors.transparent,
+      forceActionsBelow: true,
+      surfaceTintColor: const Color.fromARGB(230, 20, 20, 90),
+      content: AwesomeSnackbarContent(
+        title: 'Aide!!',
+        message: 'Cette  n\'est plus disponible.',
 
+        /// change contentType to ContentType.success, ContentType.warning or ContentType.help for variants
+        contentType: ContentType.help,
+        // to configure for material banner
+        inMaterialBanner: true,
+      ),
+      actions: const [SizedBox.shrink()],
+    );
+
+    ScaffoldMessenger.of(context)
+      ..hideCurrentMaterialBanner()
+      ..showMaterialBanner(materialBanner);
+  }
+
+  void jourSundayDisable() {
+    final materialBanner = MaterialBanner(
+      /// need to set following properties for best effect of awesome_snackbar_content
+      elevation: 0,
+      backgroundColor: Colors.transparent,
+      forceActionsBelow: true,
+      surfaceTintColor: const Color.fromARGB(230, 20, 20, 90),
+      content: AwesomeSnackbarContent(
+        title: 'Aide!!',
+        message: 'Dimanche n\'est pas disponible.',
+
+        /// change contentType to ContentType.success, ContentType.warning or ContentType.help for variants
+        contentType: ContentType.help,
+        // to configure for material banner
+        inMaterialBanner: true,
+      ),
+      actions: const [SizedBox.shrink()],
+    );
+
+    ScaffoldMessenger.of(context)
+      ..hideCurrentMaterialBanner()
+      ..showMaterialBanner(materialBanner);
+  }
+
+  Widget loadingWidget() {
+    return Center(
+        child: Container(
+      width: 100,
+      height: 100,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          LoadingAnimationWidget.hexagonDots(
+              color: Colors.redAccent, size: 120),
+          Image.asset(
+            'assets/images/logo2.png',
+            width: 80,
+            height: 80,
+            fit: BoxFit.cover,
+          )
+        ],
+      ),
+    ));
+  }
 }
-
-
-

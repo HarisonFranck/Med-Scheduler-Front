@@ -259,7 +259,7 @@ class _AppointmentDetailsState extends State<AppointmentDetails> {
                                 padding: EdgeInsets.only(top: 10),
                                 child: Text(
                                   textAlign: TextAlign.start,
-                                  'Dr ${appointment.medecin!.speciality!.label}',
+                                  '${appointment.medecin!.speciality!.label}',
                                   style: const TextStyle(fontSize: 20),
                                 ),
                               )

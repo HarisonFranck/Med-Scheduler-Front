@@ -22,6 +22,11 @@ class Utilisateur{
   String city;
   Centre? center;
   List<String> roles;
+  List<String>? patientAppointments;
+  List<String>? patientUnavailableAppointments;
+  List<String>? doctorAppointments;
+  List<String>? doctorUnavailableAppointments;
+
 
   Utilisateur({
     required this.id,
@@ -39,6 +44,10 @@ class Utilisateur{
     this.center,
     this.createdAt,
     this.updatedAt,
+    this.patientAppointments,
+    this.patientUnavailableAppointments,
+    this.doctorAppointments,
+    this.doctorUnavailableAppointments,
     required this.city,
   });
 
@@ -58,11 +67,17 @@ class Utilisateur{
       category: json['category'],
       address: json['address'],
       city: json['city'],
-      center: json['center'],
+      center: json['center']!=null?Centre.fromJson(json['center']):json['center'],
       createdAt: json['createdAt']!=null?DateTime.parse(json['createdAt']):null,
-      updatedAt: json['updatedAt']!=null?DateTime.parse(json['updatedAt']):null
+      updatedAt: json['updatedAt']!=null?DateTime.parse(json['updatedAt']):null,
+      patientAppointments: json['patientAppointments']!=null?json['patientAppointments']:[],
+      patientUnavailableAppointments: json['patientUnavailableAppointments']!=null?json['patientUnavailableAppointments']:[],
+      doctorAppointments: json['doctorAppointments']!=null?json['doctorAppointments']:[],
+      doctorUnavailableAppointments: json['doctorUnavailableAppointments']!=null?json['doctorUnavailableAppointments']:[],
     );
   }
+
+
 
   // Méthode pour convertir un Utilisateur en un objet JSON
   Map<String, dynamic> toJson() {
@@ -78,6 +93,7 @@ class Utilisateur{
       "category": category,
       "address": address,
       "city":city,
+      "center":(center!=null)?center!.id:null,
       "roles":roles,
       "speciality": (speciality!=null)?speciality!.id:null,
       "createdAt": (createdAt!=null)?createdAt!.toIso8601String():null,
@@ -85,5 +101,7 @@ class Utilisateur{
 
     };
   }
+
+
 
 }

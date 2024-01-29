@@ -228,8 +228,9 @@ class _AdminDetailsState extends State<AdminDetails> {
         return user;
       } else {
         // Gestion des erreurs HTTP
+
         if (response.statusCode == 401) {
-          print('DETAILS ADMIN GET USER');
+          authProvider.logout();
           Navigator.pushReplacement(
               context, MaterialPageRoute(builder: (context) => const MyApp()));
         }
@@ -447,8 +448,15 @@ class _AdminDetailsState extends State<AdminDetails> {
           }
         }
       } else {
+
+
+        if (response.statusCode == 401) {
+          authProvider.logout();
+          Navigator.pushReplacement(
+              context, MaterialPageRoute(builder: (context) => const MyApp()));
+        }
         // Gestion des erreurs HTTP
-        error('Il y a une erreur. HTTP Status Code: ${response.statusCode}');
+        error('Il y a une erreur reseau\n Veuillez ressayer ulterieurement');
         throw Exception(
             '-- Failed to add user. HTTP Status Code: ${response.statusCode}');
       }
@@ -862,7 +870,6 @@ class _AdminDetailsState extends State<AdminDetails> {
                                   onTap: () {
                                     authProvider.logout();
 
-                                    Agenda agenda = Agenda(disconnect: true);
 
                                     print(
                                         'TOKEN PRVIDED: ${authProvider.token}');

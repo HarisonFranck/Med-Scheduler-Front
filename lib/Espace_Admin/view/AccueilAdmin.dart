@@ -62,6 +62,12 @@ class _AccueilAdminState extends State<AccueilAdmin> {
             listSpec = value;
           })
         });
+
+        getAllCenter().then((value) => {
+    setState(() {
+    listCenter = value;
+    })
+    });
   }
 
   void ReInitDataSpec() {
@@ -120,7 +126,9 @@ class _AccueilAdminState extends State<AccueilAdmin> {
 
         return datas.map((e) => Medecin.fromJson(e)).toList();
       } else {
+
         if (response.statusCode == 401) {
+          authProvider.logout();
           Navigator.pushReplacement(
               context, MaterialPageRoute(builder: (context) => const MyApp()));
         }
@@ -149,7 +157,9 @@ class _AccueilAdminState extends State<AccueilAdmin> {
 
         return datas.map((e) => Centre.fromJson(e)).toList();
       } else {
+
         if (response.statusCode == 401) {
+          authProvider.logout();
           Navigator.pushReplacement(
               context, MaterialPageRoute(builder: (context) => const MyApp()));
         }
@@ -181,7 +191,9 @@ class _AccueilAdminState extends State<AccueilAdmin> {
 
         return datas.map((e) => Specialite.fromJson(e)).toList();
       } else {
+
         if (response.statusCode == 401) {
+          authProvider.logout();
           Navigator.pushReplacement(
               context, MaterialPageRoute(builder: (context) => const MyApp()));
         }
@@ -554,7 +566,7 @@ class _AccueilAdminState extends State<AccueilAdmin> {
                                                     top: 10,
                                                     right: 50),
                                                 child: Text(
-                                                  'Acun Centre pour le moment',
+                                                  'Aucun Centre pour le moment',
                                                   style: TextStyle(
                                                       fontSize: 17,
                                                       color: Colors.grey
@@ -719,7 +731,7 @@ class _AccueilAdminState extends State<AccueilAdmin> {
                                                     top: 10,
                                                     right: 50),
                                                 child: Text(
-                                                  'Merci de rechercher les médecins avec les options ci-dessus...',
+                                                  'Aucun medecin...',
                                                   style: TextStyle(
                                                       fontSize: 17,
                                                       color: Colors.grey
@@ -749,8 +761,6 @@ class _AccueilAdminState extends State<AccueilAdmin> {
                                 itemBuilder: (context, index) {
                                   Medecin medecin = medecins[index];
 
-                                  print(
-                                      'APP MED: ${medecin.doctorAppointments}');
 
                                   return Padding(
                                       padding: const EdgeInsets.only(
@@ -947,7 +957,6 @@ class _AccueilAdminState extends State<AccueilAdmin> {
               ),
         floatingActionButton: FloatingActionButton(
           onPressed: () {
-            print('CURRENT: $currentChoice');
 
             if (currentChoice == "Specialite") {
               AjouterSpecialite(context);
@@ -1932,12 +1941,17 @@ class _AccueilAdminState extends State<AccueilAdmin> {
   }
 
 
+  Centre? center;
 
+  List<Centre> listCenter = [];
+
+  FocusNode _focusNodeCentre = FocusNode();
 
 
   void AjouterMedecin(BuildContext context) {
 
     spec = null;
+    center = null;
 
 
     showDialog(
@@ -1989,7 +2003,7 @@ class _AccueilAdminState extends State<AccueilAdmin> {
                       return null;
                     },
                   ),
-                  buildDropdownButtonFormField(
+                  buildDropdownButtonFormFieldSpec(
                     label: 'Specialite',
                     value: spec,
                     focusNode: _focusNodeSpec,
@@ -2007,6 +2021,28 @@ class _AccueilAdminState extends State<AccueilAdmin> {
                     validator: (value) {
                       if (value == null) {
                         return 'Veuillez sélectionner une spécialité';
+                      }
+                      return null;
+                    },
+                  ),
+                  buildDropdownButtonFormFieldCenter(
+                    label: 'Centre',
+                    value: center,
+                    focusNode: _focusNodeCentre,
+                    items: listCenter.map((e) {
+                      return DropdownMenuItem<Centre>(
+                        value: e,
+                        child: Text('${e.label}'),
+                      );
+                    }).toList(),
+                    onChanged: (Centre? newval) {
+                  setState(() {
+                  center = newval;
+                  });
+                  },
+                    validator: (value) {
+                      if (value == null) {
+                        return 'Veuillez sélectionner un centre';
                       }
                       return null;
                     },
@@ -2084,6 +2120,7 @@ class _AccueilAdminState extends State<AccueilAdmin> {
                                     password: "doctor",
                                     userType: 'Doctor',
                                     speciality: spec!,
+                                    center: center!,
                                     phone: phoneController.text.trim(),
                                     email: emailController.text.trim(),
                                     imageName: "",
@@ -2174,6 +2211,13 @@ class _AccueilAdminState extends State<AccueilAdmin> {
           UpdateUtilisateur();
         }
       } else {
+
+
+        if (response.statusCode == 401) {
+          authProvider.logout();
+          Navigator.pushReplacement(
+              context, MaterialPageRoute(builder: (context) => const MyApp()));
+        }
         // Gestion des erreurs HTTP
 
         print('REQ ERROR: ${response.body}');
@@ -2199,6 +2243,7 @@ class _AccueilAdminState extends State<AccueilAdmin> {
   TextEditingController modifVilleController = TextEditingController();
 
   Specialite? modifSpec;
+  Centre? modifCenter;
 
 // ... (importations et autres méthodes)
 
@@ -2212,8 +2257,16 @@ class _AccueilAdminState extends State<AccueilAdmin> {
     modifAddresseController.text = medecin.address;
     modifVilleController.text = medecin.city;
 
-    modifSpec = listSpec
-        .firstWhere((element) => medecin.speciality!.label == element.label);
+    if(medecin.speciality!=null){
+      modifSpec = listSpec
+          .firstWhere((element) => medecin.speciality!.label == element.label);
+
+    }else{
+      modifSpec = null;
+    }
+
+    modifCenter = listCenter
+        .firstWhere((element) => medecin.center!.label == element.label);
 
     showDialog(
       context: context,
@@ -2264,7 +2317,7 @@ class _AccueilAdminState extends State<AccueilAdmin> {
                       return null;
                     },
                   ),
-                  buildDropdownButtonFormField(
+                  buildDropdownButtonFormFieldSpec(
                     label: 'Specialite',
                     value: modifSpec,
                     focusNode: _focusNodeSpec,
@@ -2282,6 +2335,28 @@ class _AccueilAdminState extends State<AccueilAdmin> {
                     validator: (value) {
                       if (value == null) {
                         return 'Veuillez sélectionner une spécialité';
+                      }
+                      return null;
+                    },
+                  ),
+                  buildDropdownButtonFormFieldCenter(
+                    label: 'Centre',
+                    value: modifCenter,
+                    focusNode: _focusNodeCentre,
+                    items: listCenter.map((e) {
+                      return DropdownMenuItem<Centre>(
+                        value: e,
+                        child: Text('${e.label}'),
+                      );
+                    }).toList(),
+                    onChanged: (Centre? newval) {
+                  setState(() {
+                  modifCenter = newval;
+                  });
+                  },
+                    validator: (value) {
+                      if (value == null) {
+                        return 'Veuillez sélectionner un centre';
                       }
                       return null;
                     },
@@ -2360,6 +2435,7 @@ class _AccueilAdminState extends State<AccueilAdmin> {
                                     password: "doctor",
                                     userType: 'Doctor',
                                     speciality: modifSpec!,
+                                    center: modifCenter!,
                                     phone: modifPhoneController.text.trim(),
                                     email: modifEmailController.text.trim(),
                                     imageName: "",
@@ -2711,7 +2787,7 @@ class _AccueilAdminState extends State<AccueilAdmin> {
     );
   }
 
-  Widget buildDropdownButtonFormField({
+  Widget buildDropdownButtonFormFieldSpec({
     required String label,
     required Specialite? value,
     required FocusNode focusNode,
@@ -2737,6 +2813,54 @@ class _AccueilAdminState extends State<AccueilAdmin> {
           ),
           prefixIcon: const Icon(
             Icons.people,
+            color: Color.fromARGB(1000, 60, 70, 120),
+          ),
+          labelStyle: TextStyle(
+            color: focusNode.hasFocus ? Colors.redAccent : Colors.black,
+          ),
+          hintStyle: const TextStyle(
+            color: Colors.black,
+            fontWeight: FontWeight.w300,
+          ),
+          labelText: label,
+          hintText: '-- Plus d\'options --',
+          border: UnderlineInputBorder(
+            borderRadius: BorderRadius.circular(5.0),
+          ),
+        ),
+        validator: validator,
+      ),
+    );
+  }
+
+
+
+  Widget buildDropdownButtonFormFieldCenter({
+    required String label,
+    required Centre? value,
+    required FocusNode focusNode,
+    required List<DropdownMenuItem<Centre>> items,
+    required ValueChanged<Centre?> onChanged,
+    required FormFieldValidator<Centre?> validator,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 10, right: 10, bottom: 30),
+      child: DropdownButtonFormField<Centre>(
+        focusNode: focusNode,
+        icon: const Icon(
+          Icons.arrow_drop_down_circle_outlined,
+          color: Colors.black,
+        ),
+        value: value,
+        onChanged: onChanged,
+        items: items,
+        style: const TextStyle(color: Colors.black),
+        decoration: InputDecoration(
+          enabledBorder: const UnderlineInputBorder(
+            borderSide: BorderSide(color: Colors.grey),
+          ),
+          prefixIcon: const Icon(
+            Icons.home_work_rounded,
             color: Color.fromARGB(1000, 60, 70, 120),
           ),
           labelStyle: TextStyle(

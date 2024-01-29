@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:med_scheduler_front/Medecin.dart';
 import 'package:med_scheduler_front/CustomAppointment.dart';
 import 'package:chips_choice/chips_choice.dart';
 import 'package:med_scheduler_front/Utilisateur.dart';
-import 'package:med_scheduler_front/Patient.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:med_scheduler_front/Categorie.dart';
 import 'package:provider/provider.dart';
 import 'package:med_scheduler_front/AuthProvider.dart';
 import 'package:jwt_decode/jwt_decode.dart';
@@ -14,6 +11,8 @@ import 'AppointmentDetails.dart';
 import 'package:med_scheduler_front/UrlBase.dart';
 import 'dart:io';
 import 'package:intl/intl.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
+import 'package:med_scheduler_front/main.dart';
 
 class ListAppointment extends StatefulWidget {
   final Utilisateur user;
@@ -39,10 +38,14 @@ class _ListAppointmentState extends State<ListAppointment> {
 
         Utilisateur user = Utilisateur.fromJson(jsonData);
 
-        print('UTILISATEUR: ${user.lastName}');
-
         return user;
       } else {
+
+        if (response.statusCode == 401) {
+          authProvider.logout();
+          Navigator.pushReplacement(
+              context, MaterialPageRoute(builder: (context) => const MyApp()));
+        }
         // Gestion des erreurs HTTP
         throw Exception(
             '-- Failed to load data. HTTP Status Code: ${response.statusCode}');
@@ -202,7 +205,7 @@ class _ListAppointmentState extends State<ListAppointment> {
 
     if (match != null) {
       String val = match.group(0)!;
-      print('VAL: $val');
+
       return val;
     } else {
       // Aucun nombre trouvé dans la chaîne
@@ -225,8 +228,17 @@ class _ListAppointmentState extends State<ListAppointment> {
         final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
         final datas = jsonData['hydra:member'] as List<dynamic>;
 
-        return datas.map((e) => CustomAppointment.fromJson(e)).toList();
+        final datasAppoints = datas.map((e) => CustomAppointment.fromJson(e)).toList();
+
+        return datasAppoints.where((element) => (element.isDeleted==null||element.isDeleted==false)).toList();
       } else {
+
+
+        if (response.statusCode == 401) {
+          authProvider.logout();
+          Navigator.pushReplacement(
+              context, MaterialPageRoute(builder: (context) => const MyApp()));
+        }
         // Gestion des erreurs HTTP
         throw Exception(
             '-- Failed to load data. HTTP Status Code: ${response.statusCode}');
@@ -394,7 +406,7 @@ class _ListAppointmentState extends State<ListAppointment> {
                         if (snapshot.connectionState ==
                             ConnectionState.waiting) {
                           // Affichez un indicateur de chargement pendant le chargement
-                          return const Center(child: CircularProgressIndicator());
+                          return Center(child: loadingWidget());
                         } else if (snapshot.hasError) {
                           // Gérez les erreurs de requête ici
                           return const Center(
@@ -607,7 +619,7 @@ class _ListAppointmentState extends State<ListAppointment> {
                         if (snapshot.connectionState ==
                             ConnectionState.waiting) {
                           // Affichez un indicateur de chargement pendant le chargement
-                          return const Center(child: CircularProgressIndicator());
+                          return Center(child: loadingWidget());
                         } else if (snapshot.hasError) {
                           // Gérez les erreurs de requête ici
                           return const Center(
@@ -819,7 +831,7 @@ class _ListAppointmentState extends State<ListAppointment> {
                         if (snapshot.connectionState ==
                             ConnectionState.waiting) {
                           // Affichez un indicateur de chargement pendant le chargement
-                          return const Center(child: CircularProgressIndicator());
+                          return Center(child: loadingWidget());
                         } else if (snapshot.hasError) {
                           // Gérez les erreurs de requête ici
                           return const Center(
@@ -1026,5 +1038,26 @@ class _ListAppointmentState extends State<ListAppointment> {
                 ],
               ],
             )),);
+  }
+
+
+
+  Widget loadingWidget(){
+    return Center(
+        child:Container(
+          width: 100,
+          height: 100,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+
+              LoadingAnimationWidget.hexagonDots(
+                  color: Colors.redAccent,
+                  size: 120),
+
+              Image.asset('assets/images/logo2.png',width: 80,height: 80,fit: BoxFit.cover,)
+            ],
+          ),
+        ));
   }
 }

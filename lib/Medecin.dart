@@ -22,7 +22,7 @@ class Medecin{
   DateTime? createdAt;
   String city;
   Centre? center;
-  List<String>? doctorAppointments;
+  List<dynamic>? doctorAppointments;
 
 
   Medecin({
@@ -58,7 +58,7 @@ class Medecin{
         category: json['category']!=null?Categorie.fromJson(json['category']):null,
         address: json['address']??'',
         city: json['city']??'',
-        doctorAppointments: json['doctorAppointments']!=null?json['doctorAppointments'] as List<String>:[],
+        doctorAppointments: json['doctorAppointments']!=null?json['doctorAppointments'] as List<dynamic>:[],
         center: json['center']!=null?Centre.fromJson(json['center']):null,
       createdAt: json['createdAt']!=null?DateTime.parse(json['createdAt']):DateTime.now()
     );

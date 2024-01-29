@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:med_scheduler_front/DisablingAppointment.dart';
+import 'package:med_scheduler_front/UtilisateurNewPassword.dart';
 import 'package:med_scheduler_front/CustomAppointment.dart';
 import 'dart:convert';
 import 'package:intl/intl.dart';
@@ -11,6 +11,9 @@ import 'package:provider/provider.dart';
 import 'package:med_scheduler_front/main.dart';
 import 'Agenda.dart';
 import 'package:awesome_dialog/awesome_dialog.dart';
+import 'package:med_scheduler_front/Espace_Client/view/AppointmentDetails.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
+
 
 class AppointmentDialog extends StatefulWidget {
   final Medecin medecin;
@@ -34,6 +37,7 @@ class _AppointmentDialogState extends State<AppointmentDialog> {
 
   List<CustomAppointment> listAppointment = [];
   List<CustomAppointment> listUnavalaibleAppointment = [];
+  List<CustomAppointment> appointsList = [];
 
   List<bool> isDisableIndex = List.generate(6, (index) => false);
 
@@ -59,18 +63,15 @@ class _AppointmentDialogState extends State<AppointmentDialog> {
     // Attendre la résolution du Future<List<CustomAppointment>>
     List<CustomAppointment> appointments = await appointmentFuture;
 
-    print('APOOIIIINTS: ${appointments.length}');
 
     // Filtrer les appointments de la semaine actuelle
     List<CustomAppointment> appointmentsInCurrentWeek =
-        appointments.where((appointment) {
+    appointments.where((appointment) {
       return isDayClicked(appointment.startAt);
     }).toList();
 
     // Ajouter les appointments filtrés à la liste résultante
     filteredAppointments.addAll(appointmentsInCurrentWeek);
-
-    print('FILTERED APPOINTS: ${filteredAppointments.length}');
 
     return filteredAppointments;
   }
@@ -81,11 +82,11 @@ class _AppointmentDialogState extends State<AppointmentDialog> {
 
     if (match != null) {
       String val = match.group(0)!;
-      print('VAL: $val');
-      return val;
+
+    return val;
     } else {
-      // Aucun nombre trouvé dans la chaîne
-      throw const FormatException("Aucun nombre trouvé dans la chaîne.");
+    // Aucun nombre trouvé dans la chaîne
+    throw const FormatException("Aucun nombre trouvé dans la chaîne.");
     }
   }
 
@@ -94,23 +95,22 @@ class _AppointmentDialogState extends State<AppointmentDialog> {
     token = authProvider.token;
 
     final url = Uri.parse(
-        "${baseUrl}api/doctors/unavailable/appointments/${extractLastNumber(widget.medecin.id)}");
+        "${baseUrl}api/doctors/appointments/${extractLastNumber(widget.medecin.id)}");
 
     final headers = {'Authorization': 'Bearer $token'};
 
     try {
       final response = await http.get(url, headers: headers);
 
-      print('STATUS CODE APPOINTS: ${response.statusCode} \n');
-
       if (response.statusCode == 200) {
         final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
         final datas = jsonData['hydra:member'] as List<dynamic>;
 
-
         return datas.map((e) => CustomAppointment.fromJson(e)).toList();
       } else {
+
         if (response.statusCode == 401) {
+          authProvider.logout();
           Navigator.pushReplacement(
               context, MaterialPageRoute(builder: (context) => const MyApp()));
         }
@@ -123,11 +123,11 @@ class _AppointmentDialogState extends State<AppointmentDialog> {
       throw e;
     }
   }
+
   Future<List<CustomAppointment>> getAllUnavalaibleAppointment() async {
     authProvider = Provider.of<AuthProvider>(context, listen: false);
     token = authProvider.token;
 
-    print('MED ID: ${widget.medecin.id}');
     final url = Uri.parse(
         "${baseUrl}api/doctors/unavailable/appointments/${extractLastNumber(widget.medecin.id)}");
 
@@ -136,17 +136,22 @@ class _AppointmentDialogState extends State<AppointmentDialog> {
     try {
       final response = await http.get(url, headers: headers);
 
-      print('STATUS CODE APPOINTS AGENDA:  ${response.statusCode} \n');
 
       if (response.statusCode == 200) {
         final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
         final datas = jsonData['hydra:member'] as List<dynamic>;
 
-        print('DATS UNAVALAIBLE SIZE: ${datas.length}');
 
         return datas.map((e) => CustomAppointment.fromJson(e)).toList();
       } else {
-        print('RESP ERROR UNAV: ${response.body}');
+
+
+        if (response.statusCode == 401) {
+          authProvider.logout();
+          Navigator.pushReplacement(
+              context, MaterialPageRoute(builder: (context) => const MyApp()));
+        }
+
         // Gestion des erreurs HTTP
         throw Exception(
             '-- Failed to load data. HTTP Status Code: ${response.statusCode}');
@@ -156,7 +161,6 @@ class _AppointmentDialogState extends State<AppointmentDialog> {
       throw e;
     }
   }
-
 
   List<CustomAppointment> getAllUnavalaibleByDate(
       List<CustomAppointment> list, DateTime dt) {
@@ -172,6 +176,7 @@ class _AppointmentDialogState extends State<AppointmentDialog> {
     return filteredList;
   }
 
+
   @override
   void didChangeDependencies() {
     // TODO: implement didChangeDependencies
@@ -186,20 +191,16 @@ class _AppointmentDialogState extends State<AppointmentDialog> {
     currentJour = ModalRoute.of(context)?.settings.arguments as DateTime;
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      listAppointment = (getAvailableAppointments(
-                  currentJour!, await getAllAppointment(), widget.medecin) !=
-              null)
-          ? getAvailableAppointments(
-              currentJour!, await getAllAppointment(), widget.medecin)!
-          : [];
+      listAppointment = (getAvailableAppointments(currentJour!, await getAllUnavalaibleAppointment(), widget.medecin) != null) ? getAvailableAppointments(currentJour!, await getAllUnavalaibleAppointment(), widget.medecin)!: [];
       listUnavalaibleAppointment = getAllUnavalaibleByDate(
-          await getAllUnavalaibleAppointment(), currentJour!);
+      await getAllUnavalaibleAppointment(), currentJour!);
       setBoolDisabled(listAppointment);
+      appointsList = await getAllAppointment();
 
       if (mounted) {
-        setState(() {
-          isLoaded = true;
-        });
+      setState(() {
+      isLoaded = true;
+      });
       }
     });
   }
@@ -208,13 +209,13 @@ class _AppointmentDialogState extends State<AppointmentDialog> {
     for (int a = 0; a < listAppointment.length; a++) {
       CustomAppointment appointment = listAppointment.elementAt(a);
       if (appointment.appType == "Desactiver") {
-        print('MISY DISABLE: ${appointment.startAt}');
+
         setState(() {
-          isDisableIndex[a] = true;
+          isDisableIndex[a] = false;
         });
       } else {
         setState(() {
-          isDisableIndex[a] = false;
+          isDisableIndex[a] = true;
         });
       }
     }
@@ -245,6 +246,60 @@ class _AppointmentDialogState extends State<AppointmentDialog> {
     });
   }
 
+
+
+  Future<void> patchAppointment(
+      CustomAppointment appointment) async {
+    final url = Uri.parse("${baseUrl}api/appointments/${extractLastNumber(appointment.id)}");
+    //final headers = {'Content-Type': 'application/json'};
+
+    final headers = {
+      'Content-Type': 'application/merge-patch+json',
+      'Authorization': 'Bearer $token'
+    };
+
+    try {
+      print('PATCH ISDELETED: ${appointment.isDeleted}');
+      String jsonUser = jsonEncode(appointment.toJsonUnav());
+
+      print('JSOON USER: ${jsonUser}');
+
+      final response = await http.patch(url, headers: headers, body: jsonUser);
+      print('${response.statusCode} \n BODY PATCH: ${response.body} ');
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> jsonResponse = json.decode(response.body);
+
+
+        if (jsonResponse.containsKey('error')) {
+          error('Rendez-vous déja existant');
+        } else {}
+      } else {
+
+
+        if (response.statusCode == 401) {
+          authProvider.logout();
+          Navigator.pushReplacement(
+              context, MaterialPageRoute(builder: (context) => const MyApp()));
+        }
+
+        if (response.statusCode == 201) {
+        } else {
+          // Gestion des erreurs HTTP
+
+          error(
+              'Il y a une erreur APPOINTMENT. HTTP Status Code: ${response.statusCode}');
+        }
+      }
+    } catch (e, stackTrace) {
+      print('Error: $e \nStack trace: $stackTrace');
+      throw e;
+    }
+  }
+
+
+
+
   Future<void> createUnavalaibleAppointment(
       CustomAppointment appointment) async {
     final url = Uri.parse("${baseUrl}api/unavailable_appointments");
@@ -263,16 +318,23 @@ class _AppointmentDialogState extends State<AppointmentDialog> {
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonResponse = json.decode(response.body);
-        print('ERRRR: $jsonResponse');
+
 
         if (jsonResponse.containsKey('error')) {
           error('Rendez-vous déja existant');
         } else {}
       } else {
+
+        if (response.statusCode == 401) {
+          authProvider.logout();
+          Navigator.pushReplacement(
+              context, MaterialPageRoute(builder: (context) => const MyApp()));
+        }
+
         if (response.statusCode == 201) {
         } else {
           // Gestion des erreurs HTTP
-          print('RESP ERROR: ${response.body}');
+
           error(
               'Il y a une erreur APPOINTMENT. HTTP Status Code: ${response.statusCode}');
         }
@@ -298,16 +360,22 @@ class _AppointmentDialogState extends State<AppointmentDialog> {
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonResponse = json.decode(response.body);
-        print('ERRRR: $jsonResponse');
 
         if (jsonResponse.containsKey('error')) {
           error('Rendez-vous déja existant');
         } else {}
       } else {
+
+        if (response.statusCode == 401) {
+          authProvider.logout();
+          Navigator.pushReplacement(
+              context, MaterialPageRoute(builder: (context) => const MyApp()));
+        }
+
         if (response.statusCode == 204) {
         } else {
           // Gestion des erreurs HTTP
-          print('RESP ERROR: ${response.body}');
+
           error(
               'Il y a une erreur APPOINTMENT. HTTP Status Code: ${response.statusCode}');
         }
@@ -322,7 +390,6 @@ class _AppointmentDialogState extends State<AppointmentDialog> {
     return appointments
         .every((appointment) => appointment.appType == "Desactiver");
   }
-
 
 
   List<CustomAppointment>? getAvailableAppointments(DateTime journeeCliquer,
@@ -367,10 +434,10 @@ class _AppointmentDialogState extends State<AppointmentDialog> {
     if (appointments.isNotEmpty) {
       for (int avIndex = 0; avIndex < availableAppointments.length; avIndex++) {
         CustomAppointment avAppointment =
-            availableAppointments.elementAt(avIndex);
+        availableAppointments.elementAt(avIndex);
 
         bool hasMatch =
-            false; // Drapeau pour vérifier s'il y a une correspondance
+        false; // Drapeau pour vérifier s'il y a une correspondance
 
         for (int unavIndex = 0; unavIndex < appointments.length; unavIndex++) {
           CustomAppointment unavAppointment = appointments.elementAt(unavIndex);
@@ -380,13 +447,13 @@ class _AppointmentDialogState extends State<AppointmentDialog> {
           // Logique de comparaison
           if (unavAppointment.appType == "Desactiver") {
             if ((DateFormat('yyyy-MM-dd').format(avAppointment.startAt) ==
-                    DateFormat('yyyy-MM-dd').format(unavAppointment.startAt)) &&
+                DateFormat('yyyy-MM-dd').format(unavAppointment.startAt)) &&
                 (TimeOfDay.fromDateTime(avAppointment.timeStart) ==
                     TimeOfDay.fromDateTime(unavAppointment.timeStart)) &&
                 (TimeOfDay.fromDateTime(avAppointment.timeEnd) ==
                     TimeOfDay.fromDateTime(unavAppointment.timeEnd)) &&
                 ((avAppointment.medecin!.lastName ==
-                        unavAppointment.medecin!.lastName) &&
+                    unavAppointment.medecin!.lastName) &&
                     (avAppointment.medecin!.firstName ==
                         unavAppointment.medecin!.firstName))) {
               tranchesDate.add(unavAppointment);
@@ -520,25 +587,65 @@ class _AppointmentDialogState extends State<AppointmentDialog> {
   bool isDayDisabled = false;
   List<bool> switchEnfants = [];
 
+  CustomAppointment? isInUnavalaiblePrise(List<CustomAppointment> listUnavalaibleAppointment,
+      CustomAppointment appointment) {
 
-  bool isInUnavalaiblePrise(List<CustomAppointment> listUnavalaibleAppointment,CustomAppointment appointment){
+    CustomAppointment? unavAppointFinded;
 
-    bool isUnique = true;
-
-    for(int unavIndex=0;unavIndex<listUnavalaibleAppointment.length;unavIndex++){
-      CustomAppointment unavAppoint = listUnavalaibleAppointment.elementAt(unavIndex);
-      bool isDifferentTime =
-          unavAppoint.timeStart.hour !=
-              appointment.timeStart.hour &&
-              unavAppoint.timeEnd.hour !=
-                  appointment.timeEnd.hour;
-    if(!isDifferentTime&&(unavAppoint.appType=="Pris"||unavAppoint.appType=="Prise")){
-      isUnique = false;
+    for (int unavIndex = 0;
+    unavIndex < listUnavalaibleAppointment.length;
+    unavIndex++) {
+      CustomAppointment unavAppoint =
+      listUnavalaibleAppointment.elementAt(unavIndex);
+      bool isEqualTime =
+          unavAppoint.timeStart.hour == appointment.timeStart.hour &&
+              unavAppoint.timeEnd.hour == appointment.timeEnd.hour;
+      if (isEqualTime &&
+          (unavAppoint.appType == "Pris" || unavAppoint.appType == "Prise")) {
+        unavAppointFinded = unavAppoint;
+      }
     }
+
+    return unavAppointFinded;
+  }
+
+  CustomAppointment? isInUnavalaibleDesactiver(List<CustomAppointment> listUnavalaibleAppointment,
+      CustomAppointment appointment) {
+
+    CustomAppointment? unavAppointFinded;
+
+    for (int unavIndex = 0;
+    unavIndex < listUnavalaibleAppointment.length;
+    unavIndex++) {
+      CustomAppointment unavAppoint =
+      listUnavalaibleAppointment.elementAt(unavIndex);
+      bool isEqualTime =
+          unavAppoint.timeStart.hour == appointment.timeStart.hour &&
+              unavAppoint.timeEnd.hour == appointment.timeEnd.hour;
+      if (isEqualTime && unavAppoint.appType == "Desactiver") {
+        unavAppointFinded = unavAppoint;
+      }
     }
 
-    return isUnique;
+    return unavAppointFinded;
+  }
 
+
+  CustomAppointment? getAppointmentDoctorPrise(CustomAppointment appointment){
+    CustomAppointment? appointmentFinded;
+    for(int ap=0;ap<appointsList.length;ap++){
+      CustomAppointment appoint = appointsList.elementAt(ap);
+      bool isEqualTime =
+          appoint.timeStart.hour == appointment.timeStart.hour &&
+              appoint.timeEnd.hour == appointment.timeEnd.hour;
+      bool isEqualPatient = appoint.patient!.id == appointment.patient!.id;
+
+      if(isEqualPatient&&isEqualTime){
+        appointmentFinded = appoint;
+    }
+
+    }
+    return appointmentFinded;
   }
 
 
@@ -550,249 +657,415 @@ class _AppointmentDialogState extends State<AppointmentDialog> {
           backgroundColor: const Color.fromARGB(1000, 238, 239, 244),
           body: (isLoaded)
               ? Padding(
-                  padding: const EdgeInsets.only(top: 60, left: 20, right: 20,bottom: 20),
-                  child: Container(
-                    decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(6),
-                        color: Colors.white
-                    ),
-                  child: Column(
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          const Spacer(),
-                          Image.asset(
-                            'assets/images/date-limite.png',
-                            width: 35,
-                          ),
-                          const Spacer(),
-                          Text(
-                            '${formatDateTime(currentJour!)}',
-                            textScaler: const TextScaler.linear(1.4),
-                            textAlign: TextAlign.start,
-                            style:
-                                TextStyle(color: Colors.black.withOpacity(0.7)),
-                          ),
-                          const Spacer(),
-                          Switch(
-                            thumbColor: MaterialStateProperty.all(Color.fromARGB(230, 20, 20, 90)),
-                            activeColor: Colors.redAccent,
-                            inactiveThumbColor: const Color.fromARGB(230, 20, 20, 90),
-                            value: areAllAppointmentsDesactiver(
-                                        getAvailableAppointments(currentJour!,
-                                            listAppointment, widget.medecin)!)
-                                    ? true
-                                    : false,
-                            onChanged: (val) {
+              padding: const EdgeInsets.only(
+                  top: 60, left: 20, right: 20, bottom: 20),
+              child: Container(
+                decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(6),
+                    color: Colors.white),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        const Spacer(),
+                        Image.asset(
+                          'assets/images/date-limite.png',
+                          width: 35,
+                        ),
+                        const Spacer(),
+                        Text(
+                          '${formatDateTime(currentJour!)}',
+                          textScaler: const TextScaler.linear(1.4),
+                          textAlign: TextAlign.start,
+                          style: TextStyle(
+                              color: Colors.black.withOpacity(0.7)),
+                        ),
+                        const Spacer(),
+                        Switch(
+                          thumbColor: areAllAppointmentsDesactiver(
+                              getAvailableAppointments(currentJour!,
+                                  listAppointment, widget.medecin)!)
+                              ? MaterialStateProperty.all(Colors.redAccent)
+                              : MaterialStateProperty.all(Colors.green),
+                          activeColor: Colors.grey.withOpacity(0.3),
+                          inactiveThumbColor: Colors.redAccent,
+                          inactiveTrackColor:
+                          Colors.redAccent.withOpacity(0.3),
+                          value: areAllAppointmentsDesactiver(
+                              getAvailableAppointments(currentJour!,
+                                  listAppointment, widget.medecin)!)
+                              ? false
+                              : true,
+                          onChanged: (val) {
 
-                              /// Liste des appointment qui sont uniques(ne sont pas enregistrés)
-                              List<CustomAppointment> appointsList = [];
+                            /// Liste des appointment qui sont uniques(ne sont pas enregistrés)
+                            List<CustomAppointment> appointsList = [];
 
-                              setState(() {
-                                isLoaded = false;
-                                isDayDisabled = val;
+                            setState(() {
 
-                                // Mettez à jour l'attribut "appType" de tous les rendez-vous du jour
-                                if (isDayDisabled) {
+                              isLoaded = false;
+                              isDayDisabled = val;
 
-                                  /// On boucle tous les plages crées par défaut
-                                  for (var appointment in listAppointment) {
+                              /// Si le switch devient false(desactivation)
+                              if (isDayDisabled==false) {
 
-                                    /// On initialise un variable boolean en isUnique = false a chaque appointment
-                                    bool isUnique = false;
+                                print('DAY DISABLED');
 
-                                    /// On boucle tous les appointment qui ne sont plus disponible de type "Desactiver" du medecin en question et du date cliquer(enregistrés dans la base)
-                                    for (var unavAppoint in listUnavalaibleAppointment) {
+                                /// On boucle tous les plages crées par défaut
+                                for (var appointment in listAppointment) {
+                                  /// On initialise un variable boolean en isUnique = true a chaque appointment(par defaut activer)
+                                  bool isUnique = true;
 
-                                      /// Verification si l'appointment crée par defaut a desactiver est déja enregistrer(en se referent par la timeStart et timeEnd)
-                                      bool isDifferentTime =
-                                          unavAppoint.timeStart.hour !=
-                                                  appointment.timeStart.hour &&
-                                              unavAppoint.timeEnd.hour !=
-                                                  appointment.timeEnd.hour;
+                                  /// On boucle tous les appointment qui ne sont plus disponible de type "Desactiver" du medecin en question et du date cliquer(enregistrés dans la base)
+                                  for (var unavAppoint
+                                  in listUnavalaibleAppointment) {
+                                    /// Verification si l'appointment crée par defaut a desactiver est déja enregistrer(en se referent par la timeStart et timeEnd)
+                                    bool isEqualTimeAndPrise = unavAppoint
+                                        .timeStart.hour ==
+                                        appointment.timeStart.hour &&
+                                        unavAppoint.timeEnd.hour ==
+                                            appointment.timeEnd.hour && (unavAppoint.appType=="Prise"||unavAppoint.appType=="Pris");
 
+                                    bool isEqualTimeAndDisabled = unavAppoint
+                                        .timeStart.hour ==
+                                        appointment.timeStart.hour &&
+                                        unavAppoint.timeEnd.hour ==
+                                            appointment.timeEnd.hour && unavAppoint.appType=="Desactiver";
 
-                                      /// Si l'appointment a desactiver est unique, on affecte isUnique en true
-                                      if (isDifferentTime) {
-                                        isUnique = true;
-                                      }
-                                    } // On sort de la boucle de appointment indisponible
-
-
-                                    /// On vérifie après si le boolean est unique pour cette appointment a desactiver
-                                    if (isUnique) {
-
-                                      /// On ajoute l'appointment dans la liste a desctiver après
-                                      appointsList.add(appointment);
-
-
+                                    /// Si l'appointment a desactiver est unique, on affecte isUnique en false
+                                    if (isEqualTimeAndPrise) {
+                                      isUnique = false;
                                     }
-                                  } // On sort du boucle de list Appointment
 
-                                  /// Maintenant qu'on a eu tous les appointments uniques, on boucle pour les desactiver un a un
-                                  for (var appoint in appointsList) {
+                                  }// On sort du boucle de list Appointment
 
-                                    /// On instancie appointment dans un nouveau variable d'appointment(customAppointment)
+                                  if (isUnique==false) {
+
                                     CustomAppointment customAppointment =
-                                        CustomAppointment(
+                                    CustomAppointment(
                                       medecin: widget.medecin,
-                                      id: appoint.id,
-                                      type: appoint.type,
+                                      patient: appointment.patient,
+                                      id: appointment.id,
+                                      type: appointment.type,
                                       startAt: currentJour!,
-                                      timeStart: appoint.timeStart,
-                                      timeEnd: appoint.timeEnd,
-                                      reason: "",
-                                      createdAt: appoint.createdAt,
+                                      timeStart: appointment.timeStart,
+                                      timeEnd: appointment.timeEnd,
+                                      reason: appointment.reason,
+                                      createdAt: appointment.createdAt,
                                       appType:
-                                          isDayDisabled ? 'Desactiver' : "",
+                                      'Desactiver',
                                     );
 
-                                    bool uniqueVe = isInUnavalaiblePrise(listUnavalaibleAppointment, appoint);
+                                    if(isInUnavalaibleDesactiver(listUnavalaibleAppointment,appointment)==null){
 
-                                    if(uniqueVe){
-                                      /// On cree l'appointment avec un type "Desactiver" vers le serveur(On desactive l'appointment)
-                                      createUnavalaibleAppointment(
-                                          customAppointment);
+                                      CustomAppointment? unavAppointFinded = isInUnavalaiblePrise(listUnavalaibleAppointment, appointment);
+                                        if(unavAppointFinded!=null){
+                                          CustomAppointment? appointmentPrise = getAppointmentDoctorPrise(unavAppointFinded);
 
-                                      /// On actualise l'état
-                                      didChangeDependencies();
+                                          ConfirmDisableAppointmentBoucle(appointmentPrise!);
 
-                                    }else{
+                                        }
 
-                                      /// On demande la confirmation de l'admin ou du medecin s'il veut vraiment desactiver cette plage horaire qui est deja prise en tant que rendez-vous
-                                      ConfirmDisableAppointmentBoucle(customAppointment);
 
                                       /// On actualise l'état
                                       didChangeDependencies();
-
                                     }
 
-                                  } // On sort du boucle
 
-                                  /// Si le Switch est desactiver ou bien le jour est reactiver de nouveau
-                                } else {
+                                  }else{
 
-                                  /// On boucle de nouveau les appointments par defaut crée
-                                  for (var appointment in listAppointment) {
+                                    print('app ADD: ${appointment.timeStart.hour}');
+                                    if(isInUnavalaibleDesactiver(listUnavalaibleAppointment,appointment)==null){
+                                      /// On ajoute l'appointment dans la liste a desctiver après
+                                      appointsList.add(appointment);
+                                    }
 
+                                  }
+
+                                }// On sort de la boucle de appointment indisponible
+
+
+
+                                /// Maintenant qu'on a eu tous les appointments uniques, on boucle pour les desactiver un a un
+                                for (var appoint in appointsList) {
+                                  /// On instancie appointment dans un nouveau variable d'appointment(customAppointment)
+                                  CustomAppointment customAppointment =
+                                  CustomAppointment(
+                                    medecin: widget.medecin,
+                                    id: appoint.id,
+                                    type: appoint.type,
+                                    startAt: currentJour!,
+                                    timeStart: appoint.timeStart,
+                                    timeEnd: appoint.timeEnd,
+                                    reason: "",
+                                    createdAt: appoint.createdAt,
+                                    appType:
+                                    'Desactiver',
+                                  );
+
+
+
+                                  /// On cree l'appointment avec un type "Desactiver" vers le serveur(On desactive l'appointment)
+                                  createUnavalaibleAppointment(customAppointment);
+
+                                  /// On actualise l'état
+                                  didChangeDependencies();
+
+                                } // On sort du boucle
+
+                                /// Si le Switch est desactiver ou bien le jour est reactiver de nouveau
+                              } else {
+
+                                print('BOUCLE ENABLED');
+
+                                /// On boucle de nouveau les appointments par defaut crée
+                                for (var appointment in listAppointment) {
+
+                                  CustomAppointment? unavAppointFinded = isInUnavalaiblePrise(listUnavalaibleAppointment, appointment);
+                                  if(unavAppointFinded!=null){
+                                    CustomAppointment? appointmentPrise = getAppointmentDoctorPrise(unavAppointFinded);
+                                    if(appointmentPrise!=null){
+
+                                      CustomAppointment appointmentPatchFalse = CustomAppointment(id: appointmentPrise.id,medecin: appointmentPrise.medecin,patient: appointmentPrise.patient,type: appointmentPrise.type, startAt: appointmentPrise.startAt, timeStart: appointmentPrise.timeStart, timeEnd: appointmentPrise.timeEnd, reason: appointmentPrise.reason, updatedAt: DateTime.now(),createdAt: appointmentPrise.createdAt,isDeleted: false);
+
+                                      patchAppointment(appointmentPatchFalse);
+
+                                      deleteUnavalaibleAppointment(appointment);
+                                    }else{
+                                      /// On supprime l'appointment de type "Desactiver" dans la base de donnée(on reactive le plage horaire)
+                                      deleteUnavalaibleAppointment(appointment);
+                                    }
+                                  }else{
                                     /// On supprime l'appointment de type "Desactiver" dans la base de donnée(on reactive le plage horaire)
                                     deleteUnavalaibleAppointment(appointment);
-
-                                    /// On actualise l'état
-                                    didChangeDependencies();
                                   }
+
+                                  /// On actualise l'état
+                                  didChangeDependencies();
                                 }
-                              });
-                            },
-                          ),
-                          const Spacer(),
-                        ],
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.only(top: 20, bottom: 10),
-                        child: Text(
-                          'Les tranches horaires:',
-                          style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.black.withOpacity(0.6)),
+                              }
+                            });
+                          },
                         ),
+                        const Spacer(),
+                      ],
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 20, bottom: 10),
+                      child: Text(
+                        'Les tranches horaires:',
+                        style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.black.withOpacity(0.6)),
                       ),
-                      Expanded(
-                        child: Container(
-                          padding: const EdgeInsets.only(left: 10,right: 10,top: 20),
-                          color: Colors.transparent,
-                          width: MediaQuery.of(context).size.width - 40,
-                          height: MediaQuery.of(context).size.height / 3,
-                          child: ListView.builder(
-                            itemCount: listAppointment.length,
-                            itemBuilder: (context, i) {
-                              CustomAppointment appointment =
-                                  listAppointment.elementAt(i);
+                    ),
+                    Expanded(
+                      child: Container(
+                        padding: const EdgeInsets.only(
+                            left: 10, right: 10, top: 20),
+                        color: Colors.transparent,
+                        width: MediaQuery.of(context).size.width - 40,
+                        height: MediaQuery.of(context).size.height / 3,
+                        child: ListView.builder(
+                          itemCount: listAppointment.length,
+                          itemBuilder: (context, i) {
+                            CustomAppointment appointment =
+                            listAppointment.elementAt(i);
 
-                                  bool isUnique = isInUnavalaiblePrise(listUnavalaibleAppointment,appointment);
-                              //print('APPOINT APPTYPE: ${appointment.appType}, START: ${appointment.timeStart}, END: ${appointment.timeEnd}');
+                            CustomAppointment? unavAppointFinded = isInUnavalaiblePrise(listUnavalaibleAppointment, appointment);
+                            CustomAppointment? unavAppointFindedDesactiver = isInUnavalaibleDesactiver(listUnavalaibleAppointment, appointment);
 
-                              return Column(
-                                children: [
-                                  Container(
-                                    height:60,
+                            //CustomAppointment? appointmentPrise = getAppointmentDoctorPrise(unavAppointFinded!);
+
+                            return Column(
+                              children: [
+                                (unavAppointFinded==null)
+                                    ? Container(
+                                  height: 60,
+                                  decoration: BoxDecoration(
+                                      color:Colors.transparent,
+                                      borderRadius:
+                                      BorderRadius.circular(6)),
+                                  child: Row(
+                                    children: [
+                                      Padding(
+                                        padding:
+                                        const EdgeInsets.only(
+                                            left: 15),
+                                        child: Text(
+                                          '${formatDateTimeAppointment(appointment.startAt, appointment.timeStart, appointment.timeEnd)}',
+
+                                          style:const TextStyle(
+                                              color: Color
+                                                  .fromARGB(
+                                                  230, 20, 20, 90),
+                                              fontWeight: FontWeight.w400
+                                              ,
+                                              letterSpacing: 1.5,
+                                              fontSize: 16),
+                                        ),
+                                      ),
+                                      const Spacer(),
+                                      Switch(
+                                        thumbColor: (appointment
+                                            .appType ==
+                                            "Desactiver")
+                                            ? MaterialStateProperty
+                                            .all(Colors.redAccent)
+                                            : MaterialStateProperty
+                                            .all(Colors.green),
+                                        activeColor: Colors.grey
+                                            .withOpacity(0.3),
+                                        inactiveThumbColor:
+                                        Colors.redAccent,
+                                        inactiveTrackColor: Colors
+                                            .redAccent
+                                            .withOpacity(0.3),
+                                        value: (appointment.appType ==
+                                            null)
+                                            ? true
+                                            : ((appointment.appType ==
+                                            "Desactiver")
+                                            ? false
+                                            : true),
+                                        onChanged: (val) {
+                                          setState(() {
+                                            print('FIRST VAL: $val');
+
+                                            isDisableIndex[i] = val;
+
+                                            if (isDisableIndex[i] ==
+                                                true) {
+                                              print('TRUE');
+                                              deleteUnavalaibleAppointment(
+                                                  appointment);
+
+                                              didChangeDependencies();
+                                            } else {
+                                              print('FALSE');
+
+
+                                              CustomAppointment appoint = CustomAppointment(
+                                                  medecin: widget
+                                                      .medecin,
+                                                  id: '',
+                                                  type: appointment
+                                                      .type,
+                                                  startAt:
+                                                  currentJour!,
+                                                  timeStart:
+                                                  appointment
+                                                      .timeStart,
+                                                  timeEnd:
+                                                  appointment
+                                                      .timeEnd,
+                                                  reason: "",
+                                                  createdAt:
+                                                  appointment
+                                                      .createdAt,
+                                                  appType:
+                                                  isDisableIndex[
+                                                  i]
+                                                      ? ""
+                                                      : "Desactiver");
+
+                                              createUnavalaibleAppointment(
+                                                  appoint);
+                                              didChangeDependencies();
+
+                                            }
+                                          });
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                )
+                                    : GestureDetector(
+                                  onTap: (){
+                                    Navigator.push(context, MaterialPageRoute(builder: (context)=>AppointmentDetails(),settings: RouteSettings(arguments: unavAppointFinded)));
+                                  },
+                                  child: Container(
+                                    height: 60,
                                     decoration: BoxDecoration(
-
-                                        color: isUnique?Colors.transparent:Colors.redAccent.withOpacity(0.3),
-                                        borderRadius: BorderRadius.circular(6)
-                                    ),
-                                    child:  Row(
+                                        color: (getAppointmentDoctorPrise(unavAppointFinded)!.isDeleted!=null&&getAppointmentDoctorPrise(unavAppointFinded)!.isDeleted==true)? Color.fromARGB(1000, 238, 239, 244):Colors.redAccent
+                                            .withOpacity(0.3),
+                                        borderRadius:
+                                        BorderRadius.circular(6)),
+                                    child: Row(
                                       children: [
                                         Padding(
-                                          padding: const EdgeInsets.only(left: 15),
+                                          padding:
+                                          const EdgeInsets.only(
+                                              left: 15),
                                           child: Text(
-                                            isUnique?'${formatDateTimeAppointment(appointment.startAt, appointment.timeStart, appointment.timeEnd)}':' Rendez-vous en cours \n ${formatDateTimeAppointment(appointment.startAt, appointment.timeStart, appointment.timeEnd)}',
-
-                                            style: TextStyle(
-                                                color:const Color.fromARGB(
+                                              (getAppointmentDoctorPrise(unavAppointFinded)!.isDeleted!=null&&getAppointmentDoctorPrise(unavAppointFinded)!.isDeleted==true)?'Rendez-vous annulé \n ${formatDateTimeAppointment(appointment.startAt, appointment.timeStart, appointment.timeEnd)}':' Rendez-vous en cours \n ${formatDateTimeAppointment(appointment.startAt, appointment.timeStart, appointment.timeEnd)}',
+                                            style:const TextStyle(
+                                                color: Color
+                                                    .fromARGB(
                                                     230, 20, 20, 90),
-                                                fontWeight: isUnique?FontWeight.w400:FontWeight.w500,
+                                                fontWeight: FontWeight.w500,
                                                 letterSpacing: 1.5,
                                                 fontSize: 16),
                                           ),
                                         ),
                                         const Spacer(),
                                         Switch(
-                                          thumbColor: MaterialStateProperty.all(Color.fromARGB(230, 20, 20, 90)),
-                                          activeColor: Colors.redAccent,
+                                          thumbColor: (appointment
+                                              .appType ==
+                                              "Desactiver")
+                                              ? MaterialStateProperty
+                                              .all(Colors.redAccent)
+                                              : MaterialStateProperty
+                                              .all(Colors.green),
+                                          activeColor: Colors.grey
+                                              .withOpacity(0.3),
                                           inactiveThumbColor:
-                                          const Color.fromARGB(230, 20, 20, 90),
-                                          value: (appointment.appType == null)
-                                              ? false
+                                          Colors.redAccent,
+                                          inactiveTrackColor: Colors
+                                              .redAccent
+                                              .withOpacity(0.3),
+                                          value: (appointment.appType ==
+                                              null)
+                                              ? true
                                               : ((appointment.appType ==
                                               "Desactiver")
-                                              ? true
-                                              : false),
+                                              ? false
+                                              : true),
                                           onChanged: (val) {
                                             setState(() {
                                               print('FIRST VAL: $val');
 
                                               isDisableIndex[i] = val;
 
+                                              if (isDisableIndex[i] ==
+                                                  true) {
+                                                print('TRUE PRISE');
 
+                                                CustomAppointment? appointmentPrise = getAppointmentDoctorPrise(unavAppointFinded);
 
-                                              if (isDisableIndex[i] == false) {
-                                                print('FALSE');
+                                                CustomAppointment appointmentPatchFalse = CustomAppointment(id: appointmentPrise!.id,medecin: appointmentPrise.medecin,patient: appointmentPrise.patient,type: appointmentPrise.type, startAt: appointmentPrise.startAt, timeStart: appointmentPrise.timeStart, timeEnd: appointmentPrise.timeEnd, reason: appointmentPrise.reason, updatedAt: DateTime.now(),createdAt: appointmentPrise.createdAt,isDeleted: false);
+
+                                                patchAppointment(appointmentPatchFalse);
+
                                                 deleteUnavalaibleAppointment(
-                                                    appointment);
+                                                    unavAppointFindedDesactiver!);
 
                                                 didChangeDependencies();
                                               } else {
-                                                print('TRUE');
+                                                print('FALSE PRISE');
 
-                                                if(isUnique){
+                                                //CustomAppointment newAppoint = CustomAppointment(id: appointment.id,patient: appointment.patient, type: appointment.type, startAt: appointment.startAt, timeStart: appointment.timeStart, timeEnd: appointment.timeEnd, reason: appointment.reason, createdAt: appointment.createdAt,appType: "Desactiver");
 
-                                                  CustomAppointment appoint =
-                                                  CustomAppointment(
-                                                      medecin: widget.medecin,
-                                                      id: '',
-                                                      type: appointment.type,
-                                                      startAt: currentJour!,
-                                                      timeStart:
-                                                      appointment.timeStart,
-                                                      timeEnd:
-                                                      appointment.timeEnd,
-                                                      reason: "",
-                                                      createdAt:
-                                                      appointment.createdAt,
-                                                      appType: isDisableIndex[i]
-                                                          ? 'Desactiver'
-                                                          : "");
 
-                                                  createUnavalaibleAppointment(
-                                                      appoint);
-                                                  didChangeDependencies();
+                                                print('APPOINT FINDED: ${unavAppointFinded.patient!.id}');
 
-                                                }else{
-                                                  ConfirmDisableAppointment(appointment,i);
-                                                }
+                                                CustomAppointment? appointmentPrise = getAppointmentDoctorPrise(unavAppointFinded);
 
+
+                                                print('APPPOINT PRISE : ${appointmentPrise!.patient!.id}');
+
+                                                ConfirmDisableAppointment(appointmentPrise);
 
                                               }
                                             });
@@ -801,59 +1074,74 @@ class _AppointmentDialogState extends State<AppointmentDialog> {
                                       ],
                                     ),
                                   ),
-
-                                  const Divider(
-                                    thickness: 1,
-                                    color: Colors.grey,
-                                    indent: 10,
-                                    endIndent: 10,
-                                  ),
-                                  const SizedBox(
-                                    height: 10,
-                                  ),
-                                ],
-                              );
-                            },
-                          ),
+                                ),
+                                const Divider(
+                                  thickness: 1,
+                                  color: Colors.grey,
+                                  indent: 10,
+                                  endIndent: 10,
+                                ),
+                                const SizedBox(
+                                  height: 10,
+                                ),
+                              ],
+                            );
+                          },
                         ),
                       ),
-                      Row(
-                        children: [
-                          const Spacer(),
-                          TextButton(
-                            onPressed: () {
-                              Navigator.pushReplacement(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (context) => Agenda(disconnect: false,),
-                                      settings: RouteSettings(
-                                          arguments: widget.medecin)));
-                            },
-                            child: const Text(
-                              'Annuler',
-                              style: TextStyle(
-                                  color: Colors.redAccent,
-                                  letterSpacing: 2,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w500),
-                            ),
+                    ),
+                    Row(
+                      children: [
+                        const Spacer(),
+                        TextButton(
+                          onPressed: () {
+                            Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => Agenda(),settings: RouteSettings(arguments: widget.medecin)));
+                          },
+                          child: const Text(
+                            'Annuler',
+                            style: TextStyle(
+                                color: Colors.redAccent,
+                                letterSpacing: 2,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500),
                           ),
-                        ],
-                      ),
-                      const SizedBox(
-                        height: 20,
-                      ),
-                    ],
-                  ),
-          )
-                )
-              : const Center(
-                  child: CircularProgressIndicator(),
-                )),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(
+                      height: 20,
+                    ),
+                  ],
+                ),
+              ))
+              :loadingWidget()),
     );
   }
 
 
+
+
+  Widget loadingWidget(){
+    return Center(
+        child:Container(
+          width: 100,
+          height: 100,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+
+              LoadingAnimationWidget.hexagonDots(
+                  color: Colors.redAccent,
+                  size: 120),
+
+              Image.asset('assets/images/logo2.png',width: 80,height: 80,fit: BoxFit.cover,)
+            ],
+          ),
+        ));
+  }
 
 
   void ConfirmDisableAppointmentBoucle(CustomAppointment appointment) {
@@ -878,6 +1166,25 @@ class _AppointmentDialogState extends State<AppointmentDialog> {
       },
       btnOkOnPress: () {
 
+
+        CustomAppointment appointPatch =
+        CustomAppointment(
+            medecin: widget.medecin,
+            patient: appointment.patient,
+            id: appointment.id,
+            type: appointment.type,
+            startAt: currentJour!,
+            timeStart:
+            appointment.timeStart,
+            timeEnd:
+            appointment.timeEnd,
+            reason: appointment.reason,
+            createdAt:
+            appointment.createdAt,
+            updatedAt: DateTime.now(),
+            isDeleted: true);
+
+
         CustomAppointment appoint =
         CustomAppointment(
             medecin: widget.medecin,
@@ -891,9 +1198,9 @@ class _AppointmentDialogState extends State<AppointmentDialog> {
             reason: "",
             createdAt:
             appointment.createdAt,
-            appType: isDayDisabled
-                ? 'Desactiver'
-                : "");
+            appType:'Desactiver');
+
+        patchAppointment(appointPatch);
 
         createUnavalaibleAppointment(
             appoint);
@@ -903,15 +1210,16 @@ class _AppointmentDialogState extends State<AppointmentDialog> {
 
   }
 
-
-
-  void ConfirmDisableAppointment(CustomAppointment appointment,int i) {
-
+  void ConfirmDisableAppointment(CustomAppointment appointment) {
     AwesomeDialog(
       dialogBackgroundColor: Colors.redAccent,
       btnCancelColor: Colors.grey,
-      titleTextStyle: const TextStyle(letterSpacing: 2,color: Colors.white),
-      descTextStyle: TextStyle(letterSpacing: 2,color: Colors.white.withOpacity(0.8),fontWeight: FontWeight.w500,fontSize: 16),
+      titleTextStyle: const TextStyle(letterSpacing: 2, color: Colors.white),
+      descTextStyle: TextStyle(
+          letterSpacing: 2,
+          color: Colors.white.withOpacity(0.8),
+          fontWeight: FontWeight.w500,
+          fontSize: 16),
       context: context,
       autoDismiss: true,
       dialogType: DialogType.info,
@@ -919,38 +1227,46 @@ class _AppointmentDialogState extends State<AppointmentDialog> {
       btnOkText: 'Confirmer',
       btnCancelText: 'Annuler',
       animType: AnimType.rightSlide,
-
       title: 'Confirmation',
-      desc: 'Voulez-vous vraiment désactiver cette plage horaire contenant un rendez-vous ?',
-      btnCancelOnPress: () {
-
-      },
+      desc:
+      'Confirmez-vous votre choix de désactiver cette plage horaire, qui inclut un rendez-vous prévu ?',
+      btnCancelOnPress: () {},
       btnOkOnPress: () {
 
-        CustomAppointment appoint =
-        CustomAppointment(
+
+        CustomAppointment appointPatch = CustomAppointment(
+            medecin: widget.medecin,
+            patient: appointment.patient,
+            id: appointment.id,
+            type: appointment.type,
+            startAt: currentJour!,
+            timeStart: appointment.timeStart,
+            timeEnd: appointment.timeEnd,
+            reason: appointment.reason,
+            createdAt: appointment.createdAt,
+            updatedAt: DateTime.now(),
+            isDeleted: true);
+
+
+
+
+        CustomAppointment appoint = CustomAppointment(
             medecin: widget.medecin,
             id: '',
             type: appointment.type,
             startAt: currentJour!,
-            timeStart:
-            appointment.timeStart,
-            timeEnd:
-            appointment.timeEnd,
+            timeStart: appointment.timeStart,
+            timeEnd: appointment.timeEnd,
             reason: "",
-            createdAt:
-            appointment.createdAt,
-            appType: isDisableIndex[i]
-                ? 'Desactiver'
-                : "");
+            createdAt: appointment.createdAt,
+            appType:'Desactiver');
 
-        createUnavalaibleAppointment(
-            appoint);
+        patchAppointment(appointPatch);
+
+        createUnavalaibleAppointment(appoint);
         didChangeDependencies();
       },
     ).show();
-
   }
-
 
 }

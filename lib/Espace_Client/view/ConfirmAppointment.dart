@@ -10,6 +10,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'PriseDeRendezVous.dart';
 import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
+import 'package:med_scheduler_front/main.dart';
 
 class ConfirmAppointment extends StatefulWidget {
   final CustomAppointment appointment;
@@ -128,8 +129,17 @@ class _ConfirmAppointmentState extends State<ConfirmAppointment> {
           Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>PriseDeRendezVous(patient: widget.appointment.patient!),settings: RouteSettings(arguments: appointment.medecin)));
         }else{
 
+
+          if (response.statusCode == 401) {
+            authProvider.logout();
+            Navigator.pushReplacement(
+                context, MaterialPageRoute(builder: (context) => const MyApp()));
+          }else{
+            error('Il y a une erreur APPOINTMENT. HTTP Status Code: ${response.statusCode}');
+          }
+
           // Gestion des erreurs HTTP
-          error('Il y a une erreur APPOINTMENT. HTTP Status Code: ${response.statusCode}');
+          //error('Il y a une erreur APPOINTMENT. HTTP Status Code: ${response.statusCode}');
 
         }
 
@@ -179,6 +189,13 @@ class _ConfirmAppointmentState extends State<ConfirmAppointment> {
           RdvValider();
           Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>PriseDeRendezVous(patient: widget.appointment.patient!),settings: RouteSettings(arguments: appointment.medecin)));
         }else{
+
+
+          if (response.statusCode == 401) {
+            authProvider.logout();
+            Navigator.pushReplacement(
+                context, MaterialPageRoute(builder: (context) => const MyApp()));
+          }
 
           // Gestion des erreurs HTTP
           error('Il y a une erreur APPOINTMENT. HTTP Status Code: ${response.statusCode}');
