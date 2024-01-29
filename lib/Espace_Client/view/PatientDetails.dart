@@ -13,10 +13,10 @@ import 'package:path_provider/path_provider.dart';
 import 'package:image/image.dart' as img;
 import 'package:uuid/uuid.dart';
 import 'package:med_scheduler_front/UrlBase.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
 import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
+import 'package:med_scheduler_front/Utilitie/Utilities.dart';
+import 'package:med_scheduler_front/Repository/UserRepository.dart';
 
 class PatientDetails extends StatefulWidget {
   _PatientDetailsState createState() => _PatientDetailsState();
@@ -30,14 +30,11 @@ class _PatientDetailsState extends State<PatientDetails> {
 
   bool isLoading = false;
 
-  bool _isPageActive = true;
+  UserRepository? userRepository;
+  Utilities? utilities;
 
   @override
   void dispose() {
-    // TODO: implement dispose
-    _isPageActive = false;
-    super.dispose();
-
     print('--- DESTRUCTION PAGE ---');
   }
 
@@ -195,52 +192,9 @@ class _PatientDetailsState extends State<PatientDetails> {
   @override
   void initState() {
     super.initState();
-    print('INIT ZAO');
-    utilisateur = widget.user;
+    utilities = Utilities(context: context);
+    userRepository = UserRepository(context: context, utilities: utilities!);
 
-    profilImage =
-        (utilisateur.imageName != null) ? File(utilisateur.imageName!) : null;
-    nomController.text = utilisateur.firstName;
-    prenomController.text = utilisateur.lastName;
-    phoneController.text = utilisateur.phone;
-    emailController.text = utilisateur.email;
-    categorieController.text = (utilisateur.category != null)
-        ? categorieSet(utilisateur.category!)
-        : "";
-  }
-
-  Future<Utilisateur> getUser(String id) async {
-    final url = Uri.parse("${baseUrl}api/users/${extractLastNumber(id)}");
-
-    print('URL USER: $url');
-
-    final headers = {'Authorization': 'Bearer $token'};
-
-    try {
-      final response = await http.get(url, headers: headers);
-      print(' --- ST CODE: ${response.statusCode}');
-
-      if (response.statusCode == 200) {
-        final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
-
-        Utilisateur user = Utilisateur.fromJson(jsonData);
-
-        print('UTILISATEUR: ${user.lastName}');
-
-        return user;
-      } else {
-        // Gestion des erreurs HTTP
-        if (response.statusCode == 401) {
-          authProvider.logout();
-          Navigator.pushReplacement(
-              context, MaterialPageRoute(builder: (context) => const MyApp()));
-        }
-        throw Exception('ANOTHER ERROR');
-      }
-    } catch (e, stackTrace) {
-      print('Error: $e \nStack trace: $stackTrace');
-      throw Exception('-- Failed to load data. Error: $e');
-    }
   }
 
   bool dataLoaded = false;
@@ -256,7 +210,8 @@ class _PatientDetailsState extends State<PatientDetails> {
     authProvider = Provider.of<AuthProvider>(context);
     token = authProvider.token;
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      utilisateur = await getUser(widget.user.id);
+      utilisateur = await userRepository!.getUser(widget.user.id);
+      print('USER EMAIL: ${utilisateur.email}');
       if (mounted) {
         setState(() {
           profilImage = (utilisateur.imageName != null)
@@ -277,11 +232,11 @@ class _PatientDetailsState extends State<PatientDetails> {
   }
 
   String categorieSet(String uri) {
-    if (extractLastNumber(uri) == '1') {
+    if (utilities!.extractLastNumber(uri) == '1') {
       return 'Bébé';
-    } else if (extractLastNumber(uri) == '2') {
+    } else if (utilities!.extractLastNumber(uri) == '2') {
       return 'Enfant';
-    } else if (extractLastNumber(uri) == '3') {
+    } else if (utilities!.extractLastNumber(uri) == '3') {
       return 'Femme';
     } else {
       return 'Homme';
@@ -393,11 +348,8 @@ class _PatientDetailsState extends State<PatientDetails> {
                     createdAt: utilisateur.createdAt,
                     city: utilisateur.city);
 
-
-
-                UserUpdate(userInterm);
-                UserUpdateImage(fileImage);
-
+                userRepository!.UserUpdate(userInterm);
+                userRepository!.UserUpdateImage(fileImage, userInterm);
 
                 if (mounted) {
                   setState(() {
@@ -414,152 +366,6 @@ class _PatientDetailsState extends State<PatientDetails> {
         );
       },
     );
-  }
-
-  String extractLastNumber(String input) {
-    RegExp regExp = RegExp(r'\d+$');
-    Match? match = regExp.firstMatch(input);
-
-    if (match != null) {
-      String val = match.group(0)!;
-      print('VAL: $val');
-      return val;
-    } else {
-      // Aucun nombre trouvé dans la chaîne
-      throw const FormatException("Aucun nombre trouvé dans la chaîne.");
-    }
-  }
-
-  Future<void> UserUpdate(Utilisateur utilisateur) async {
-    setState(() {
-      isLoading = true;
-    });
-    final url =
-        Uri.parse("${baseUrl}api/users/${extractLastNumber(utilisateur.id)}");
-    //final headers = {'Content-Type': 'application/json'};
-
-    final headers = {'Content-Type': 'application/merge-patch+json'};
-
-    print('URL: $url');
-
-    try {
-      String jsonUser = jsonEncode(utilisateur.toJson());
-      print('Request Body: $jsonUser');
-      final response = await http.patch(url, headers: headers, body: jsonUser);
-      print(response.statusCode);
-
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> jsonResponse = json.decode(response.body);
-        print('ERRRR: $jsonResponse');
-
-        if (jsonResponse.containsKey('error')) {
-          error('Erreur de modification');
-        } else {
-          ModificationUtilisateur();
-          if (mounted) {
-            setState(() {
-              isLoading = false;
-            });
-          }
-        }
-      } else {
-        setState(() {
-          isLoading = false;
-        });
-        if (response.statusCode == 401) {
-          authProvider.logout();
-          Navigator.pushReplacement(
-              context, MaterialPageRoute(builder: (context) => const MyApp()));
-        }
-        // Gestion des erreurs HTTP
-        error('Il y a une erreur. HTTP Status Code: ${response.statusCode}');
-        throw Exception(
-            '-- Failed to add user. HTTP Status Code: ${response.statusCode}');
-      }
-    } catch (e, exception) {
-      setState(() {
-        isLoading = false;
-      });
-      // Gestion des erreurs autres que HTTP
-      error('Erreur de connexion ou voir ceci: $e');
-      print('EXCPEPT: $exception');
-      throw Exception('-- CATCH Failed to add user. Error: $e');
-    }
-  }
-
-
-  Future<void> UserUpdateImage(File file) async {
-    setState(() {
-      isLoading = true;
-    });
-    
-
-    
-    final url =
-    Uri.parse("${baseUrl}api/image-profile/${extractLastNumber(utilisateur.id)}");
-    //final headers = {'Content-Type': 'application/json'};
-
-    final headers = {'Content-Type': 'multipart/form-data'};
-
-
-    print('URL PHOTO UPDATE: $url');
-
-    try {
-      var request = http.MultipartRequest('POST', Uri.parse(url.path));
-
-      // Ajouter le fichier au champ de données multipartes
-      var fileStream = http.ByteStream(file.openRead());
-      var length = await file.length();
-      var multipartFile = http.MultipartFile('file', fileStream, length,
-          filename: file.path.split('/').last);
-      request.files.add(multipartFile);
-
-      //String jsonUser = jsonEncode(utilisateur.toJson());
-      //print('Request Body: $jsonUser');
-
-      var response = await http.Response.fromStream(await request.send());
-
-
-      //final response = await http.patch(url, headers: headers, body: jsonUser);
-      print(response.statusCode);
-
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> jsonResponse = json.decode(response.body);
-        print('ERRRR: $jsonResponse');
-
-        if (jsonResponse.containsKey('error')) {
-          error('Erreur de modification');
-        } else {
-          ModificationUtilisateur();
-          if (mounted) {
-            setState(() {
-              isLoading = false;
-            });
-          }
-        }
-      } else {
-        setState(() {
-          isLoading = false;
-        });
-        if (response.statusCode == 401) {
-          authProvider.logout();
-          Navigator.pushReplacement(
-              context, MaterialPageRoute(builder: (context) => const MyApp()));
-        }
-        // Gestion des erreurs HTTP
-        error('Il y a une erreur de connexion\n Veuillez verifiez votre connexion!');
-        throw Exception(
-            '-- Erreur de connexion');
-      }
-    } catch (e, exception) {
-      setState(() {
-        isLoading = false;
-      });
-      // Gestion des erreurs autres que HTTP
-      error('Erreur de connexion ou voir ceci: $e');
-      print('EXCPEPT: $exception');
-      throw Exception('-- CATCH Failed to add user. Error: $e');
-    }
   }
 
   void error(String description) {
@@ -685,7 +491,6 @@ class _PatientDetailsState extends State<PatientDetails> {
                                                             'IMAGE NAME: $imageName');
 
                                                         _pickImage(imageName);
-
                                                       },
                                                       icon: const Icon(
                                                         Icons.add_a_photo,
@@ -819,11 +624,14 @@ class _PatientDetailsState extends State<PatientDetails> {
                                         const Size(100.0, 30.0)),
                                   ),
                                   onPressed: () {
+                                    setState(() {
+                                      isLoading = true;
+                                    });
                                     FocusScope.of(context).unfocus();
 
                                     String email = emailController.text;
                                     if (email.isEmpty) {
-                                      ModificationError(
+                                      utilities!.ModificationError(
                                           'Veuillez saisir votre email');
                                     } else {
                                       String? mail = _validateEmail(email);
@@ -842,15 +650,19 @@ class _PatientDetailsState extends State<PatientDetails> {
                                             roles: utilisateur.roles,
                                             createdAt: utilisateur.createdAt,
                                             city: utilisateur.city);
-                                        UserUpdate(userInterm);
-
+                                        userRepository!.UserUpdate(userInterm);
+                                        didChangeDependencies();
                                         if (mounted) {
+
                                           setState(() {
+                                            emailController.text = userInterm.email;
                                             EditEmail = false;
                                           });
                                         }
                                       } else {
                                         emailInvalide();
+                                        Future.delayed(Duration(seconds: 6));
+
                                       }
                                     }
                                   },
@@ -924,11 +736,12 @@ class _PatientDetailsState extends State<PatientDetails> {
                                         const Size(100.0, 30.0)),
                                   ),
                                   onPressed: () {
+
                                     FocusScope.of(context).unfocus();
 
                                     String phone = phoneController.text;
                                     if (phone.length != 10) {
-                                      ModificationError(
+                                      utilities!.ModificationError(
                                           'Veuillez inserer un numero valide');
                                     } else {
                                       Utilisateur userInterm = Utilisateur(
@@ -945,11 +758,15 @@ class _PatientDetailsState extends State<PatientDetails> {
                                           roles: utilisateur.roles,
                                           createdAt: utilisateur.createdAt,
                                           city: utilisateur.city);
-                                      UserUpdate(userInterm);
+                                      userRepository!.UserUpdate(userInterm);
+                                       didChangeDependencies();
                                       if (mounted) {
+
                                         setState(() {
+                                          phoneController.text = userInterm.phone;
                                           EditPhone = false;
                                         });
+
                                       }
                                     }
                                   },
@@ -1055,48 +872,6 @@ class _PatientDetailsState extends State<PatientDetails> {
     ));
   }
 
-  void ModificationUtilisateur() {
-    final materialBanner = MaterialBanner(
-      /// need to set following properties for best effect of awesome_snackbar_content
-      elevation: 0,
-      backgroundColor: Colors.transparent,
-      forceActionsBelow: true,
-      content: AwesomeSnackbarContent(
-        title: 'Succès!!',
-        message: 'Modification succès',
-
-        /// change contentType to ContentType.success, ContentType.warning or ContentType.help for variants
-        contentType: ContentType.success,
-        // to configure for material banner
-        inMaterialBanner: true,
-      ),
-      actions: const [SizedBox.shrink()],
-    );
-
-    ScaffoldMessenger.of(context)
-      ..hideCurrentMaterialBanner()
-      ..showMaterialBanner(materialBanner);
-  }
-
-  void ModificationError(String errorDesc) {
-    SnackBar snackBar = SnackBar(
-      /// need to set following properties for best effect of awesome_snackbar_content
-      elevation: 0,
-      behavior: SnackBarBehavior.floating,
-      backgroundColor: Colors.transparent,
-      content: AwesomeSnackbarContent(
-        color: Colors.redAccent,
-        title: 'Erreur!',
-        message: '$errorDesc',
-
-        /// change contentType to ContentType.success, ContentType.warning or ContentType.help for variants
-        contentType: ContentType.failure,
-      ),
-    );
-
-    ScaffoldMessenger.of(context).showSnackBar(snackBar);
-  }
-
   void emailInvalide() {
     SnackBar snackBar = SnackBar(
       /// need to set following properties for best effect of awesome_snackbar_content
@@ -1138,8 +913,4 @@ class _PatientDetailsState extends State<PatientDetails> {
       ..hideCurrentMaterialBanner()
       ..showMaterialBanner(materialBanner);
   }
-
-
-
-
 }

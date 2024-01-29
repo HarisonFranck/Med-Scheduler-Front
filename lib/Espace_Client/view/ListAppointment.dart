@@ -13,6 +13,8 @@ import 'dart:io';
 import 'package:intl/intl.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:med_scheduler_front/main.dart';
+import 'package:med_scheduler_front/Utilitie/Utilities.dart';
+import 'package:med_scheduler_front/Repository/UserRepository.dart';
 
 class ListAppointment extends StatefulWidget {
   final Utilisateur user;
@@ -25,36 +27,19 @@ class ListAppointment extends StatefulWidget {
 class _ListAppointmentState extends State<ListAppointment> {
   String baseUrl = UrlBase().baseUrl;
 
-  Future<Utilisateur> getUser(int id) async {
-    final url = Uri.parse("${baseUrl}api/users/$id");
+  UserRepository? userRepository;
+  Utilities? utilities;
 
-    final headers = {'Authorization': 'Bearer $token'};
 
-    try {
-      final response = await http.get(url, headers: headers);
-
-      if (response.statusCode == 200) {
-        final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
-
-        Utilisateur user = Utilisateur.fromJson(jsonData);
-
-        return user;
-      } else {
-
-        if (response.statusCode == 401) {
-          authProvider.logout();
-          Navigator.pushReplacement(
-              context, MaterialPageRoute(builder: (context) => const MyApp()));
-        }
-        // Gestion des erreurs HTTP
-        throw Exception(
-            '-- Failed to load data. HTTP Status Code: ${response.statusCode}');
-      }
-    } catch (e, stackTrace) {
-      print('Error: $e \nStack trace: $stackTrace');
-      throw Exception('-- Failed to load data. Error: $e');
-    }
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    utilities = Utilities(context: context);
+    userRepository = UserRepository(context: context, utilities: utilities!);
   }
+
+
 
   bool isToday(DateTime startAt) {
     DateTime now = DateTime.now();
@@ -194,9 +179,9 @@ class _ListAppointmentState extends State<ListAppointment> {
 
     idUser = payload['id'];
 
-    listRdvJJ = filterToday(getAllAppointment());
-    listRdvNext = filterNext(getAllAppointment());
-    listRdvFinished = filterFinished(getAllAppointment());
+    listRdvJJ = filterToday(userRepository!.getAllAppointmentByPatient(widget.user));
+    listRdvNext = filterNext(userRepository!.getAllAppointmentByPatient(widget.user));
+    listRdvFinished = filterFinished(userRepository!.getAllAppointmentByPatient(widget.user));
   }
 
   String extractLastNumber(String input) {
@@ -213,41 +198,6 @@ class _ListAppointmentState extends State<ListAppointment> {
     }
   }
 
-  Future<List<CustomAppointment>> getAllAppointment() async {
-    final url = Uri.parse(
-        "${baseUrl}api/patients/appointments/${extractLastNumber(widget.user.id)}");
-
-    final headers = {'Authorization': 'Bearer $token'};
-
-    try {
-      final response = await http.get(url, headers: headers);
-
-      print('STATUS CODE: ${response.statusCode} \n');
-
-      if (response.statusCode == 200) {
-        final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
-        final datas = jsonData['hydra:member'] as List<dynamic>;
-
-        final datasAppoints = datas.map((e) => CustomAppointment.fromJson(e)).toList();
-
-        return datasAppoints.where((element) => (element.isDeleted==null||element.isDeleted==false)).toList();
-      } else {
-
-
-        if (response.statusCode == 401) {
-          authProvider.logout();
-          Navigator.pushReplacement(
-              context, MaterialPageRoute(builder: (context) => const MyApp()));
-        }
-        // Gestion des erreurs HTTP
-        throw Exception(
-            '-- Failed to load data. HTTP Status Code: ${response.statusCode}');
-      }
-    } catch (e, stackTrace) {
-      print('Error: $e \nStack trace: $stackTrace');
-      throw Exception('-- Failed to load data. Error: $e');
-    }
-  }
 
   String abbreviateName(String fullName) {
     List<String> nameParts = fullName.split(' ');

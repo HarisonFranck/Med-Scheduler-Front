@@ -12,11 +12,11 @@ import 'package:path_provider/path_provider.dart';
 import 'package:image/image.dart' as img;
 import 'package:uuid/uuid.dart';
 import 'package:med_scheduler_front/UrlBase.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
 import 'IndexAccueilAdmin.dart';
 import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
-import 'Agenda.dart';
+import 'package:med_scheduler_front/Repository/AdminRepository.dart';
+import 'package:med_scheduler_front/Utilitie/Utilities.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 class AdminDetails extends StatefulWidget {
   _AdminDetailsState createState() => _AdminDetailsState();
@@ -28,7 +28,34 @@ class AdminDetails extends StatefulWidget {
 class _AdminDetailsState extends State<AdminDetails> {
   String baseUrl = UrlBase().baseUrl;
 
+  AdminRepository? adminRepository;
+  Utilities? utilities;
+
+  Utilisateur? user;
+
   bool _isPageActive = true;
+
+
+  Widget loadingWidget() {
+    return Center(
+        child: Container(
+          width: 100,
+          height: 100,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              LoadingAnimationWidget.hexagonDots(
+                  color: Colors.redAccent, size: 120),
+              Image.asset(
+                'assets/images/logo2.png',
+                width: 80,
+                height: 80,
+                fit: BoxFit.cover,
+              )
+            ],
+          ),
+        ));
+  }
 
   @override
   void dispose() {
@@ -69,6 +96,9 @@ class _AdminDetailsState extends State<AdminDetails> {
 
     return true;
   }
+
+
+
 
   File? _profileImageFile;
 
@@ -193,6 +223,10 @@ class _AdminDetailsState extends State<AdminDetails> {
   @override
   void initState() {
     super.initState();
+
+    utilities = Utilities(context: context);
+    adminRepository = AdminRepository(context: context, utilities: utilities!);
+
     print('INIT ZAO');
     utilisateur = widget.user;
 
@@ -207,41 +241,6 @@ class _AdminDetailsState extends State<AdminDetails> {
         : "";
   }
 
-  Future<Utilisateur> getUser(String id) async {
-    final url = Uri.parse("${baseUrl}api/users/${extractLastNumber(id)}");
-
-    print('URL USER: $url');
-
-    final headers = {'Authorization': 'Bearer $token'};
-
-    try {
-      final response = await http.get(url, headers: headers);
-      print(' --- ST CODE: ${response.statusCode}');
-
-      if (response.statusCode == 200) {
-        final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
-
-        Utilisateur user = Utilisateur.fromJson(jsonData);
-
-        print('UTILISATEUR: ${user.lastName}');
-
-        return user;
-      } else {
-        // Gestion des erreurs HTTP
-
-        if (response.statusCode == 401) {
-          authProvider.logout();
-          Navigator.pushReplacement(
-              context, MaterialPageRoute(builder: (context) => const MyApp()));
-        }
-        throw Exception('ANOTHER ERROR');
-      }
-    } catch (e, stackTrace) {
-      print('Error: $e \nStack trace: $stackTrace');
-      throw Exception('-- Failed to load data. Error: $e');
-    }
-  }
-
   bool dataLoaded = false;
 
   @override
@@ -252,7 +251,7 @@ class _AdminDetailsState extends State<AdminDetails> {
     authProvider = Provider.of<AuthProvider>(context);
     token = authProvider.token;
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      utilisateur = await getUser(widget.user.id);
+      utilisateur = await adminRepository!.getUser(widget.user.id);
       if (mounted) {
         setState(() {
           profilImage = (utilisateur.imageName != null)
@@ -273,11 +272,11 @@ class _AdminDetailsState extends State<AdminDetails> {
   }
 
   String categorieSet(String uri) {
-    if (extractLastNumber(uri) == '1') {
+    if (utilities!.extractLastNumber(uri) == '1') {
       return 'Bébé';
-    } else if (extractLastNumber(uri) == '2') {
+    } else if (utilities!.extractLastNumber(uri) == '2') {
       return 'Enfant';
-    } else if (extractLastNumber(uri) == '3') {
+    } else if (utilities!.extractLastNumber(uri) == '3') {
       return 'Femme';
     } else {
       return 'Homme';
@@ -387,7 +386,7 @@ class _AdminDetailsState extends State<AdminDetails> {
                     createdAt: utilisateur.createdAt,
                     city: utilisateur.city);
 
-                UserUpdate(userInterm);
+                adminRepository!.UserUpdate(userInterm);
 
                 if (mounted) {
                   setState(() {
@@ -404,68 +403,6 @@ class _AdminDetailsState extends State<AdminDetails> {
         );
       },
     );
-  }
-
-  String extractLastNumber(String input) {
-    RegExp regExp = RegExp(r'\d+$');
-    Match? match = regExp.firstMatch(input);
-
-    if (match != null) {
-      String val = match.group(0)!;
-      print('VAL: $val');
-      return val;
-    } else {
-      // Aucun nombre trouvé dans la chaîne
-      throw const FormatException("Aucun nombre trouvé dans la chaîne.");
-    }
-  }
-
-  Future<void> UserUpdate(Utilisateur utilisateur) async {
-    final url =
-        Uri.parse("${baseUrl}api/users/${extractLastNumber(utilisateur.id)}");
-    //final headers = {'Content-Type': 'application/json'};
-
-    final headers = {'Content-Type': 'application/merge-patch+json'};
-
-    print('URL: $url');
-
-    try {
-      String jsonUser = jsonEncode(utilisateur.toJson());
-      print('Request Body: $jsonUser');
-      final response = await http.patch(url, headers: headers, body: jsonUser);
-      print(response.statusCode);
-
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> jsonResponse = json.decode(response.body);
-        print('ERRRR: $jsonResponse');
-
-        if (jsonResponse.containsKey('error')) {
-          error('Erreur de modification');
-        } else {
-          ModificationUtilisateur();
-          if (mounted) {
-            setState(() {});
-          }
-        }
-      } else {
-
-
-        if (response.statusCode == 401) {
-          authProvider.logout();
-          Navigator.pushReplacement(
-              context, MaterialPageRoute(builder: (context) => const MyApp()));
-        }
-        // Gestion des erreurs HTTP
-        error('Il y a une erreur reseau\n Veuillez ressayer ulterieurement');
-        throw Exception(
-            '-- Failed to add user. HTTP Status Code: ${response.statusCode}');
-      }
-    } catch (e, exception) {
-      // Gestion des erreurs autres que HTTP
-      error('Erreur de connexion ou voir ceci: $e');
-      print('EXCPEPT: $exception');
-      throw Exception('-- CATCH Failed to add user. Error: $e');
-    }
   }
 
   void error(String description) {
@@ -747,7 +684,7 @@ class _AdminDetailsState extends State<AdminDetails> {
                                             roles: utilisateur.roles,
                                             createdAt: utilisateur.createdAt,
                                             city: utilisateur.city);
-                                        UserUpdate(userInterm);
+                                        adminRepository!.UserUpdate(userInterm);
                                         if (mounted) {
                                           setState(() {});
                                         }
@@ -846,7 +783,7 @@ class _AdminDetailsState extends State<AdminDetails> {
                                           roles: utilisateur.roles,
                                           createdAt: utilisateur.createdAt,
                                           city: utilisateur.city);
-                                      UserUpdate(userInterm);
+                                      adminRepository!.UserUpdate(userInterm);
                                       if (mounted) {
                                         setState(() {});
                                       }
@@ -869,7 +806,6 @@ class _AdminDetailsState extends State<AdminDetails> {
                                 child: GestureDetector(
                                   onTap: () {
                                     authProvider.logout();
-
 
                                     print(
                                         'TOKEN PRVIDED: ${authProvider.token}');
@@ -907,8 +843,8 @@ class _AdminDetailsState extends State<AdminDetails> {
                     )
                   ],
                 )
-              : const Center(
-                  child: CircularProgressIndicator(),
+              : Center(
+                  child: loadingWidget(),
                 )),
     );
   }

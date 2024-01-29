@@ -1,15 +1,12 @@
 import 'package:flutter/material.dart';
 import 'Login.dart';
 import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-import 'dart:async';
 import 'package:med_scheduler_front/UtilisateurNewPassword.dart';
-import 'package:med_scheduler_front/Utilisateur.dart';
 import 'package:med_scheduler_front/UrlBase.dart';
 import 'package:med_scheduler_front/AuthProvider.dart';
-import 'package:med_scheduler_front/main.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
+import 'package:med_scheduler_front/Utilitie/Utilities.dart';
+import 'package:med_scheduler_front/Repository/UserRepository.dart';
 
 class Modification_MotdePasse extends StatefulWidget {
   @override
@@ -26,6 +23,19 @@ class _Modification_MotdePasseState extends State<Modification_MotdePasse> {
 
   bool isLoading = false;
 
+  UserRepository? userRepository;
+  Utilities? utilities;
+
+
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    utilities = Utilities(context: context);
+    userRepository = UserRepository(context: context, utilities: utilities!);
+  }
+
 
 
   TextEditingController newmdpController = TextEditingController();
@@ -40,78 +50,6 @@ class _Modification_MotdePasseState extends State<Modification_MotdePasse> {
 
 
   final GlobalKey<ScaffoldState> scafkey = GlobalKey<ScaffoldState>();
-
-
-
-
-  String extractLastNumber(String input) {
-    RegExp regExp = RegExp(r'\d+$');
-    Match? match = regExp.firstMatch(input);
-
-    if (match != null) {
-      String val = match.group(0)!;
-
-    return val;
-    } else {
-    // Aucun nombre trouvé dans la chaîne
-    throw const FormatException("Aucun nombre trouvé dans la chaîne.");
-    }
-  }
-
-
-  Future<void> patchUser(int id,String newPassword) async {
-
-    setState(() {
-      isLoading = true;
-    });
-
-    final url = Uri.parse("${baseUrl}api/change-password/$id");
-
-    print('URL USER: $url');
-
-    //final headers = {'Authorization': 'Bearer $token'};
-
-    final body = {"password": "$newPassword"};
-
-
-    try {
-      final response = await http.patch(url, body: jsonEncode(body));
-      print(' --- ST CODE: ${response.statusCode}');
-
-      if (response.statusCode == 200) {
-
-        modifPasswordValider();
-
-        setState(() {
-          isLoading = false;
-        });
-
-        Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context)=>Login()), (route) => false);
-
-
-      } else {
-        setState(() {
-          isLoading = false;
-        });
-        // Gestion des erreurs HTTP
-
-        if (response.statusCode == 401) {
-          authProvider.logout();
-          Navigator.pushReplacement(
-              context, MaterialPageRoute(builder: (context) => const MyApp()));
-        }
-        throw Exception('ANOTHER ERROR');
-      }
-    } catch (e, stackTrace) {
-      setState(() {
-        isLoading = false;
-      });
-      print('Error: $e \nStack trace: $stackTrace');
-      throw Exception('-- Failed to load data. Error: $e');
-    }
-  }
-
-
 
 
   @override
@@ -285,7 +223,7 @@ class _Modification_MotdePasseState extends State<Modification_MotdePasse> {
                     if(newmdpController.text==confirmnewmdpController.text){
 
 
-                      patchUser(user.id,newmdpController.text);
+                      userRepository!.patchUserPassword(user.id,newmdpController.text);
 
                     }else{
                       /// Quand le nouveau mot de passe et confirmation mot de passe ne sont pas les memes
@@ -357,29 +295,6 @@ class _Modification_MotdePasseState extends State<Modification_MotdePasse> {
     ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 
-
-  void modifPasswordValider() {
-    final materialBanner = MaterialBanner(
-      /// need to set following properties for best effect of awesome_snackbar_content
-      elevation: 0,
-      backgroundColor: Colors.transparent,
-      forceActionsBelow: true,
-      content: AwesomeSnackbarContent(
-        title: 'Succès!!',
-        message: 'Mot de passe modifié',
-
-        /// change contentType to ContentType.success, ContentType.warning or ContentType.help for variants
-        contentType: ContentType.success,
-        // to configure for material banner
-        inMaterialBanner: true,
-      ),
-      actions: const [SizedBox.shrink()],
-    );
-
-    ScaffoldMessenger.of(context)
-      ..hideCurrentMaterialBanner()
-      ..showMaterialBanner(materialBanner);
-  }
 
 
   Widget loadingWidget() {

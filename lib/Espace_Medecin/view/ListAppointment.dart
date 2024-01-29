@@ -13,6 +13,9 @@ import 'dart:io';
 import 'package:intl/intl.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:med_scheduler_front/main.dart';
+import 'package:med_scheduler_front/Utilitie/Utilities.dart';
+import 'package:med_scheduler_front/Repository/MedecinRepository.dart';
+import 'package:med_scheduler_front/Repository/BaseRepository.dart';
 
 class ListAppointment extends StatefulWidget {
   final Utilisateur user;
@@ -26,38 +29,22 @@ class ListAppointment extends StatefulWidget {
 class _ListAppointmentState extends State<ListAppointment> {
   String baseUrl = UrlBase().baseUrl;
 
-  Future<Utilisateur> getUser(int id) async {
-    final url = Uri.parse("${baseUrl}api/users/$id");
 
-    final headers = {'Authorization': 'Bearer $token'};
+  BaseRepository? baseRepository;
+  MedecinRepository? medecinRepository;
+  Utilities? utilities;
 
-    try {
-      final response = await http.get(url, headers: headers);
 
-      if (response.statusCode == 200) {
-        final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
 
-        Utilisateur user = Utilisateur.fromJson(jsonData);
-
-        print('UTILISATEUR: ${user.lastName}');
-
-        return user;
-      } else {
-
-        if (response.statusCode == 401) {
-          authProvider.logout();
-          Navigator.pushReplacement(
-              context, MaterialPageRoute(builder: (context) => const MyApp()));
-        }
-        // Gestion des erreurs HTTP
-        throw Exception(
-            '-- Failed to load data. HTTP Status Code: ${response.statusCode}');
-      }
-    } catch (e, stackTrace) {
-      print('Error: $e \nStack trace: $stackTrace');
-      throw Exception('-- Failed to load data. Error: $e');
-    }
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    utilities = Utilities(context: context);
+    baseRepository = BaseRepository(context: context, utilities: utilities!);
+    medecinRepository = MedecinRepository(context: context, utilities: utilities!);
   }
+
 
   bool isToday(DateTime startAt) {
     DateTime now = DateTime.now();
@@ -197,55 +184,12 @@ class _ListAppointmentState extends State<ListAppointment> {
 
     idUser = payload['id'];
 
-    listRdvJJ = filterToday(getAllAppointment());
-    listRdvNext = filterNext(getAllAppointment());
-    listRdvFinished = filterFinished(getAllAppointment());
+    listRdvJJ = filterToday(medecinRepository!.getAllAppointmentByUser(widget.user));
+    listRdvNext = filterNext(medecinRepository!.getAllAppointmentByUser(widget.user));
+    listRdvFinished = filterFinished(medecinRepository!.getAllAppointmentByUser(widget.user));
   }
 
-  String extractLastNumber(String input) {
-    RegExp regExp = RegExp(r'\d+$');
-    Match? match = regExp.firstMatch(input);
 
-    if (match != null) {
-      String val = match.group(0)!;
-
-      return val;
-    } else {
-      // Aucun nombre trouvé dans la chaîne
-      throw const FormatException("Aucun nombre trouvé dans la chaîne.");
-    }
-  }
-
-  Future<List<CustomAppointment>> getAllAppointment() async {
-    final url = Uri.parse(
-        "${baseUrl}api/doctors/appointments/${extractLastNumber(widget.user.id)}");
-
-    final headers = {'Authorization': 'Bearer $token'};
-
-    try {
-      final response = await http.get(url, headers: headers);
-
-      if (response.statusCode == 200) {
-        final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
-        final datas = jsonData['hydra:member'] as List<dynamic>;
-
-        return datas.map((e) => CustomAppointment.fromJson(e)).toList();
-      } else {
-
-        if (response.statusCode == 401) {
-          authProvider.logout();
-          Navigator.pushReplacement(
-              context, MaterialPageRoute(builder: (context) => const MyApp()));
-        }
-        // Gestion des erreurs HTTP
-        throw Exception(
-            '-- Failed to load data. HTTP Status Code: ${response.statusCode}');
-      }
-    } catch (e, stackTrace) {
-      print('Error: $e \nStack trace: $stackTrace');
-      throw Exception('-- Failed to load data. Error: $e');
-    }
-  }
 
   String abbreviateName(String fullName) {
     List<String> nameParts = fullName.split(' ');

@@ -2,9 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_calendar/calendar.dart';
 import 'package:med_scheduler_front/Medecin.dart';
 import 'package:med_scheduler_front/CustomAppointment.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-import 'dart:async';
 import 'package:med_scheduler_front/AuthProvider.dart';
 import 'package:provider/provider.dart';
 import 'package:med_scheduler_front/UrlBase.dart';
@@ -15,7 +12,8 @@ import 'IndexAccueilAdmin.dart';
 import 'AppointmentDialog.dart';
 import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
-import 'package:med_scheduler_front/main.dart';
+import 'package:med_scheduler_front/Repository/BaseRepository.dart';
+import 'package:med_scheduler_front/Utilitie/Utilities.dart';
 
 class Agenda extends StatefulWidget {
   AgendaState createState() => AgendaState();
@@ -27,10 +25,16 @@ class AgendaState extends State<Agenda> {
 
   bool _isPageActive = true;
 
+  BaseRepository? baseRepository;
+  Utilities? utilities;
+
+
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
+    utilities = Utilities(context: context);
+    baseRepository = BaseRepository(context: context,utilities: utilities!);
   }
 
   @override
@@ -78,8 +82,8 @@ class AgendaState extends State<Agenda> {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       //await getAllAsync();
 
-      listAppointment = await getAllAppointment();
-      listUnavalaibleAppointment = await getAllUnavalaibleAppointment();
+      listAppointment = await baseRepository!.getAllAppointmentByMedecin(medecinClicked!);
+      listUnavalaibleAppointment = await baseRepository!.getAllUnavalaibleAppointment(medecinClicked!);
       if (listAppointment.isEmpty) {
         print('EMPTY O');
         setState(() {
@@ -92,108 +96,8 @@ class AgendaState extends State<Agenda> {
     });
   }
 
-  String extractLastNumber(String input) {
-    RegExp regExp = RegExp(r'\d+$');
-    Match? match = regExp.firstMatch(input);
-
-    if (match != null) {
-      String val = match.group(0)!;
-      return val;
-    } else {
-      // Aucun nombre trouvé dans la chaîne
-      throw const FormatException("Aucun nombre trouvé dans la chaîne.");
-    }
-  }
-
-  Future<List<CustomAppointment>> getAllUnavalaibleAppointment() async {
-    if (!_isPageActive) {
-      return []; // Page n'est plus active, on retourne une liste vide.
-    }
-
-    print('MED ID: ${medecinClicked!.id}');
-    final url = Uri.parse(
-        "${baseUrl}api/doctors/unavailable/appointments/${extractLastNumber(medecinClicked!.id)}");
-
-    final headers = {'Authorization': 'Bearer $token'};
-
-    try {
-      final response = await http.get(url, headers: headers);
-
-      print('STATUS CODE APPOINTS AGENDA:  ${response.statusCode} \n');
-
-      if (response.statusCode == 200) {
-        final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
-        final datas = jsonData['hydra:member'] as List<dynamic>;
-
-        return datas.map((e) => CustomAppointment.fromJson(e)).toList();
-      } else {
 
 
-        if (response.statusCode == 401) {
-          authProvider.logout();
-          Navigator.pushReplacement(
-              context, MaterialPageRoute(builder: (context) => const MyApp()));
-        }
-
-        print('RESP ERROR UNAV: ${response.body}');
-        // Gestion des erreurs HTTP
-        throw Exception(
-            '-- Failed to load data. HTTP Status Code: ${response.statusCode}');
-      }
-    } catch (e, stackTrace) {
-      print('Error: $e \nStack trace: $stackTrace');
-      throw e;
-    }
-  }
-
-  Future<List<CustomAppointment>> getAllAppointment() async {
-    if (!_isPageActive) {
-      return []; // Page n'est plus active, on retourne une liste vide.
-    }
-
-    final url = Uri.parse(
-        "${baseUrl}api/doctors/appointments/${extractLastNumber(medecinClicked!.id)}");
-
-    final headers = {'Authorization': 'Bearer $token'};
-
-    try {
-      final response = await http.get(url, headers: headers);
-
-      print('STATUS CODE APPOINTS AGNENDAAA: ${response.statusCode} \n');
-
-      if (response.statusCode == 200) {
-        final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
-        final datas = jsonData['hydra:member'] as List<dynamic>;
-
-        //return datas.map((e) => CustomAppointment.fromJson(e)).toList();
-
-        // Filtrer les rendez-vous à venir
-        final upcomingAppointments = datas.where((e) {
-          final appointmentDate = DateTime.parse(e['startAt']);
-          return appointmentDate.isAfter(DateTime.now());
-        }).toList();
-
-        return upcomingAppointments
-            .map((e) => CustomAppointment.fromJson(e))
-            .toList();
-      } else {
-
-
-        if (response.statusCode == 401) {
-          authProvider.logout();
-          Navigator.pushReplacement(
-              context, MaterialPageRoute(builder: (context) => const MyApp()));
-        }
-
-        // Gestion des erreurs HTTP
-        throw Exception('-- TOKEN EXPIRED.');
-      }
-    } catch (e) {
-      //print('Error: $e \nStack trace: $stackTrace');
-      throw Exception(
-          '-- Erreur de connexion.\n Veuillez vérifier votre connexion internet !');
-    }
-  }
 
   CalendarController controller = CalendarController();
 

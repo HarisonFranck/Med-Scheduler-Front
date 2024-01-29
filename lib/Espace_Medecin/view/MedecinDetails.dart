@@ -20,6 +20,8 @@ import 'package:med_scheduler_front/Centre.dart';
 import 'ModificationPassword.dart';
 import 'package:med_scheduler_front/UtilisateurNewPassword.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
+import 'package:med_scheduler_front/Repository/BaseRepository.dart';
+import 'package:med_scheduler_front/Utilitie/Utilities.dart';
 
 class MedecinDetails extends StatefulWidget {
   @override
@@ -38,6 +40,22 @@ class _MedecinDetailsState extends State<MedecinDetails> {
   List<Centre> listCenter = [];
 
   Centre? center;
+
+
+
+  Utilities? utilities;
+  BaseRepository? baseRepository;
+
+
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    utilities = Utilities(context: context);
+    baseRepository = BaseRepository(context: context, utilities: utilities!);
+  }
+
 
   Widget buildDropdownButtonFormFieldCenter({
     required String label,
@@ -245,74 +263,10 @@ class _MedecinDetailsState extends State<MedecinDetails> {
   late Utilisateur utilisateur;
 
 
-  Future<Utilisateur> getUser(String id) async {
-    final url = Uri.parse("${baseUrl}api/users/${extractLastNumber(id)}");
 
-    print('URL USER: $url');
-
-    final headers = {'Authorization': 'Bearer $token'};
-
-    try {
-      final response = await http.get(url, headers: headers);
-      print(' --- ST CODE: ${response.statusCode}');
-
-      if (response.statusCode == 200) {
-        final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
-
-        Utilisateur user = Utilisateur.fromJson(jsonData);
-
-        print('UTILISATEUR: ${user.lastName}');
-
-        return user;
-      } else {
-        // Gestion des erreurs HTTP
-
-        if (response.statusCode == 401) {
-          authProvider.logout();
-          Navigator.pushReplacement(
-              context, MaterialPageRoute(builder: (context) => const MyApp()));
-        }
-        throw Exception('ANOTHER ERROR');
-      }
-    } catch (e, stackTrace) {
-      print('Error: $e \nStack trace: $stackTrace');
-      throw Exception('-- Failed to load data. Error: $e');
-    }
-  }
-
-  Future<List<Centre>> getAllCenter() async {
-    final url = Uri.parse("${baseUrl}api/centers?page=1");
-
-    final headers = {'Authorization': 'Bearer $token'};
-
-    try {
-      final response = await http.get(url, headers: headers);
-
-      if (response.statusCode == 200) {
-        final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
-        final datas = jsonData['hydra:member'] as List<dynamic>;
-
-        return datas.map((e) => Centre.fromJson(e)).toList();
-      } else {
-
-        if (response.statusCode == 401) {
-          authProvider.logout();
-          Navigator.pushReplacement(
-              context, MaterialPageRoute(builder: (context) => const MyApp()));
-        }
-        // Gestion des erreurs HTTP
-        throw Exception(
-            '-- Erreur d\'obtention des données\n vérifier votre connexion internet.');
-      }
-    } catch (e) {
-      //print('Error: $e \nStack trace: $stackTrace');
-      throw Exception(
-          '-- Erreur de connexion.\n Veuillez vérifier votre connexion internet !');
-    }
-  }
 
   void getAll() {
-    getAllCenter().then((value) => {
+    baseRepository!.getAllCenter().then((value) => {
           setState(() {
             listCenter = value;
           })
@@ -333,7 +287,8 @@ class _MedecinDetailsState extends State<MedecinDetails> {
     token = authProvider.token;
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       getAll();
-      utilisateur = await getUser(widget.user.id);
+      String id = utilities!.extractLastNumber(widget.user.id);
+      utilisateur = await baseRepository!.getUser(int.parse(id));
 
       if (mounted) {
         setState(() {

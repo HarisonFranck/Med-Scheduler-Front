@@ -3,12 +3,10 @@ import 'package:med_scheduler_front/Medecin.dart';
 import 'dart:io';
 import 'Agenda.dart';
 import 'package:med_scheduler_front/AuthProvider.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-import 'package:provider/provider.dart';
 import 'package:med_scheduler_front/UrlBase.dart';
-import 'package:med_scheduler_front/main.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
+import 'package:med_scheduler_front/Utilitie/Utilities.dart';
+import 'package:med_scheduler_front/Repository/BaseRepository.dart';
 
 class SearchMedecin extends StatefulWidget {
   SearchMedecinState createState() => SearchMedecinState();
@@ -16,6 +14,9 @@ class SearchMedecin extends StatefulWidget {
 
 class SearchMedecinState extends State<SearchMedecin> {
   late Future<List<Medecin>> medecinsFuture;
+
+  BaseRepository? baseRepository;
+  Utilities? utilities;
 
   late AuthProvider authProvider;
   late String token;
@@ -25,13 +26,14 @@ class SearchMedecinState extends State<SearchMedecin> {
   bool dataLoaded = false;
 
   Future<void> getAllAsync() async {
-    medecinsFuture = getAllMedecin();
+    medecinsFuture = baseRepository!.getAllMedecin();
   }
 
   @override
   void initState() {
     super.initState();
-
+    utilities = Utilities(context: context);
+    baseRepository = BaseRepository(context: context, utilities: utilities!);
     print('-- INIT SEARCH  --');
     WidgetsFlutterBinding.ensureInitialized();
 
@@ -45,48 +47,6 @@ class SearchMedecinState extends State<SearchMedecin> {
     });
   }
 
-  Future<List<Medecin>> getAllMedecin() async {
-    print('GET ALL');
-    authProvider = Provider.of<AuthProvider>(context, listen: false);
-    token = authProvider.token;
-
-    // Définir l'URL de base
-    Uri url = Uri.parse("${baseUrl}api/doctors?page=1");
-
-    if (searchLastName.text.trim().isNotEmpty) {
-      url = Uri.parse("$url&lastName=${searchLastName.text}");
-    }
-
-    print('URI: $url');
-
-    final headers = {'Authorization': 'Bearer $token'};
-
-    try {
-      final response = await http.get(url, headers: headers);
-      print('STATUS CODE MEDS SEARCH: ${response.statusCode} \n');
-
-      if (response.statusCode == 200) {
-        final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
-        final datas = jsonData['hydra:member'] as List<dynamic>;
-
-        return datas.map((e) => Medecin.fromJson(e)).toList();
-      } else {
-
-        if (response.statusCode == 401) {
-          authProvider.logout();
-          Navigator.pushReplacement(
-              context, MaterialPageRoute(builder: (context) => const MyApp()));
-        }
-        // Gestion des erreurs HTTP
-        throw Exception(
-          '-- Erreur d\'obtention des données\n vérifier votre connexion internet. Code: ${response.statusCode}',
-        );
-      }
-    } catch (e, stackTrace) {
-      print(' -- E: $e --\n STACK: $stackTrace');
-      throw e;
-    }
-  }
 
   String abbreviateName(String fullName) {
     List<String> nameParts = fullName.split(' ');
@@ -136,6 +96,7 @@ class SearchMedecinState extends State<SearchMedecin> {
   FocusNode _focusNodeSearch = FocusNode();
   TextEditingController searchLastName = TextEditingController();
 
+
   @override
   Widget build(BuildContext context) {
     return PopScope(
@@ -152,12 +113,12 @@ class SearchMedecinState extends State<SearchMedecin> {
                             if (nom.trim().isEmpty) {
                               setState(() {
                                 searchLastName.text = "";
-                                medecinsFuture = getAllMedecin();
+                                medecinsFuture = baseRepository!.getAllMedecin();
                               });
                             } else {
                               setState(() {
                                 searchLastName.text = nom;
-                                medecinsFuture = getAllMedecin();
+                                medecinsFuture = baseRepository!.getAllMedecin();
                                 print('LASTNAME: ${searchLastName.text}');
                               });
                             }
@@ -205,16 +166,14 @@ class SearchMedecinState extends State<SearchMedecin> {
                                   ConnectionState.waiting) {
                                 return Center(
                                     child: ListView(
-                                  children: const [
+                                  children: [
                                     Center(
-                                      child: CircularProgressIndicator(
-                                        color: Colors.redAccent,
-                                      ),
+                                      child: loadingWidget(),
                                     ),
-                                    SizedBox(
+                                    const SizedBox(
                                       height: 30,
                                     ),
-                                    Text(
+                                    const Text(
                                       'Chargement des données..\n Assurez-vous d\'avoir une connexion internet',
                                       textAlign: TextAlign.center,
                                     )

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'Agenda.dart';
 import 'AccueilAdmin.dart';
 import 'AdminDetails.dart';
 import 'package:icons_plus/icons_plus.dart';
@@ -8,12 +7,11 @@ import 'package:med_scheduler_front/Utilisateur.dart';
 import 'package:med_scheduler_front/AuthProvider.dart';
 import 'package:provider/provider.dart';
 import 'package:jwt_decode/jwt_decode.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
 import 'package:med_scheduler_front/UrlBase.dart';
 import 'SearchMedecin.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
-import 'package:med_scheduler_front/main.dart';
+import 'package:med_scheduler_front/Repository/BaseRepository.dart';
+import 'package:med_scheduler_front/Utilitie/Utilities.dart';
 
 class IndexAccueilAdmin extends StatefulWidget {
   @override
@@ -28,39 +26,12 @@ class _IndexAccueilAdminState extends State<IndexAccueilAdmin> {
   String baseUrl = UrlBase().baseUrl;
 
 
+  BaseRepository? baseRepository;
+  Utilities? utilities;
 
-  Future<Utilisateur> getUser(int id) async {
-    final url = Uri.parse("${baseUrl}api/users/$id");
 
-    final headers = {'Authorization': 'Bearer $token'};
 
-    try {
-      final response = await http.get(url, headers: headers);
 
-      if (response.statusCode == 200) {
-        final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
-
-        Utilisateur user = Utilisateur.fromJson(jsonData);
-
-        print('UTILISATEUR: ${user.lastName}');
-
-        return user;
-      } else {
-
-        if (response.statusCode == 401) {
-          authProvider.logout();
-          Navigator.pushReplacement(
-              context, MaterialPageRoute(builder: (context) => const MyApp()));
-        }
-        // Gestion des erreurs HTTP
-        throw Exception(
-            '-- Failed to load data. HTTP Status Code: ${response.statusCode}');
-      }
-    } catch (e, stackTrace) {
-      print('Error: $e \nStack trace: $stackTrace');
-      throw Exception('-- Failed to load data. Error: $e');
-    }
-  }
 
   List<Map<String, dynamic>>? _pages;
   int _selectedPageIndex = 0;
@@ -81,7 +52,7 @@ class _IndexAccueilAdminState extends State<IndexAccueilAdmin> {
     idUser = payload['id'];
     print('ID USER INDEXED: $idUser');
 
-    user = getUser(idUser);
+    user = baseRepository!.getUser(idUser);
     userGetted();
   }
 
@@ -99,6 +70,7 @@ class _IndexAccueilAdminState extends State<IndexAccueilAdmin> {
       _pages = [
         {
           'page': AccueilAdmin(user: utilisateur!),
+
         },
         {
           'page': SearchMedecin(),
@@ -121,11 +93,12 @@ class _IndexAccueilAdminState extends State<IndexAccueilAdmin> {
 
   @override
   void initState() {
-    print('INIT STATE');
 
-    //userGetted();
 
     super.initState();
+    utilities = Utilities(context: context);
+    baseRepository = BaseRepository(context: context,utilities: utilities!);
+
   }
 
   void _selectPage(int index) {
@@ -138,8 +111,7 @@ class _IndexAccueilAdminState extends State<IndexAccueilAdmin> {
 
   @override
   Widget build(BuildContext context) {
-    bool isLandscape =
-        MediaQuery.of(context).orientation == Orientation.landscape;
+
     return PopScope(
       canPop: false,
       child: Scaffold(

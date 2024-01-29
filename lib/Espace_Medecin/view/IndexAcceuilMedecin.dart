@@ -9,12 +9,12 @@ import 'package:med_scheduler_front/Utilisateur.dart';
 import 'package:med_scheduler_front/AuthProvider.dart';
 import 'package:provider/provider.dart';
 import 'package:jwt_decode/jwt_decode.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
 import 'package:med_scheduler_front/UrlBase.dart';
 import 'ListAppointment.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
-import 'package:med_scheduler_front/main.dart';
+import 'package:med_scheduler_front/Repository/BaseRepository.dart';
+import 'package:med_scheduler_front/Repository/MedecinRepository.dart';
+import 'package:med_scheduler_front/Utilitie/Utilities.dart';
 
 class IndexAcceuilMedecin extends StatefulWidget {
   const IndexAcceuilMedecin({super.key});
@@ -30,38 +30,11 @@ class _IndexAcceuilMedecinState extends State<IndexAcceuilMedecin> {
   late String token;
   String baseUrl = UrlBase().baseUrl;
 
-  Future<Utilisateur> getUser(int id) async {
-    final url = Uri.parse("${baseUrl}api/users/$id");
 
-    final headers = {'Authorization': 'Bearer $token'};
+  BaseRepository? baseRepository;
+  MedecinRepository? medecinRepository;
+  Utilities? utilities;
 
-    try {
-      final response = await http.get(url, headers: headers);
-
-      if (response.statusCode == 200) {
-        final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
-
-        Utilisateur user = Utilisateur.fromJson(jsonData);
-
-        print('UTILISATEUR: ${user.lastName}');
-
-        return user;
-      } else {
-
-        if (response.statusCode == 401) {
-          authProvider.logout();
-          Navigator.pushReplacement(
-              context, MaterialPageRoute(builder: (context) => const MyApp()));
-        }
-        // Gestion des erreurs HTTP
-        throw Exception(
-            '-- Failed to load data. HTTP Status Code: ${response.statusCode}');
-      }
-    } catch (e, stackTrace) {
-      print('Error: $e \nStack trace: $stackTrace');
-      throw Exception('-- Failed to load data. Error: $e');
-    }
-  }
 
   List<Map<String, dynamic>>? _pages;
   int _selectedPageIndex = 0;
@@ -83,7 +56,7 @@ class _IndexAcceuilMedecinState extends State<IndexAcceuilMedecin> {
     idUser = payload['id'];
     print('ID USER INDEXED: $idUser');
 
-    user = getUser(idUser);
+    user = baseRepository!.getUser(idUser);
     userGetted();
   }
 
@@ -124,11 +97,11 @@ class _IndexAcceuilMedecinState extends State<IndexAcceuilMedecin> {
 
   @override
   void initState() {
-    print('INIT STATE');
-
-    //userGetted();
 
     super.initState();
+    utilities = Utilities(context: context);
+    baseRepository = BaseRepository(context: context, utilities: utilities!);
+    medecinRepository = MedecinRepository(context: context, utilities: utilities!);
   }
 
   void _selectPage(int index) {

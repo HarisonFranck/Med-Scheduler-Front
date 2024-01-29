@@ -17,6 +17,7 @@ import 'package:uuid/uuid.dart';
 import 'package:med_scheduler_front/UrlBase.dart';
 import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
+import 'package:med_scheduler_front/Utilitie/Utilities.dart';
 
 class Registration extends StatefulWidget {
 
@@ -30,6 +31,9 @@ class _RegistrationState extends State<Registration> {
   String baseUrl = UrlBase().baseUrl;
 
   bool isLoading = false;
+
+
+  Utilities? utilities;
 
 
   TextEditingController path = TextEditingController();
@@ -216,7 +220,8 @@ class _RegistrationState extends State<Registration> {
 
   @override
   void initState() {
-    super.didChangeDependencies();
+    super.initState();
+    utilities = Utilities(context: context);
 
 
     getAll();
@@ -391,15 +396,6 @@ class _RegistrationState extends State<Registration> {
 
 
 
-  String extractApiPath(String fullPath) {
-    const String apiPrefix = '/med_scheduler_api/public';
-    if (fullPath.startsWith(apiPrefix)) {
-      return fullPath.substring(apiPrefix.length);
-    } else {
-      // La chaîne ne commence pas par le préfixe attendu
-      return fullPath;
-    }
-  }
 
 
   Widget scafWithLoading(){
@@ -840,7 +836,7 @@ class _RegistrationState extends State<Registration> {
 
                             if(mail==null){
 
-                              Utilisateur user = Utilisateur(id: '', lastName: nomController.text.trim(),roles: ['ROLE_USER'], firstName: prenomController.text.trim(),password: passwordController.text.trim(), userType: 'Patient', phone: phoneController.text.trim(), email: emailController.text.trim(), imageName: path.text.trim(), category: extractApiPath(categorie!.id), address: addresseController.text.trim(), createdAt: DateTime.now(), city: villeController.text.trim());
+                              Utilisateur user = Utilisateur(id: '', lastName: nomController.text.trim(),roles: ['ROLE_USER'], firstName: prenomController.text.trim(),password: passwordController.text.trim(), userType: 'Patient', phone: phoneController.text.trim(), email: emailController.text.trim(), imageName: path.text.trim(), category: utilities!.extractApiPath(categorie!.id), address: addresseController.text.trim(), createdAt: DateTime.now(), city: villeController.text.trim());
                               addUser(user);
                             }else{
                               //print('MAIL NON VALIDE');
@@ -886,13 +882,12 @@ class _RegistrationState extends State<Registration> {
               height: MediaQuery.of(context).size.height,
               color: Colors.black.withOpacity(0.2),
             ),
-            Center(
-              child: LoadingAnimationWidget.fourRotatingDots(color: Colors.redAccent, size: 120),
-            )
+            loadingWidget()
           ],
         )
     );
   }
+
 
 
 
@@ -1332,7 +1327,7 @@ class _RegistrationState extends State<Registration> {
 
                         if(mail==null){
 
-                          Utilisateur user = Utilisateur(id: '', lastName: nomController.text.trim(),roles: ['ROLE_USER'], firstName: prenomController.text.trim(),password: passwordController.text.trim(), userType: 'Patient', phone: phoneController.text.trim(), email: emailController.text.trim(), imageName: path.text.trim(), category: extractApiPath(categorie!.id), address: addresseController.text.trim(), createdAt: DateTime.now(), city: villeController.text.trim());
+                          Utilisateur user = Utilisateur(id: '', lastName: nomController.text.trim(),roles: ['ROLE_USER'], firstName: prenomController.text.trim(),password: passwordController.text.trim(), userType: 'Patient', phone: phoneController.text.trim(), email: emailController.text.trim(), imageName: (path.text!="")?path.text.trim():"", category: utilities!.extractApiPath(categorie!.id), address: addresseController.text.trim(), createdAt: DateTime.now(), city: villeController.text.trim());
                           addUser(user);
                         }else{
                           //print('MAIL NON VALIDE');
