@@ -7,6 +7,10 @@ import 'package:med_scheduler_front/UrlBase.dart';
 import 'package:med_scheduler_front/AuthProvider.dart';
 import 'package:med_scheduler_front/Utilitie/Utilities.dart';
 import 'package:med_scheduler_front/Repository/MedecinRepository.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:med_scheduler_front/main.dart';
 
 class ModificationPassword extends StatefulWidget {
   @override
@@ -20,6 +24,8 @@ class _ModificationPasswordState extends State<ModificationPassword> {
   late String token;
 
   String baseUrl = UrlBase().baseUrl;
+
+  bool isLoading = false;
 
 
   MedecinRepository? medecinRepository;
@@ -52,20 +58,62 @@ class _ModificationPasswordState extends State<ModificationPassword> {
 Utilisateur? user;
 
 
-  String extractLastNumber(String input) {
-    RegExp regExp = RegExp(r'\d+$');
-    Match? match = regExp.firstMatch(input);
 
-    if (match != null) {
-      String val = match.group(0)!;
 
-    return val;
-    } else {
-    // Aucun nombre trouvé dans la chaîne
-    throw const FormatException("Aucun nombre trouvé dans la chaîne.");
+
+  Future<void> getUserToChangePassword(int id,String newPassword) async {
+
+    setState(() {
+      isLoading = true;
+    });
+
+    final url = Uri.parse("${baseUrl}api/change-password/$id");
+
+    print('URL USER: $url');
+
+    //final headers = {'Authorization': 'Bearer $token'};
+
+    final body = {"password": "$newPassword"};
+
+
+    try {
+      final response = await http.patch(url, body: jsonEncode(body));
+      print(' --- ST CODE: ${response.statusCode}');
+
+      if (response.statusCode == 200) {
+        utilities!.modifPasswordValider();
+
+    setState(() {
+    isLoading = false;
+    });
+        Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context)=>IndexAcceuilMedecin()), (route) => false);
+
+
+      } else {
+    setState(() {
+    isLoading = false;
+    });
+        // Gestion des erreurs HTTP
+        if (response.statusCode == 401) {
+          authProvider.logout();
+          Navigator.pushReplacement(
+              context, MaterialPageRoute(builder: (context) => const MyApp()));
+        }
+        throw Exception('ANOTHER ERROR');
+      }
+    } catch (e, stackTrace) {
+    setState(() {
+    isLoading = false;
+    });
+      if (e is http.ClientException) {
+        utilities!.ErrorConnexion();
+      } else {
+        // Gérer d'autres exceptions
+        print('Une erreur inattendue s\'est produite: $e');
+      }
+      throw Exception('-- Failed to load data. Error: $e');
     }
   }
-
 
 
 
@@ -81,7 +129,7 @@ Utilisateur? user;
       key: scafkey,
 
 
-      body: ListView(
+      body:(!isLoading)?ListView(
 
         children: [
 
@@ -90,8 +138,9 @@ Utilisateur? user;
           Padding(padding: const EdgeInsets.only(top: 10,left: 10),child:  GestureDetector(
 
             onTap: (){
+              Navigator.pop(context);
 
-              Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>IndexAcceuilMedecin()));
+              //Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>IndexAcceuilMedecin()));
             },
             child: Row(
               children: [
@@ -232,6 +281,7 @@ Utilisateur? user;
                   minimumSize: MaterialStateProperty.all(const Size(260.0, 60.0)),
                 ),
                 onPressed: () {
+
                   FocusScope.of(context).unfocus();
 
                   /// Si les champs nouveau mot de passe et la confirmation mot de passe ne sont pas vide
@@ -241,15 +291,18 @@ Utilisateur? user;
                     /// Si les champs nouveau mot de passe et la confirmation mot de passe sont les mêmes
                     if(newmdpController.text==confirmnewmdpController.text){
 
-                      medecinRepository!.getUserToChangePassword(utilisateur.id,newmdpController.text);
+                      getUserToChangePassword(utilisateur.id,newmdpController.text);
+
 
                     }else{
                       /// Quand le nouveau mot de passe et confirmation mot de passe ne sont pas les memes
                       Correspondance();
+
                     }
                   }else{
                     /// Quand les champs sont vides
                     ChampsIncomplets();
+
                   }
                 },
                 child: const Text(
@@ -268,6 +321,8 @@ Utilisateur? user;
 
 
         ],
+      ):Center(
+        child: loadingWidget(),
       ),
     ),);
   }
@@ -338,5 +393,24 @@ Utilisateur? user;
       ..showMaterialBanner(materialBanner);
   }
 
+
+  Widget loadingWidget(){
+    return Center(
+        child:Container(
+          width: 100,
+          height: 100,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+
+              LoadingAnimationWidget.hexagonDots(
+                  color: Colors.redAccent,
+                  size: 120),
+
+              Image.asset('assets/images/logo2.png',width: 80,height: 80,fit: BoxFit.cover,)
+            ],
+          ),
+        ));
+  }
 
 }

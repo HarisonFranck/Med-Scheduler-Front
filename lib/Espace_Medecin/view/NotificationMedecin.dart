@@ -9,11 +9,11 @@ import 'IndexAcceuilMedecin.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:med_scheduler_front/Repository/MedecinRepository.dart';
 import 'package:med_scheduler_front/Utilitie/Utilities.dart';
+import 'package:med_scheduler_front/AuthProviderUser.dart';
+import 'package:provider/provider.dart';
 
 class NotificationMedecin extends StatefulWidget {
-  final Utilisateur user;
 
-  NotificationMedecin({required this.user});
 
   @override
   _NotificationMedecinState createState() => _NotificationMedecinState();
@@ -27,6 +27,8 @@ class _NotificationMedecinState extends State<NotificationMedecin> {
   Utilities? utilities;
   MedecinRepository? medecinRepository;
 
+  Utilisateur? user;
+
   @override
   void initState() {
     // TODO: implement initState
@@ -38,6 +40,7 @@ class _NotificationMedecinState extends State<NotificationMedecin> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    user = Provider.of<AuthProviderUser>(context).utilisateur;
   }
 
   bool isToday(DateTime startAt, DateTime timeStart) {
@@ -73,6 +76,8 @@ class _NotificationMedecinState extends State<NotificationMedecin> {
             isToday(appointment.startAt, appointment.timeStart))
         .toList();
     print('SIZE FILTER: ${filteredAppointments.length}');
+
+
 
     return filteredAppointments;
   }
@@ -242,13 +247,13 @@ class _NotificationMedecinState extends State<NotificationMedecin> {
                       const EdgeInsets.only(top: 20, bottom: 20, right: 5, left: 5),
                   child: FutureBuilder<List<CustomAppointment>>(
                     future: filterAppointments(
-                        medecinRepository!.getAllAppointmentByUser(widget.user)), // Appelez votre fonction de récupération de données ici
+                        medecinRepository!.getAllAppointmentByMedecin(user!)), // Appelez votre fonction de récupération de données ici
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
                         // Affichez un indicateur de chargement pendant le chargement
                         return Padding(
                           padding: EdgeInsets.only(
-                              top: MediaQuery.of(context).size.height / 3),
+                              top: MediaQuery.of(context).size.height / 3.6),
                           child: Center(child: loadingWidget()),
                         );
                       } else if (snapshot.hasError) {
@@ -499,7 +504,7 @@ class _NotificationMedecinState extends State<NotificationMedecin> {
                                                             ),
                                                             Expanded(
                                                                 child: Text(
-                                                                    'Vous avez un rendez-vous avec le patient ${listRDV.elementAt(index).patient!.lastName} ${abbreviateName(listRDV.elementAt(index).patient!.firstName)} le :',
+                                                                    'Vous avez un rendez-vous avec le patient ${listRDV.elementAt(index).patient!.lastName} ${abbreviateName(listRDV.elementAt(index).patient!.firstName)} :',
                                                                     style: TextStyle(
                                                                         color: Colors
                                                                             .black
