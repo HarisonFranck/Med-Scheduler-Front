@@ -21,11 +21,12 @@ import 'package:med_scheduler_front/main.dart';
 import 'package:med_scheduler_front/Utilitie/Utilities.dart';
 import 'package:med_scheduler_front/Repository/MedecinRepository.dart';
 import 'package:med_scheduler_front/Repository/BaseRepository.dart';
+import 'package:med_scheduler_front/Utilisateur.dart';
+import 'package:med_scheduler_front/AuthProviderUser.dart';
+
 
 class Agenda extends StatefulWidget {
-  final Medecin medecin;
 
-  Agenda({required this.medecin});
 
   @override
   AgendaState createState() => AgendaState();
@@ -38,6 +39,9 @@ class AgendaState extends State<Agenda> {
   MedecinRepository? medecinRepository;
   BaseRepository? baseRepository;
   Utilities? utilities;
+
+  Utilisateur? user;
+  Medecin? widgetMedecin;
 
 
   Future<void> initializeCalendar() async {
@@ -55,7 +59,7 @@ class AgendaState extends State<Agenda> {
 
     try {
       List<CustomAppointment> appoints =
-          await getProcheRendezVous(await medecinRepository!.getAllAppointmentMedecin(widget.medecin));
+          await getProcheRendezVous(await medecinRepository!.getAllAppointmentMedecin(widgetMedecin!));
 
       if (appoints.isNotEmpty) {
         appoints.forEach((element) async {
@@ -181,7 +185,7 @@ class AgendaState extends State<Agenda> {
     utilities = Utilities(context: context);
     medecinRepository = MedecinRepository(context: context, utilities: utilities!);
     baseRepository = BaseRepository(context: context, utilities: utilities!);
-    initializeCalendar();
+
   }
 
   List<CustomAppointment> listAppointment = [];
@@ -227,13 +231,15 @@ class AgendaState extends State<Agenda> {
     calculateBlackoutDates();
 
     authProvider = Provider.of<AuthProvider>(context, listen: false);
+    user = Provider.of<AuthProviderUser>(context).utilisateur;
+    widgetMedecin = Medecin(id: user!.id, roles: user!.roles, speciality: user!.speciality, lastName: user!.lastName, firstName: user!.firstName, userType: user!.userType, phone: user!.phone, email: user!.email, address: user!.address, center: user!.center, createdAt: user!.createdAt, city: user!.city);
     token = authProvider.token;
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       //await getAllAsync();
 
-      listAppointment = await medecinRepository!.getAllAppointmentMedecin(widget.medecin);
-      listUnavalaibleAppointment = await baseRepository!.getAllUnavalaibleAppointment(widget.medecin);
+      listAppointment = await medecinRepository!.getAllAppointmentMedecin(widgetMedecin!);
+      listUnavalaibleAppointment = await baseRepository!.getAllUnavalaibleAppointment(widgetMedecin!);
       if (listAppointment.isEmpty) {
         setState(() {
           dataLoaded = true;
@@ -509,7 +515,7 @@ class AgendaState extends State<Agenda> {
 
   bool dateIsAllDisabled(DateTime date) {
     return (getAvailableAppointments(
-            date, listAppointment, widget.medecin, listUnavalaibleAppointment)!
+            date, listAppointment, widgetMedecin!, listUnavalaibleAppointment)!
         .isEmpty);
   }
 
@@ -546,7 +552,7 @@ class AgendaState extends State<Agenda> {
                         Text(
                           textAlign: TextAlign.center,
                           textScaler: const TextScaler.linear(1.45),
-                          'Dr ${widget.medecin.firstName ?? 'Chargement...'}',
+                          'Dr ${widgetMedecin!.firstName ?? 'Chargement...'}',
                           style: const TextStyle(
                             letterSpacing: 2,
                             fontWeight: FontWeight.w600,
@@ -724,8 +730,7 @@ class AgendaState extends State<Agenda> {
                                                       MaterialPageRoute(
                                                           builder: (context) =>
                                                               AppointmentDialog(
-                                                                  medecin: widget
-                                                                      .medecin),
+                                                                  medecin:widgetMedecin!),
                                                           settings: RouteSettings(
                                                               arguments:
                                                                   dtCliquer)));
@@ -782,8 +787,7 @@ class AgendaState extends State<Agenda> {
                                                       MaterialPageRoute(
                                                           builder: (context) =>
                                                               AppointmentDialog(
-                                                                  medecin: widget
-                                                                      .medecin),
+                                                                  medecin: widgetMedecin!),
                                                           settings: RouteSettings(
                                                               arguments:
                                                                   dtCliquer)));

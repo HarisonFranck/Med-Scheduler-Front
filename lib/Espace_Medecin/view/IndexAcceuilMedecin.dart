@@ -15,6 +15,7 @@ import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:med_scheduler_front/Repository/BaseRepository.dart';
 import 'package:med_scheduler_front/Repository/MedecinRepository.dart';
 import 'package:med_scheduler_front/Utilitie/Utilities.dart';
+import 'package:med_scheduler_front/AuthProviderUser.dart';
 
 class IndexAcceuilMedecin extends StatefulWidget {
   const IndexAcceuilMedecin({super.key});
@@ -28,6 +29,7 @@ class _IndexAcceuilMedecinState extends State<IndexAcceuilMedecin> {
 
   late AuthProvider authProvider;
   late String token;
+  late AuthProviderUser authProviderUser;
   String baseUrl = UrlBase().baseUrl;
 
 
@@ -49,6 +51,7 @@ class _IndexAcceuilMedecinState extends State<IndexAcceuilMedecin> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     authProvider = Provider.of<AuthProvider>(context);
+    authProviderUser = Provider.of<AuthProviderUser>(context);
     token = authProvider.token;
 
     Map<String, dynamic> payload = Jwt.parseJwt(token);
@@ -60,12 +63,15 @@ class _IndexAcceuilMedecinState extends State<IndexAcceuilMedecin> {
     userGetted();
   }
 
+
+
   void userGetted() async {
-    utilisateur = await user;
-    medecin = Medecin(id: utilisateur!.id, roles: utilisateur!.roles, speciality: utilisateur!.speciality, lastName: utilisateur!.lastName, firstName: utilisateur!.firstName, userType: utilisateur!.userType, phone: utilisateur!.phone, email: utilisateur!.email, address: utilisateur!.address, center: utilisateur!.center, createdAt: utilisateur!.createdAt, city: utilisateur!.city);
+    if(utilisateur==null){
+      utilisateur = await user;
 
-    print('USER OO: ${medecin!.lastName}');
-
+      authProviderUser.setUser(utilisateur!);
+      print('USER OO: ${utilisateur!.lastName}');
+    }
     // Maintenant que l'utilisateur est récupéré, initialisez les pages
     initPages();
   }
@@ -74,16 +80,16 @@ class _IndexAcceuilMedecinState extends State<IndexAcceuilMedecin> {
     if (utilisateur != null) {
       _pages = [
         {
-          'page': Agenda(medecin: medecin!),
+          'page': Agenda(),
         },
         {
-          'page': ListAppointment(user: utilisateur!),
+          'page': ListAppointment(),
         },
         {
-          'page': NotificationMedecin(user: utilisateur!),
+          'page': NotificationMedecin(),
         },
         {
-          'page': MedecinDetails(user: utilisateur!),
+          'page': MedecinDetails(),
         }
       ];
 

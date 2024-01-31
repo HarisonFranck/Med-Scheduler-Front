@@ -21,32 +21,30 @@ import 'ModificationPassword.dart';
 import 'package:med_scheduler_front/UtilisateurNewPassword.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:med_scheduler_front/Repository/BaseRepository.dart';
+import 'package:med_scheduler_front/Repository/MedecinRepository.dart';
 import 'package:med_scheduler_front/Utilitie/Utilities.dart';
+import 'package:med_scheduler_front/AuthProviderUser.dart';
+import 'UpdateMedecin.dart';
 
 class MedecinDetails extends StatefulWidget {
   @override
   _MedecinDetailsState createState() => _MedecinDetailsState();
-
-  Utilisateur user;
-
-  MedecinDetails({required this.user});
 }
 
 class _MedecinDetailsState extends State<MedecinDetails> {
   String baseUrl = UrlBase().baseUrl;
 
-  bool _isPageActive = true;
-
   List<Centre> listCenter = [];
 
   Centre? center;
 
-
+  Centre? centerTemporaire;
 
   Utilities? utilities;
+  MedecinRepository? medecinRepository;
   BaseRepository? baseRepository;
 
-
+  Utilisateur? user;
 
   @override
   void initState() {
@@ -54,8 +52,8 @@ class _MedecinDetailsState extends State<MedecinDetails> {
     super.initState();
     utilities = Utilities(context: context);
     baseRepository = BaseRepository(context: context, utilities: utilities!);
+    getAll();
   }
-
 
   Widget buildDropdownButtonFormFieldCenter({
     required String label,
@@ -103,7 +101,6 @@ class _MedecinDetailsState extends State<MedecinDetails> {
   @override
   void dispose() {
     // TODO: implement dispose
-    _isPageActive = false;
     super.dispose();
 
     print('--- DESTRUCTION PAGE ---');
@@ -170,30 +167,7 @@ class _MedecinDetailsState extends State<MedecinDetails> {
     return resizedBytes;
   }
 
-  Future<void> _pickImage(String imageName) async {
-    bool isGranted = await _requestGalleryPermission();
-    try {
-      if (isGranted) {
-        final picker = ImagePicker();
-        final pickedFile = await picker.pickImage(source: ImageSource.gallery);
 
-        if (pickedFile != null) {
-          AjouterImage(pickedFile, imageName);
-          print('NOT NULL');
-
-          //AjouterImage(_profileImageFile!);
-        } else {
-          print('Il y a une erreur');
-        }
-      } else {
-        AutorisationParametre();
-      }
-    } catch (e) {
-      print('CATCH : $e');
-    }
-  }
-
-  File? _selectedImage;
 
   void AutorisationParametre() {
     // L'utilisateur a refusé la permission, afficher un message d'information
@@ -231,6 +205,7 @@ class _MedecinDetailsState extends State<MedecinDetails> {
     );
   }
 
+  late AuthProviderUser authProviderUser;
   late AuthProvider authProvider;
   late String token;
 
@@ -262,9 +237,6 @@ class _MedecinDetailsState extends State<MedecinDetails> {
 
   late Utilisateur utilisateur;
 
-
-
-
   void getAll() {
     baseRepository!.getAllCenter().then((value) => {
           setState(() {
@@ -273,22 +245,23 @@ class _MedecinDetailsState extends State<MedecinDetails> {
         });
   }
 
+
   bool dataLoaded = false;
+  bool isLoading = false;
 
   @override
   void didChangeDependencies() {
-
     // TODO: implement didChangeDependencies
     super.didChangeDependencies();
     print('DID ZAO');
+    authProviderUser = Provider.of<AuthProviderUser>(context, listen: false);
+    user = Provider.of<AuthProviderUser>(context).utilisateur;
 
-    //utilisateur = widget.user;
     authProvider = Provider.of<AuthProvider>(context, listen: false);
     token = authProvider.token;
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      getAll();
-      String id = utilities!.extractLastNumber(widget.user.id);
-      utilisateur = await baseRepository!.getUser(int.parse(id));
+      utilisateur = await baseRepository!
+          .getUser(int.parse(utilities!.extractLastNumber(user!.id)));
 
       if (mounted) {
         setState(() {
@@ -305,18 +278,24 @@ class _MedecinDetailsState extends State<MedecinDetails> {
               ? categorieSet(utilisateur.category!)
               : "";
 
-          isLoading = false;
+          EditEmail = false;
+          EditCenter = false;
+          EditPhone = false;
+          dataLoaded = true;
+      //didChangeDependencies();
+
+
         });
       }
     });
   }
 
   String categorieSet(String uri) {
-    if (extractLastNumber(uri) == '1') {
+    if (utilities!.extractLastNumber(uri) == '1') {
       return 'Bébé';
-    } else if (extractLastNumber(uri) == '2') {
+    } else if (utilities!.extractLastNumber(uri) == '2') {
       return 'Enfant';
-    } else if (extractLastNumber(uri) == '3') {
+    } else if (utilities!.extractLastNumber(uri) == '3') {
       return 'Femme';
     } else {
       return 'Homme';
@@ -327,203 +306,7 @@ class _MedecinDetailsState extends State<MedecinDetails> {
   FocusNode nodePhone = FocusNode();
   FocusNode nodeCenter = FocusNode();
 
-  void AjouterImage(XFile xfProfilImage, String imageName) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(6.0),
-          ),
-          title: const Text(
-            'Confirmation',
-            style: TextStyle(letterSpacing: 2),
-            textAlign: TextAlign.center,
-          ),
-          content: Container(
-            padding: const EdgeInsets.only(top: 20),
-            color: Colors.transparent,
-            width: MediaQuery.of(context).size.width - 40,
-            height: MediaQuery.of(context).size.height / 3,
-            child: Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(
-                      top: 10, left: 20, right: 20, bottom: 20),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(60),
-                    child: Container(
-                      decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(60)),
-                      width: 120,
-                      height: 120,
-                      child: ((File(xfProfilImage.path) != null) &&
-                              (File(xfProfilImage.path)!.existsSync()))
-                          ? Image.file(
-                              File(xfProfilImage.path)!,
-                              fit: BoxFit.cover,
-                            )
-                          : const Icon(
-                              Icons.account_circle,
-                            ),
-                    ),
-                  ),
-                ),
-                const Expanded(
-                    child: Text(
-                  'Voulez-vous vraiment enregistrer cette image pour votre profil?',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(letterSpacing: 2),
-                ))
-              ],
-            ),
-          ),
-          scrollable: true,
-          actions: [
-            TextButton(
-              child: const Text(
-                'Annuler',
-                style: TextStyle(
-                    color: Colors.redAccent,
-                    letterSpacing: 2,
-                    fontWeight: FontWeight.w700),
-              ),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-            TextButton(
-              child: const Text(
-                'Confirmer',
-                style: TextStyle(
-                    color: Colors.green,
-                    letterSpacing: 2,
-                    fontWeight: FontWeight.w700),
-              ),
-              onPressed: () async {
-                final appDocumentsDirectory =
-                    await getApplicationDocumentsDirectory();
-                final fileName = '$imageName.jpg';
-                final localCopyFile =
-                    File('${appDocumentsDirectory.path}/$fileName');
 
-                await localCopyFile
-                    .writeAsBytes(await _resizeImage(xfProfilImage.path));
-
-                print('Local copy file path: ${localCopyFile.path}');
-                Utilisateur userInterm = Utilisateur(
-                    id: utilisateur.id,
-                    lastName: utilisateur.lastName,
-                    firstName: utilisateur.firstName,
-                    userType: utilisateur.userType,
-                    phone: utilisateur.phone,
-                    password: utilisateur.password,
-                    email: utilisateur.email,
-                    center: utilisateur.center,
-                    speciality: utilisateur.speciality,
-                    imageName: localCopyFile.path,
-                    category: utilisateur.category,
-                    address: utilisateur.address,
-                    roles: utilisateur.roles,
-                    createdAt: utilisateur.createdAt,
-                    city: utilisateur.city);
-
-                UserUpdate(userInterm);
-
-                if (mounted) {
-                  setState(() {
-                    _profileImageFile = localCopyFile;
-                    path.text = _profileImageFile!.path;
-                    profilImage = File(path.text);
-                    print('IMAGE PATH :${path.text}');
-                  });
-                }
-                Navigator.pop(context);
-              },
-            )
-          ],
-        );
-      },
-    );
-  }
-
-  String extractLastNumber(String input) {
-    RegExp regExp = RegExp(r'\d+$');
-    Match? match = regExp.firstMatch(input);
-
-    if (match != null) {
-      String val = match.group(0)!;
-      print('VAL: $val');
-      return val;
-    } else {
-      // Aucun nombre trouvé dans la chaîne
-      throw const FormatException("Aucun nombre trouvé dans la chaîne.");
-    }
-  }
-
-  bool isLoading = true;
-
-  Future<void> UserUpdate(Utilisateur utilisateur) async {
-    setState(() {
-      isLoading = true;
-    });
-    final url =
-        Uri.parse("${baseUrl}api/users/${extractLastNumber(utilisateur.id)}");
-    //final headers = {'Content-Type': 'application/json'};
-
-    final headers = {'Content-Type': 'application/merge-patch+json'};
-
-    print('URL: $url');
-
-    try {
-      String jsonUser = jsonEncode(utilisateur.toJson());
-      print('Request Body: $jsonUser');
-      final response = await http.patch(url, headers: headers, body: jsonUser);
-      print(response.statusCode);
-
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> jsonResponse = json.decode(response.body);
-        print('ERRRR: $jsonResponse');
-        setState(() {
-          isLoading = false;
-        });
-
-        if (jsonResponse.containsKey('error')) {
-          error('Erreur de modification');
-        } else {
-          ModificationUtilisateur();
-          if (mounted) {
-            setState(() {
-              isLoading = false;
-            });
-          }
-        }
-      } else {
-        setState(() {
-          isLoading = false;
-        });
-
-        if (response.statusCode == 401) {
-          authProvider.logout();
-          Navigator.pushReplacement(
-              context, MaterialPageRoute(builder: (context) => const MyApp()));
-        }
-        // Gestion des erreurs HTTP
-        error('Il y a une erreur. HTTP Status Code: ${response.statusCode}');
-        throw Exception(
-            '-- Failed to add user. HTTP Status Code: ${response.statusCode}');
-      }
-    } catch (e, exception) {
-      setState(() {
-        isLoading = false;
-      });
-      // Gestion des erreurs autres que HTTP
-      error('Erreur de connexion ou voir ceci: $e');
-      print('EXCPEPT: $exception');
-      throw Exception('-- CATCH Failed to add user. Error: $e');
-    }
-  }
 
   void error(String description) {
     showDialog(
@@ -558,7 +341,7 @@ class _MedecinDetailsState extends State<MedecinDetails> {
       canPop: false,
       child: Scaffold(
           backgroundColor: const Color.fromARGB(1000, 238, 239, 244),
-          body: (!isLoading)
+          body: (!isLoading && dataLoaded)
               ? ListView(
                   children: [
                     Padding(
@@ -629,43 +412,10 @@ class _MedecinDetailsState extends State<MedecinDetails> {
                                                 profilImage!,
                                                 fit: BoxFit.fill,
                                               )
-                                            : Stack(
-                                                children: [
-                                                  Icon(
-                                                    Icons.account_circle,
-                                                    size: 100,
-                                                    color: Colors.black
-                                                        .withOpacity(0.6),
-                                                  ),
-                                                  Positioned(
-                                                    bottom: 15,
-                                                    right: 10,
-                                                    child: IconButton(
-                                                      onPressed: () {
-                                                        String imageName =
-                                                            generateUniqueImageName()
-                                                                .trim();
-                                                        print(
-                                                            'IMAGE NAME: $imageName');
-
-                                                        _pickImage(imageName);
-                                                      },
-                                                      icon: const Icon(
-                                                        Icons.add_a_photo,
-                                                        size: 30,
-                                                        color: Color.fromARGB(
-                                                            230, 20, 20, 90),
-                                                        shadows: [
-                                                          Shadow(
-                                                              color:
-                                                                  Colors.white,
-                                                              blurRadius: 6)
-                                                        ],
-                                                      ),
-                                                    ),
-                                                  )
-                                                ],
-                                              )),
+                                            :Image.asset(
+                                      'assets/images/medecin.png',
+                                      fit: BoxFit.fill,
+                                    )),
                                   ),
                                 ),
                                 const Spacer()
@@ -681,7 +431,7 @@ class _MedecinDetailsState extends State<MedecinDetails> {
                                   padding: const EdgeInsets.only(left: 45),
                                   child: Container(
                                     width:
-                                        MediaQuery.of(context).size.width / 1.8,
+                                        MediaQuery.of(context).size.width / 1.78,
                                     child: TextField(
                                       decoration: const InputDecoration(
                                         focusedBorder: UnderlineInputBorder(
@@ -735,7 +485,7 @@ class _MedecinDetailsState extends State<MedecinDetails> {
                                   padding: const EdgeInsets.only(left: 40),
                                   child: Container(
                                     width: MediaQuery.of(context).size.width /
-                                        1.89,
+                                        1.78,
                                     child: TextField(
                                       decoration: const InputDecoration(
                                         focusedBorder: UnderlineInputBorder(
@@ -750,82 +500,8 @@ class _MedecinDetailsState extends State<MedecinDetails> {
                                     ),
                                   ),
                                 ),
-                                IconButton(
-                                    onPressed: () {
-                                      setState(() {
-                                        EditEmail = !EditEmail;
-                                        EditPhone = false;
-                                      });
-                                      if (EditEmail == true) {
-                                        nodeEmail.requestFocus();
-                                      }
-                                    },
-                                    icon: const Icon(Icons.edit))
                               ],
                             ),
-                            if (EditEmail) ...[
-                              Padding(
-                                padding:
-                                    const EdgeInsets.only(left: 160, right: 10),
-                                child: ElevatedButton(
-                                  style: ButtonStyle(
-                                    backgroundColor: MaterialStateProperty.all(
-                                        const Color.fromARGB(
-                                            1000, 60, 70, 120)),
-                                    shape: MaterialStateProperty.all(
-                                      RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(
-                                            8.0), // Définissez le rayon de la bordure ici
-                                      ),
-                                    ),
-                                    minimumSize: MaterialStateProperty.all(
-                                        const Size(100.0, 30.0)),
-                                  ),
-                                  onPressed: () {
-                                    String email = emailController.text;
-                                    if (email.isEmpty) {
-                                      ModificationError(
-                                          'Veuillez saisir votre email');
-                                    } else {
-                                      String? mail = _validateEmail(email);
-                                      if (mail == null) {
-                                        FocusScope.of(context).unfocus();
-                                        Utilisateur userInterm = Utilisateur(
-                                            id: utilisateur.id,
-                                            lastName: utilisateur.lastName,
-                                            firstName: utilisateur.firstName,
-                                            userType: utilisateur.userType,
-                                            phone: utilisateur.phone,
-                                            password: utilisateur.password,
-                                            email: email,
-                                            center: utilisateur.center,
-                                            speciality: utilisateur.speciality,
-                                            imageName: utilisateur.imageName,
-                                            category: utilisateur.category,
-                                            address: utilisateur.address,
-                                            roles: utilisateur.roles,
-                                            createdAt: utilisateur.createdAt,
-                                            city: utilisateur.city);
-                                        UserUpdate(userInterm);
-                                        if (mounted) {
-                                          setState(() {});
-                                        }
-                                      } else {
-                                        emailInvalide();
-                                      }
-                                    }
-                                  },
-                                  child: const Text(
-                                    'Enregistrer',
-                                    textScaleFactor: 1.2,
-                                    style: TextStyle(
-                                      color: Color.fromARGB(255, 253, 253, 253),
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
                             Row(
                               children: [
                                 const Padding(
@@ -836,7 +512,7 @@ class _MedecinDetailsState extends State<MedecinDetails> {
                                   padding: const EdgeInsets.only(left: 7),
                                   child: Container(
                                     width: MediaQuery.of(context).size.width /
-                                        1.89,
+                                        1.82,
                                     child: TextField(
                                       maxLength: 10,
                                       keyboardType: TextInputType.number,
@@ -853,230 +529,39 @@ class _MedecinDetailsState extends State<MedecinDetails> {
                                     ),
                                   ),
                                 ),
-                                IconButton(
-                                    onPressed: () {
-                                      setState(() {
-                                        EditPhone = !EditPhone;
-                                        EditEmail = false;
-                                        if (EditPhone == true) {
-                                          nodePhone.requestFocus();
-                                        }
-                                      });
-                                    },
-                                    icon: const Icon(Icons.edit))
                               ],
                             ),
-                            if (EditPhone) ...[
-                              Padding(
-                                padding:
-                                    const EdgeInsets.only(left: 160, right: 10),
-                                child: ElevatedButton(
-                                  style: ButtonStyle(
-                                    backgroundColor: MaterialStateProperty.all(
-                                        const Color.fromARGB(
-                                            1000, 60, 70, 120)),
-                                    shape: MaterialStateProperty.all(
-                                      RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(
-                                            8.0), // Définissez le rayon de la bordure ici
-                                      ),
-                                    ),
-                                    minimumSize: MaterialStateProperty.all(
-                                        const Size(100.0, 30.0)),
-                                  ),
-                                  onPressed: () {
-                                    String phone = phoneController.text;
-                                    if (phone.length != 10) {
-                                      ModificationError(
-                                          'Veuillez inserer un numero valide');
-                                    } else {
-                                      FocusScope.of(context).unfocus();
-                                      Utilisateur userInterm = Utilisateur(
-                                          id: utilisateur.id,
-                                          lastName: utilisateur.lastName,
-                                          firstName: utilisateur.firstName,
-                                          userType: utilisateur.userType,
-                                          phone: phone,
-                                          center: utilisateur.center,
-                                          speciality: utilisateur.speciality,
-                                          password: utilisateur.password,
-                                          email: utilisateur.email,
-                                          imageName: utilisateur.imageName,
-                                          category: utilisateur.category,
-                                          address: utilisateur.address,
-                                          roles: utilisateur.roles,
-                                          createdAt: utilisateur.createdAt,
-                                          city: utilisateur.city);
-                                      UserUpdate(userInterm);
-                                      if (mounted) {
-                                        setState(() {});
-                                      }
-                                    }
-                                  },
-                                  child: const Text(
-                                    'Enregistrer',
-                                    textScaleFactor: 1.2,
-                                    style: TextStyle(
-                                      color: Color.fromARGB(255, 253, 253, 253),
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
+                            Row(
+                              children: [
+                                const Padding(
+                                  padding: EdgeInsets.only(left: 27),
+                                  child: Text('Centre:'),
                                 ),
-                              ),
-                            ],
-                            if (!EditCenter) ...[
-                              Row(
-                                children: [
-                                  const Padding(
-                                    padding: EdgeInsets.only(left: 27),
-                                    child: Text('Centre:'),
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.only(left: 10),
-                                    child: Container(
-                                      width: MediaQuery.of(context).size.width /
-                                          1.89,
-                                      child: TextField(
-                                        maxLength: 10,
-                                        keyboardType: TextInputType.name,
-                                        decoration: const InputDecoration(
-                                          focusedBorder: UnderlineInputBorder(
-                                            borderSide: BorderSide(
-                                              color: Color.fromARGB(
-                                                  230, 20, 20, 90),
-                                            ),
+                                Padding(
+                                  padding: const EdgeInsets.only(left: 10),
+                                  child: Container(
+                                    width: MediaQuery.of(context).size.width /
+                                        1.82,
+                                    child: TextField(
+                                      keyboardType: TextInputType.name,
+                                      decoration: const InputDecoration(
+                                        focusedBorder: UnderlineInputBorder(
+                                          borderSide: BorderSide(
+                                            color:
+                                                Color.fromARGB(230, 20, 20, 90),
                                           ),
                                         ),
-                                        controller: centreController,
-                                        readOnly: true,
                                       ),
-                                    ),
-                                  ),
-                                  IconButton(
-                                      onPressed: () {
-                                        setState(() {
-                                          EditCenter = !EditCenter;
-                                          EditEmail = false;
-                                          EditPhone = false;
-                                        });
-                                      },
-                                      icon: const Icon(Icons.edit))
-                                ],
-                              ),
-                            ] else ...[
-                              Row(
-                                children: [
-                                  const Padding(
-                                    padding: EdgeInsets.only(left: 26),
-                                    child: Text('Centre:'),
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.only(left: 7),
-                                    child: Container(
-                                      width: MediaQuery.of(context).size.width /
-                                          1.80,
-                                      child: buildDropdownButtonFormFieldCenter(
-                                        label: 'Centre',
-                                        value: center,
-                                        focusNode: nodeCenter,
-                                        items: listCenter.map((e) {
-                                          return DropdownMenuItem<Centre>(
-                                            value: e,
-                                            child: Text('${e.label}'),
-                                          );
-                                        }).toList(),
-                                        onChanged: (Centre? newval) {
-                                          setState(() {
-                                            EditCenter = true;
-                                            center = newval;
-                                          });
-                                        },
-                                        validator: (value) {
-                                          if (value == null) {
-                                            return 'Veuillez sélectionner un centre';
-                                          }
-                                          return null;
-                                        },
-                                      ),
-                                    ),
-                                  ),
-                                  IconButton(
-                                      onPressed: () {
-                                        setState(() {
-                                          EditCenter = !EditCenter;
-                                          EditEmail = false;
-                                          EditPhone = false;
-                                        });
-                                      },
-                                      icon: const Icon(Icons.edit))
-                                ],
-                              ),
-                            ],
-                            if (EditCenter) ...[
-                              Padding(
-                                padding:
-                                    const EdgeInsets.only(left: 160, right: 10),
-                                child: ElevatedButton(
-                                  style: ButtonStyle(
-                                    backgroundColor: MaterialStateProperty.all(
-                                        const Color.fromARGB(
-                                            1000, 60, 70, 120)),
-                                    shape: MaterialStateProperty.all(
-                                      RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(
-                                            8.0), // Définissez le rayon de la bordure ici
-                                      ),
-                                    ),
-                                    minimumSize: MaterialStateProperty.all(
-                                        const Size(100.0, 30.0)),
-                                  ),
-                                  onPressed: () {
-                                    String phone = phoneController.text;
-                                    if (center == null) {
-                                      ModificationError(
-                                          'Veuillez inserer votre centre');
-                                    } else {
-                                      FocusScope.of(context).unfocus();
-                                      Utilisateur userInterm = Utilisateur(
-                                          id: utilisateur.id,
-                                          lastName: utilisateur.lastName,
-                                          firstName: utilisateur.firstName,
-                                          userType: utilisateur.userType,
-                                          phone: utilisateur.phone,
-                                          center: center!,
-                                          speciality: utilisateur.speciality,
-                                          password: utilisateur.password,
-                                          email: utilisateur.email,
-                                          imageName: utilisateur.imageName,
-                                          category: utilisateur.category,
-                                          address: utilisateur.address,
-                                          roles: utilisateur.roles,
-                                          createdAt: utilisateur.createdAt,
-                                          city: utilisateur.city);
-                                      UserUpdate(userInterm);
-                                      setState(() {
-                                        centreController.text =
-                                            userInterm.center!.label;
-                                        center = null;
-                                        EditCenter = false;
-                                        didChangeDependencies();
-                                      });
-                                    }
-                                  },
-                                  child: const Text(
-                                    'Enregistrer',
-                                    textScaleFactor: 1.2,
-                                    style: TextStyle(
-                                      color: Color.fromARGB(255, 253, 253, 253),
-                                      fontWeight: FontWeight.w500,
+                                      controller: centreController,
+                                      readOnly: true,
                                     ),
                                   ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                             Padding(
-                              padding:
-                                  const EdgeInsets.only(top: 10,left: 10, right: 10),
+                              padding: const EdgeInsets.only(
+                                  top: 20, left: 10, right: 10),
                               child: ElevatedButton(
                                 style: ButtonStyle(
                                   backgroundColor: MaterialStateProperty.all(
@@ -1090,16 +575,37 @@ class _MedecinDetailsState extends State<MedecinDetails> {
                                   minimumSize: MaterialStateProperty.all(
                                       const Size(100.0, 40.0)),
                                 ),
-                                onPressed: () {
+                                onPressed: (){
+                                  UtilisateurNewPassword
+                                      utilisateurNewPassword =
+                                      UtilisateurNewPassword(
+                                          id: int.parse(utilities!.extractLastNumber(
+                                              utilisateur.id)),
+                                          lastName: utilisateur.lastName,
+                                          firstName: utilisateur.firstName,
+                                          userType: utilisateur.userType,
+                                          phone: utilisateur.phone,
+                                          password: utilisateur.password,
+                                          email: utilisateur.email,
+                                          imageName: utilisateur.imageName,
+                                          category: utilisateur.category,
+                                          address: utilisateur.address,
+                                          roles: utilisateur.roles,
+                                          city: utilisateur.city);
 
-                                  UtilisateurNewPassword utilisateurNewPassword = UtilisateurNewPassword(id: int.parse(extractLastNumber(utilisateur.id)), lastName: utilisateur.lastName, firstName: utilisateur.firstName, userType: utilisateur.userType, phone: utilisateur.phone, password: utilisateur.password, email: utilisateur.email, imageName: utilisateur.imageName, category: utilisateur.category, address: utilisateur.address, roles: utilisateur.roles, city: utilisateur.city);
-
-
-                                  Navigator.push(context, MaterialPageRoute(builder: (context)=>ModificationPassword(),settings: RouteSettings(arguments: utilisateurNewPassword)));
-
+                                  Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (context) =>
+                                              UpdateMedecin(),
+                                          settings: RouteSettings(
+                                              arguments:
+                                                  utilisateurNewPassword)));
+                                  print('RETOUR OO');
+                                  didChangeDependencies();
                                 },
                                 child: const Text(
-                                  'Changer mot de passe',
+                                  'Modifier les informations',
                                   textScaleFactor: 1.2,
                                   style: TextStyle(
                                     color: Color.fromARGB(255, 253, 253, 253),
@@ -1108,12 +614,14 @@ class _MedecinDetailsState extends State<MedecinDetails> {
                                 ),
                               ),
                             ),
+
                             Padding(
                                 padding: const EdgeInsets.only(
                                     top: 30, left: 10, bottom: 30),
                                 child: GestureDetector(
                                   onTap: () {
                                     authProvider.logout();
+                                    authProviderUser.logout();
 
                                     print(
                                         'TOKEN PRVIDED: ${authProvider.token}');
@@ -1145,7 +653,6 @@ class _MedecinDetailsState extends State<MedecinDetails> {
                                     ],
                                   ),
                                 )),
-
                           ],
                         ),
                       ),
@@ -1156,27 +663,26 @@ class _MedecinDetailsState extends State<MedecinDetails> {
     );
   }
 
-
-  Widget loadingWidget(){
+  Widget loadingWidget() {
     return Center(
-        child:Container(
-          width: 100,
-          height: 100,
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-
-              LoadingAnimationWidget.hexagonDots(
-                  color: Colors.redAccent,
-                  size: 120),
-
-              Image.asset('assets/images/logo2.png',width: 80,height: 80,fit: BoxFit.cover,)
-            ],
-          ),
-        ));
+        child: Container(
+      width: 100,
+      height: 100,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          LoadingAnimationWidget.hexagonDots(
+              color: Colors.redAccent, size: 120),
+          Image.asset(
+            'assets/images/logo2.png',
+            width: 80,
+            height: 80,
+            fit: BoxFit.cover,
+          )
+        ],
+      ),
+    ));
   }
-
-
 
   void ModificationUtilisateur() {
     final materialBanner = MaterialBanner(

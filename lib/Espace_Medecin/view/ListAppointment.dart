@@ -16,11 +16,10 @@ import 'package:med_scheduler_front/main.dart';
 import 'package:med_scheduler_front/Utilitie/Utilities.dart';
 import 'package:med_scheduler_front/Repository/MedecinRepository.dart';
 import 'package:med_scheduler_front/Repository/BaseRepository.dart';
+import 'package:med_scheduler_front/AuthProviderUser.dart';
 
 class ListAppointment extends StatefulWidget {
-  final Utilisateur user;
 
-  ListAppointment({required this.user});
 
   @override
   _ListAppointmentState createState() => _ListAppointmentState();
@@ -34,6 +33,8 @@ class _ListAppointmentState extends State<ListAppointment> {
   MedecinRepository? medecinRepository;
   Utilities? utilities;
 
+  Utilisateur? user;
+
 
 
   @override
@@ -46,7 +47,7 @@ class _ListAppointmentState extends State<ListAppointment> {
   }
 
 
-  bool isToday(DateTime startAt) {
+  bool isToday(DateTime startAt,DateTime timeStart) {
     DateTime now = DateTime.now();
     DateTime startOfWeek = DateTime(now.year, now.month, now.day - now.weekday);
     DateTime endOfWeek = startOfWeek.add(const Duration(days: 6));
@@ -55,7 +56,7 @@ class _ListAppointmentState extends State<ListAppointment> {
         DateFormat('yyyy-MM-dd').format(now);
     if (val) {
       if (TimeOfDay.fromDateTime(now).hour >
-          TimeOfDay.fromDateTime(startAt).hour) {
+          TimeOfDay.fromDateTime(timeStart).hour) {
         isIt = false;
       } else {
         isIt = true;
@@ -107,10 +108,12 @@ class _ListAppointmentState extends State<ListAppointment> {
     // Attendre la résolution du Future<List<CustomAppointment>>
     List<CustomAppointment> appointments = await appointmentFuture;
 
+    print('FILTERED SIZE: ${appointments.length}');
+
     // Filtrer les appointments de la semaine actuelle
     List<CustomAppointment> appointmentsInCurrentWeek =
         appointments.where((appointment) {
-      return isToday(appointment.startAt);
+      return isToday(appointment.startAt,appointment.timeStart);
     }).toList();
 
     // Ajouter les appointments filtrés à la liste résultante
@@ -177,6 +180,7 @@ class _ListAppointmentState extends State<ListAppointment> {
   void didChangeDependencies() {
     super.didChangeDependencies();
 
+    user = Provider.of<AuthProviderUser>(context).utilisateur;
     authProvider = Provider.of<AuthProvider>(context);
     token = authProvider.token;
 
@@ -184,9 +188,11 @@ class _ListAppointmentState extends State<ListAppointment> {
 
     idUser = payload['id'];
 
-    listRdvJJ = filterToday(medecinRepository!.getAllAppointmentByUser(widget.user));
-    listRdvNext = filterNext(medecinRepository!.getAllAppointmentByUser(widget.user));
-    listRdvFinished = filterFinished(medecinRepository!.getAllAppointmentByUser(widget.user));
+    listRdvJJ = filterToday(medecinRepository!.getAllAppointmentByMedecin(user!));
+    listRdvNext = filterNext(medecinRepository!.getAllAppointmentByMedecin(user!));
+    listRdvFinished = filterFinished(medecinRepository!.getAllAppointmentByMedecin(user!));
+
+
   }
 
 
