@@ -496,7 +496,7 @@ class _NotificationAdminState extends State<NotificationAdmin> {
                                                             ),
                                                             Expanded(
                                                                 child: Text(
-                                                                    'Il y a un rendez-vous du Dr ${listRDV.elementAt(index).medecin!.lastName} ${abbreviateName(listRDV.elementAt(index).medecin!.firstName)} avec un patient :',
+                                                                    'Le Dr.${listRDV.elementAt(index).medecin!.lastName} ${abbreviateName(listRDV.elementAt(index).medecin!.firstName)} a un rendez-vous prévu avec un patient :',
                                                                     style: TextStyle(
                                                                         color: Colors
                                                                             .black

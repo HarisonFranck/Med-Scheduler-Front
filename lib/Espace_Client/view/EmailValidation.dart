@@ -288,9 +288,7 @@ class _EmailValidationState extends State<EmailValidation> {
             height: MediaQuery.of(context).size.height,
             color: Colors.black.withOpacity(0.2),
           ),
-          Center(
-            child: LoadingAnimationWidget.fourRotatingDots(color: Colors.redAccent, size: 120),
-          )
+          loadingWidget()
         ],
       )
     );
@@ -478,6 +476,28 @@ class _EmailValidationState extends State<EmailValidation> {
     );
 
     ScaffoldMessenger.of(context).showSnackBar(snackBar);
+  }
+
+
+  Widget loadingWidget() {
+    return Center(
+        child: Container(
+          width: 100,
+          height: 100,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              LoadingAnimationWidget.hexagonDots(
+                  color: Colors.redAccent, size: 120),
+              Image.asset(
+                'assets/images/logo2.png',
+                width: 80,
+                height: 80,
+                fit: BoxFit.cover,
+              )
+            ],
+          ),
+        ));
   }
 
 

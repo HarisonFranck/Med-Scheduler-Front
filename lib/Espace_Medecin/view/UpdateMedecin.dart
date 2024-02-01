@@ -52,6 +52,29 @@ class _UpdateMedecinState extends State<UpdateMedecin> {
     utilities = Utilities(context: context);
     baseRepository = BaseRepository(context: context, utilities: utilities!);
 
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+
+      profilImage = (utilisateur.imageName != null)
+          ? File(utilisateur.imageName!)
+          : null;
+      nomController.text = utilisateur.firstName;
+      prenomController.text = utilisateur.lastName;
+      phoneController.text = utilisateur.phone;
+      emailController.text = utilisateur.email;
+      centreController.text =
+      (utilisateur.center != null) ? utilisateur.center!.label : '';
+      categorieController.text = (utilisateur.category != null)
+      ? categorieSet(utilisateur.category!)
+          : "";
+
+      EditEmail = false;
+      EditCenter = false;
+      EditPhone = false;
+      isLoading = false;
+      dataLoaded = true;
+
+      });
+
     getAll();
   }
 
@@ -340,42 +363,15 @@ class _UpdateMedecinState extends State<UpdateMedecin> {
   }
 
   bool dataLoaded = false;
-  bool isLoading = false;
+  bool isLoading = true;
 
   @override
   void didChangeDependencies() {
     // TODO: implement didChangeDependencies
     super.didChangeDependencies();
-    print('DID ZAO');
-    authProviderUser = Provider.of<AuthProviderUser>(context, listen: false);
-    user = Provider.of<AuthProviderUser>(context).utilisateur;
 
-    authProvider = Provider.of<AuthProvider>(context, listen: false);
-    token = authProvider.token;
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      utilisateur = await baseRepository!
-          .getUser(int.parse(utilities!.extractLastNumber(user!.id)));
+    utilisateur = ModalRoute.of(context)?.settings.arguments as Utilisateur;
 
-
-          profilImage = (utilisateur.imageName != null)
-              ? File(utilisateur.imageName!)
-              : null;
-          nomController.text = utilisateur.firstName;
-          prenomController.text = utilisateur.lastName;
-          phoneController.text = utilisateur.phone;
-          emailController.text = utilisateur.email;
-          centreController.text =
-              (utilisateur.center != null) ? utilisateur.center!.label : '';
-          categorieController.text = (utilisateur.category != null)
-              ? categorieSet(utilisateur.category!)
-              : "";
-
-          EditEmail = false;
-          EditCenter = false;
-          EditPhone = false;
-          dataLoaded = true;
-
-    });
   }
 
   String categorieSet(String uri) {
@@ -580,6 +576,10 @@ class _UpdateMedecinState extends State<UpdateMedecin> {
                               ],
                             ),
                             onTap: () {
+                              setState(() {
+                                isLoading = false;
+                                dataLoaded = true;
+                              });
                               Navigator.of(context).pop();
                               //Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const IndexAcceuilMedecin()));
                             },

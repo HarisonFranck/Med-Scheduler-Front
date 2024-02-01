@@ -24,10 +24,7 @@ import 'package:med_scheduler_front/Repository/BaseRepository.dart';
 import 'package:med_scheduler_front/Utilisateur.dart';
 import 'package:med_scheduler_front/AuthProviderUser.dart';
 
-
 class Agenda extends StatefulWidget {
-
-
   @override
   AgendaState createState() => AgendaState();
 }
@@ -43,7 +40,6 @@ class AgendaState extends State<Agenda> {
   Utilisateur? user;
   Medecin? widgetMedecin;
 
-
   Future<void> initializeCalendar() async {
     tz.initializeTimeZones();
     tz.setLocalLocation(tz.getLocation('Indian/Antananarivo'));
@@ -58,8 +54,8 @@ class AgendaState extends State<Agenda> {
     var defaultCalendarId = calendars.data!.first.id;
 
     try {
-      List<CustomAppointment> appoints =
-          await getProcheRendezVous(await medecinRepository!.getAllAppointmentMedecin(widgetMedecin!));
+      List<CustomAppointment> appoints = await getProcheRendezVous(
+          await medecinRepository!.getAllAppointmentMedecin(widgetMedecin!));
 
       if (appoints.isNotEmpty) {
         appoints.forEach((element) async {
@@ -183,9 +179,9 @@ class AgendaState extends State<Agenda> {
     // TODO: implement initState
     super.initState();
     utilities = Utilities(context: context);
-    medecinRepository = MedecinRepository(context: context, utilities: utilities!);
+    medecinRepository =
+        MedecinRepository(context: context, utilities: utilities!);
     baseRepository = BaseRepository(context: context, utilities: utilities!);
-
   }
 
   List<CustomAppointment> listAppointment = [];
@@ -232,14 +228,28 @@ class AgendaState extends State<Agenda> {
 
     authProvider = Provider.of<AuthProvider>(context, listen: false);
     user = Provider.of<AuthProviderUser>(context).utilisateur;
-    widgetMedecin = Medecin(id: user!.id, roles: user!.roles, speciality: user!.speciality, lastName: user!.lastName, firstName: user!.firstName, userType: user!.userType, phone: user!.phone, email: user!.email, address: user!.address, center: user!.center, createdAt: user!.createdAt, city: user!.city);
+    widgetMedecin = Medecin(
+        id: user!.id,
+        roles: user!.roles,
+        speciality: user!.speciality,
+        lastName: user!.lastName,
+        firstName: user!.firstName,
+        userType: user!.userType,
+        phone: user!.phone,
+        email: user!.email,
+        address: user!.address,
+        center: user!.center,
+        createdAt: user!.createdAt,
+        city: user!.city);
     token = authProvider.token;
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       //await getAllAsync();
 
-      listAppointment = await medecinRepository!.getAllAppointmentMedecin(widgetMedecin!);
-      listUnavalaibleAppointment = await baseRepository!.getAllUnavalaibleAppointment(widgetMedecin!);
+      listAppointment =
+          await medecinRepository!.getAllAppointmentMedecin(widgetMedecin!);
+      listUnavalaibleAppointment =
+          await baseRepository!.getAllUnavalaibleAppointment(widgetMedecin!);
       if (listAppointment.isEmpty) {
         setState(() {
           dataLoaded = true;
@@ -263,10 +273,6 @@ class AgendaState extends State<Agenda> {
       throw FormatException("Aucun nombre trouvé dans la chaîne.");
     }
   }
-
-
-
-
 
   CalendarController controller = CalendarController();
 
@@ -696,11 +702,12 @@ class AgendaState extends State<Agenda> {
                                         ],
                                         Row(
                                           children: [
-                                            Spacer(),
+                                            Container(
+                                              width: 60,
+                                            ),
                                             Padding(
                                               padding: const EdgeInsets.only(
-                                                  left: 10,
-                                                  right: 16,
+
                                                   bottom: 10),
                                               child: ElevatedButton(
                                                 style: ButtonStyle(
@@ -730,7 +737,8 @@ class AgendaState extends State<Agenda> {
                                                       MaterialPageRoute(
                                                           builder: (context) =>
                                                               AppointmentDialog(
-                                                                  medecin:widgetMedecin!),
+                                                                  medecin:
+                                                                      widgetMedecin!),
                                                           settings: RouteSettings(
                                                               arguments:
                                                                   dtCliquer)));
@@ -753,11 +761,12 @@ class AgendaState extends State<Agenda> {
                                       if (istoAddAppointment) ...[
                                         Row(
                                           children: [
-                                            Spacer(),
+                                            Container(
+                                              width: 60,
+                                            ),
                                             Padding(
                                               padding: const EdgeInsets.only(
-                                                  left: 10,
-                                                  right: 16,
+
                                                   bottom: 10),
                                               child: ElevatedButton(
                                                 style: ButtonStyle(
@@ -787,7 +796,8 @@ class AgendaState extends State<Agenda> {
                                                       MaterialPageRoute(
                                                           builder: (context) =>
                                                               AppointmentDialog(
-                                                                  medecin: widgetMedecin!),
+                                                                  medecin:
+                                                                      widgetMedecin!),
                                                           settings: RouteSettings(
                                                               arguments:
                                                                   dtCliquer)));
@@ -910,10 +920,11 @@ class AgendaState extends State<Agenda> {
             child: Row(
               children: [
                 Container(
+                  width: 60,
                   child: Column(
                     children: [
                       Padding(
-                        padding: const EdgeInsets.only(left: 10, right: 10),
+                        padding: const EdgeInsets.only(left: 8, right: 10),
                         child: Text(
                           '${clickedDt.day}',
                           style: TextStyle(
@@ -923,7 +934,7 @@ class AgendaState extends State<Agenda> {
                         ),
                       ),
                       Padding(
-                        padding: const EdgeInsets.only(left: 10, right: 10),
+                        padding: const EdgeInsets.only(left: 8, right: 10),
                         child: Text(
                           '${formatDT(clickedDt)}',
                           style: TextStyle(
@@ -1038,66 +1049,100 @@ class AgendaState extends State<Agenda> {
 
     return Column(
       children: [
-        GestureDetector(
-            onTap: () {
-              DetailsAppointment(appoint);
-            },
-            child: Padding(
-              padding: const EdgeInsets.only(left: 40),
-              child: Container(
-                width: MediaQuery.of(context).size.width / 1.30,
-                height: 55,
-                // ajustez la taille du point en fonction de vos besoins
+        Row(
+          children: [
+            Container(
+              width: 60,
+            ),
+            GestureDetector(
+                onTap: () {
+                  DetailsAppointment(appoint);
+                },
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 0),
+                  child: Container(
+                    width: MediaQuery.of(context).size.width / 1.30,
+                    height:
+                        (appoint.isDeleted != null && appoint.isDeleted == true)
+                            ? 75
+                            : 55,
+                    // ajustez la taille du point en fonction de vos besoins
 
-                decoration: BoxDecoration(
-                  shape: BoxShape.rectangle,
-                  borderRadius: BorderRadius.circular(6),
-                  color:
-                      (appoint.isDeleted != null && appoint.isDeleted == true)
+                    decoration: BoxDecoration(
+                      shape: BoxShape.rectangle,
+                      borderRadius: BorderRadius.circular(6),
+                      color: (appoint.isDeleted != null &&
+                              appoint.isDeleted == true)
                           ? Colors.black.withOpacity(0.3)
                           : Colors.redAccent.withOpacity(
                               0.7), // utilisez la couleur de l'appointment
-                ),
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
+                    ),
+                    child: Column(
                       children: [
-                        Padding(
-                          padding: const EdgeInsets.only(left: 10),
-                          child: Text(
-                            textAlign: TextAlign.start,
-                            '${abreviateRaison(appoint.reason)}',
-                            style: const TextStyle(
-                                fontWeight: FontWeight.w500,
-                                letterSpacing: 2,
-                                fontSize: 15,
-                                color: Colors.white),
-                          ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.only(left: 10),
+                              child: Text(
+                                textAlign: TextAlign.start,
+                                '${abreviateRaison(appoint.reason)}',
+                                style: TextStyle(
+                                    fontWeight: FontWeight.w500,
+                                    letterSpacing: 2,
+                                    fontSize: 15,
+                                    color: (appoint.isDeleted != null &&
+                                            appoint.isDeleted == true)
+                                        ? Colors.black.withOpacity(0.4)
+                                        : Colors.white),
+                              ),
+                            ),
+                          ],
                         ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.only(left: 10),
+                              child: Text(
+                                textAlign: TextAlign.start,
+                                '${formatDateTimeAppointment(appoint.startAt, appoint.timeStart, appoint.timeEnd)}',
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.w500,
+                                    fontSize: 12,
+                                    letterSpacing: 2,
+                                    color: Colors.white),
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (appoint.isDeleted != null &&
+                            appoint.isDeleted == true) ...[
+                          const Row(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            children: [
+                              Padding(
+                                padding: EdgeInsets.only(left: 10),
+                                child: Text(
+                                  textAlign: TextAlign.start,
+                                  'Rendez-vous annulé',
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.w500,
+                                      fontSize: 13,
+                                      letterSpacing: 2,
+                                      color: Colors.redAccent),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ]
                       ],
                     ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.only(left: 10),
-                          child: Text(
-                            textAlign: TextAlign.start,
-                            '${formatDateTimeAppointment(appoint.startAt, appoint.timeStart, appoint.timeEnd)}',
-                            style: const TextStyle(
-                                fontWeight: FontWeight.w500,
-                                fontSize: 12,
-                                letterSpacing: 2,
-                                color: Colors.white),
-                          ),
-                        ),
-                      ],
-                    )
-                  ],
-                ),
-              ),
-            )),
+                  ),
+                )),
+            Spacer(),
+          ],
+        ),
         Padding(
           padding: const EdgeInsets.only(top: 5),
           child: Divider(

@@ -576,22 +576,7 @@ class _MedecinDetailsState extends State<MedecinDetails> {
                                       const Size(100.0, 40.0)),
                                 ),
                                 onPressed: (){
-                                  UtilisateurNewPassword
-                                      utilisateurNewPassword =
-                                      UtilisateurNewPassword(
-                                          id: int.parse(utilities!.extractLastNumber(
-                                              utilisateur.id)),
-                                          lastName: utilisateur.lastName,
-                                          firstName: utilisateur.firstName,
-                                          userType: utilisateur.userType,
-                                          phone: utilisateur.phone,
-                                          password: utilisateur.password,
-                                          email: utilisateur.email,
-                                          imageName: utilisateur.imageName,
-                                          category: utilisateur.category,
-                                          address: utilisateur.address,
-                                          roles: utilisateur.roles,
-                                          city: utilisateur.city);
+
 
                                   Navigator.push(
                                       context,
@@ -600,7 +585,7 @@ class _MedecinDetailsState extends State<MedecinDetails> {
                                               UpdateMedecin(),
                                           settings: RouteSettings(
                                               arguments:
-                                                  utilisateurNewPassword)));
+                                                  utilisateur)));
                                   print('RETOUR OO');
                                   didChangeDependencies();
                                 },

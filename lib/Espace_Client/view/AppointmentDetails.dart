@@ -251,8 +251,8 @@ class _AppointmentDetailsState extends State<AppointmentDetails> {
                           children: [
                             Text(
                               textAlign: TextAlign.start,
-                              'Dr ${abbreviateName(appointment.medecin!.lastName)} \n ${abbreviateFirstName(appointment.medecin!.firstName)}',
-                              style: const TextStyle(fontSize: 20),
+                              'Dr.${abbreviateName(appointment.medecin!.lastName)} \n ${abbreviateFirstName(appointment.medecin!.firstName)}',
+                              style: TextStyle(fontSize: 20,color: Colors.black.withOpacity(0.7)),
                             ),
                             if (appointment.medecin!.speciality != null) ...[
                               Padding(
@@ -260,7 +260,7 @@ class _AppointmentDetailsState extends State<AppointmentDetails> {
                                 child: Text(
                                   textAlign: TextAlign.start,
                                   '${appointment.medecin!.speciality!.label}',
-                                  style: const TextStyle(fontSize: 20),
+                                  style: TextStyle(fontSize: 20,color: Colors.black.withOpacity(0.6)),
                                 ),
                               )
                             ]

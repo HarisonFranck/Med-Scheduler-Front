@@ -316,7 +316,6 @@ class UserRepository {
 
     final headers = {'Content-Type': 'application/merge-patch+json'};
 
-    print('URL: $url');
 
     try {
       String jsonUser = jsonEncode(utilisateur.toJson());
@@ -326,7 +325,6 @@ class UserRepository {
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonResponse = json.decode(response.body);
-        print('ERRRR: $jsonResponse');
 
         if (jsonResponse.containsKey('error')) {
           utilities.error('Erreur de modification');
@@ -372,8 +370,6 @@ class UserRepository {
         final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
 
         Utilisateur user = Utilisateur.fromJson(jsonData);
-
-        print('UTILISATEUR: ${user.lastName}');
 
         return user;
       } else {
@@ -466,8 +462,7 @@ class UserRepository {
     authProvider = Provider.of<AuthProvider>(context, listen: false);
     token = authProvider.token;
 
-    print('MED ID: ${medecinCliked.id}');
-    final url = Uri.parse(
+   final url = Uri.parse(
         "${baseUrl}api/doctors/unavailable/appointments/${utilities.extractLastNumber(medecinCliked.id)}");
 
     final headers = {'Authorization': 'Bearer $token'};
@@ -475,13 +470,10 @@ class UserRepository {
     try {
       final response = await http.get(url, headers: headers);
 
-      print('STATUS CODE APPOINTS AGENDA:  ${response.statusCode} \n');
-
       if (response.statusCode == 200) {
         final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
         final datas = jsonData['hydra:member'] as List<dynamic>;
 
-        print('DATS UNAVALAIBLE SIZE: ${datas.length}');
 
         return datas.map((e) => CustomAppointment.fromJson(e)).toList();
       } else {
