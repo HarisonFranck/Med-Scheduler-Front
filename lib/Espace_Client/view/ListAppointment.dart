@@ -15,20 +15,24 @@ import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:med_scheduler_front/main.dart';
 import 'package:med_scheduler_front/Utilitie/Utilities.dart';
 import 'package:med_scheduler_front/Repository/UserRepository.dart';
+import 'package:med_scheduler_front/AuthProviderUser.dart';
 
 class ListAppointment extends StatefulWidget {
-  final Utilisateur user;
 
-  ListAppointment({required this.user});
 
   _ListAppointmentState createState() => _ListAppointmentState();
 }
 
 class _ListAppointmentState extends State<ListAppointment> {
+
+  late AuthProviderUser authProviderUser;
+
   String baseUrl = UrlBase().baseUrl;
 
   UserRepository? userRepository;
   Utilities? utilities;
+
+  Utilisateur? user;
 
 
   @override
@@ -41,7 +45,8 @@ class _ListAppointmentState extends State<ListAppointment> {
 
 
 
-  bool isToday(DateTime startAt) {
+
+  bool isToday(DateTime startAt,DateTime timeStart) {
     DateTime now = DateTime.now();
     DateTime startOfWeek = DateTime(now.year, now.month, now.day - now.weekday);
     DateTime endOfWeek = startOfWeek.add(const Duration(days: 6));
@@ -50,7 +55,7 @@ class _ListAppointmentState extends State<ListAppointment> {
         DateFormat('yyyy-MM-dd').format(now);
     if (val) {
       if (TimeOfDay.fromDateTime(now).hour >
-          TimeOfDay.fromDateTime(startAt).hour) {
+          TimeOfDay.fromDateTime(timeStart).hour) {
         isIt = false;
       } else {
         isIt = true;
@@ -59,6 +64,8 @@ class _ListAppointmentState extends State<ListAppointment> {
 
     return isIt;
   }
+
+
 
   bool isYesterday(DateTime startAt) {
     DateTime now = DateTime.now();
@@ -105,7 +112,7 @@ class _ListAppointmentState extends State<ListAppointment> {
     // Filtrer les appointments de la semaine actuelle
     List<CustomAppointment> appointmentsInCurrentWeek =
         appointments.where((appointment) {
-      return isToday(appointment.startAt);
+      return isToday(appointment.startAt,appointment.timeStart);
     }).toList();
 
     // Ajouter les appointments filtrés à la liste résultante
@@ -173,15 +180,16 @@ class _ListAppointmentState extends State<ListAppointment> {
     super.didChangeDependencies();
 
     authProvider = Provider.of<AuthProvider>(context);
+    user = Provider.of<AuthProviderUser>(context).utilisateur;
     token = authProvider.token;
 
     Map<String, dynamic> payload = Jwt.parseJwt(token);
 
     idUser = payload['id'];
 
-    listRdvJJ = filterToday(userRepository!.getAllAppointmentByPatient(widget.user));
-    listRdvNext = filterNext(userRepository!.getAllAppointmentByPatient(widget.user));
-    listRdvFinished = filterFinished(userRepository!.getAllAppointmentByPatient(widget.user));
+    listRdvJJ = filterToday(userRepository!.getAllAppointmentByPatient(user!));
+    listRdvNext = filterNext(userRepository!.getAllAppointmentByPatient(user!));
+    listRdvFinished = filterFinished(userRepository!.getAllAppointmentByPatient(user!));
   }
 
   String extractLastNumber(String input) {

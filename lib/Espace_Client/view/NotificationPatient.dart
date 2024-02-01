@@ -9,12 +9,11 @@ import 'IndexAccueil.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:med_scheduler_front/Repository/UserRepository.dart';
 import 'package:med_scheduler_front/Utilitie/Utilities.dart';
+import 'package:med_scheduler_front/AuthProviderUser.dart';
+import 'package:provider/provider.dart';
 
 
 class NotificationPatient extends StatefulWidget {
-  final Utilisateur user;
-
-  NotificationPatient({required this.user});
 
   _NotificationPatientState createState() => _NotificationPatientState();
 }
@@ -25,6 +24,8 @@ class _NotificationPatientState extends State<NotificationPatient> {
 
   UserRepository? userRepository;
   Utilities? utilities;
+
+  Utilisateur? user;
 
 
   @override
@@ -42,7 +43,9 @@ class _NotificationPatientState extends State<NotificationPatient> {
 
   @override
   void didChangeDependencies() {
+
     super.didChangeDependencies();
+    user = Provider.of<AuthProviderUser>(context).utilisateur;
 
   }
 
@@ -213,7 +216,7 @@ class _NotificationPatientState extends State<NotificationPatient> {
               padding: const EdgeInsets.only(top:20,bottom:20,right:5,left:5),
               child: FutureBuilder<List<CustomAppointment>>(
                 future: filterAppointments(
-                    userRepository!.getAllAppointmentByPatient(widget.user)), // Appelez votre fonction de récupération de données ici
+                    userRepository!.getAllAppointmentByPatient(user!)), // Appelez votre fonction de récupération de données ici
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     // Affichez un indicateur de chargement pendant le chargement

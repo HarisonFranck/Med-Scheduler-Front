@@ -17,21 +17,23 @@ import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:med_scheduler_front/Utilitie/Utilities.dart';
 import 'package:med_scheduler_front/Repository/UserRepository.dart';
+import 'package:med_scheduler_front/AuthProviderUser.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class PatientDetails extends StatefulWidget {
   _PatientDetailsState createState() => _PatientDetailsState();
-  final Utilisateur user;
-
-  PatientDetails({required this.user});
 }
 
 class _PatientDetailsState extends State<PatientDetails> {
   String baseUrl = UrlBase().baseUrl;
 
-  bool isLoading = false;
+  late AuthProviderUser authProviderUser;
 
   UserRepository? userRepository;
   Utilities? utilities;
+
+  Utilisateur? user;
 
   @override
   void dispose() {
@@ -194,23 +196,93 @@ class _PatientDetailsState extends State<PatientDetails> {
     super.initState();
     utilities = Utilities(context: context);
     userRepository = UserRepository(context: context, utilities: utilities!);
-
   }
 
+  bool isLoading = false;
   bool dataLoaded = false;
+  //bool isLoading = false;
+
+  Future<void> UserUpdate(Utilisateur utilisateur) async {
+    authProviderUser = Provider.of<AuthProviderUser>(context, listen: false);
+
+    setState(() {
+      isLoading = true;
+      dataLoaded = false;
+    });
+
+    final url = Uri.parse(
+        "${baseUrl}api/users/${utilities!.extractLastNumber(utilisateur.id)}");
+    //final headers = {'Content-Type': 'application/json'};
+
+    final headers = {'Content-Type': 'application/merge-patch+json'};
+
+    print('URL: $url');
+
+    try {
+      String jsonUser = jsonEncode(utilisateur.toJson());
+      print('Request Body: $jsonUser');
+      final response = await http.patch(url, headers: headers, body: jsonUser);
+      print(response.statusCode);
+
+      if (response.statusCode == 200) {
+        setState(() {
+          isLoading = false;
+        });
+        final Map<String, dynamic> jsonResponse = json.decode(response.body);
+        print('ERRRR: $jsonResponse');
+
+        if (jsonResponse.containsKey('error')) {
+          utilities!.error('Erreur de modification');
+        } else {
+          authProviderUser.setUser(utilisateur);
+          utilities!.ModificationUtilisateur();
+          setState(() {
+            isLoading = false;
+            dataLoaded = false;
+          });
+          didChangeDependencies();
+        }
+      } else {
+        setState(() {
+          isLoading = false;
+        });
+        if (response.statusCode == 401) {
+          authProvider.logout();
+          Navigator.pushReplacement(
+              context, MaterialPageRoute(builder: (context) => const MyApp()));
+        }
+        // Gestion des erreurs HTTP
+        utilities!.error(
+            'Il y a une erreur. HTTP Status Code: ${response.statusCode}');
+        throw Exception(
+            '-- Failed to add user. HTTP Status Code: ${response.statusCode}');
+      }
+    } catch (e, exception) {
+      if (e is http.ClientException) {
+        utilities!.ErrorConnexion();
+      } else {
+        // Gérer d'autres exceptions
+        print('Une erreur inattendue s\'est produite: $e');
+      }
+      throw Exception('-- CATCH Failed to add user. Error: $e');
+    }
+  }
 
   @override
   void didChangeDependencies() {
-    setState(() {
-      isLoading = true;
-    });
     // TODO: implement didChangeDependencies
     super.didChangeDependencies();
+    authProviderUser = Provider.of<AuthProviderUser>(context, listen: false);
+    /*setState(() {
+      isLoading = true;
+    });*/
+
+    user = Provider.of<AuthProviderUser>(context).utilisateur;
     print('DID ZAO');
-    authProvider = Provider.of<AuthProvider>(context);
+    authProvider = Provider.of<AuthProvider>(context, listen: false);
     token = authProvider.token;
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      utilisateur = await userRepository!.getUser(widget.user.id);
+      utilisateur = await userRepository!.getUser(user!.id);
       print('USER EMAIL: ${utilisateur.email}');
       if (mounted) {
         setState(() {
@@ -225,8 +297,9 @@ class _PatientDetailsState extends State<PatientDetails> {
               ? categorieSet(utilisateur.category!)
               : "";
         });
-
-        isLoading = false;
+        EditPhone = false;
+        EditEmail = false;
+        dataLoaded = true;
       }
     });
   }
@@ -401,7 +474,7 @@ class _PatientDetailsState extends State<PatientDetails> {
       canPop: false,
       child: Scaffold(
           backgroundColor: const Color.fromARGB(1000, 238, 239, 244),
-          body: (!isLoading)
+          body: (!isLoading && dataLoaded)
               ? ListView(
                   children: [
                     Padding(
@@ -600,6 +673,7 @@ class _PatientDetailsState extends State<PatientDetails> {
                                       });
                                       if (EditEmail == true) {
                                         nodeEmail.requestFocus();
+                                        EditPhone = false;
                                       }
                                     },
                                     icon: const Icon(Icons.edit))
@@ -650,19 +724,18 @@ class _PatientDetailsState extends State<PatientDetails> {
                                             roles: utilisateur.roles,
                                             createdAt: utilisateur.createdAt,
                                             city: utilisateur.city);
-                                        userRepository!.UserUpdate(userInterm);
-                                        didChangeDependencies();
-                                        if (mounted) {
+                                        UserUpdate(userInterm);
+                                        //didChangeDependencies();
 
+                                        if (mounted) {
                                           setState(() {
-                                            emailController.text = userInterm.email;
-                                            EditEmail = false;
+                                            //phoneController.text =userInterm.phone;
+                                            EditPhone = false;
                                           });
                                         }
                                       } else {
                                         emailInvalide();
                                         Future.delayed(Duration(seconds: 6));
-
                                       }
                                     }
                                   },
@@ -711,6 +784,7 @@ class _PatientDetailsState extends State<PatientDetails> {
                                         EditEmail = false;
                                         if (EditPhone == true) {
                                           nodePhone.requestFocus();
+                                          EditEmail = false;
                                         }
                                       });
                                     },
@@ -736,7 +810,6 @@ class _PatientDetailsState extends State<PatientDetails> {
                                         const Size(100.0, 30.0)),
                                   ),
                                   onPressed: () {
-
                                     FocusScope.of(context).unfocus();
 
                                     String phone = phoneController.text;
@@ -758,15 +831,13 @@ class _PatientDetailsState extends State<PatientDetails> {
                                           roles: utilisateur.roles,
                                           createdAt: utilisateur.createdAt,
                                           city: utilisateur.city);
-                                      userRepository!.UserUpdate(userInterm);
-                                       didChangeDependencies();
+                                      UserUpdate(userInterm);
+                                      didChangeDependencies();
                                       if (mounted) {
-
                                         setState(() {
-                                          phoneController.text = userInterm.phone;
+                                          //phoneController.text =userInterm.phone;
                                           EditPhone = false;
                                         });
-
                                       }
                                     }
                                   },
@@ -814,6 +885,7 @@ class _PatientDetailsState extends State<PatientDetails> {
                                 child: GestureDetector(
                                   onTap: () {
                                     authProvider.logout();
+                                    authProviderUser.logout();
                                     Navigator.pushAndRemoveUntil(
                                       context,
                                       MaterialPageRoute(

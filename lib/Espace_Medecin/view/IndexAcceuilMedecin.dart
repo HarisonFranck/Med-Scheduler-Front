@@ -153,27 +153,27 @@ class _IndexAcceuilMedecinState extends State<IndexAcceuilMedecin> {
           currentIndex: _selectedPageIndex,
           items: const [
             BottomNavigationBarItem(
-              icon: Icon(FontAwesome.calendar),
+              icon: Icon(FontAwesome.calendar,size: 20,),
               label: 'Agenda',
             ),
             BottomNavigationBarItem(
               icon: Icon(
                 FontAwesome.user_doctor,
-                size: 30,
+                size: 20,
               ),
               label: 'Rendez-vous',
             ),
             BottomNavigationBarItem(
               icon: Icon(
                 Icons.notifications,
-                size: 35,
+                size: 25,
               ),
               label: 'Notification',
             ),
             BottomNavigationBarItem(
               icon: Icon(
                 FontAwesome.user,
-                size: 28,
+                size: 18,
               ),
               label: 'Profil',
             ),

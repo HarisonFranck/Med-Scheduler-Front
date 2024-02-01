@@ -117,7 +117,7 @@ class MedecinRepository {
         // Filtrer les rendez-vous à venir
         final upcomingAppointments = datas.where((e) {
           final appointmentDate = DateTime.parse(e['startAt']);
-          return appointmentDate.isAfter(DateTime.now());
+          return appointmentDate.isAfter(DateTime.now().subtract(Duration(days: 1)));
         }).toList();
 
         return upcomingAppointments
@@ -365,10 +365,12 @@ class MedecinRepository {
 
 
 
-  Future<List<CustomAppointment>> getAllAppointmentByUser(
+  Future<List<CustomAppointment>> getAllAppointmentByMedecin(
       Utilisateur user) async {
     authProvider = Provider.of<AuthProvider>(context, listen: false);
     token = authProvider.token;
+
+    print('ID MED: ${user.id}');
 
     final url = Uri.parse(
         "${baseUrl}api/doctors/appointments/${utilities.extractLastNumber(user.id)}");
@@ -387,10 +389,7 @@ class MedecinRepository {
         final datasAppoints =
         datas.map((e) => CustomAppointment.fromJson(e)).toList();
 
-        return datasAppoints
-            .where((element) =>
-        (element.isDeleted == null || element.isDeleted == false))
-            .toList();
+        return datasAppoints.where((element) => (element.isDeleted==null||element.isDeleted==false)).toList();
       } else {
         if (response.statusCode == 401) {
           authProvider.logout();

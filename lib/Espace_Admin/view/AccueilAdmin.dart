@@ -14,11 +14,13 @@ import 'package:med_scheduler_front/Repository/BaseRepository.dart';
 import 'package:med_scheduler_front/Repository/AdminRepository.dart';
 import 'package:med_scheduler_front/Utilitie/Utilities.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
+import 'package:provider/provider.dart';
+import 'package:med_scheduler_front/AuthProviderUser.dart';
 
 class AccueilAdmin extends StatefulWidget {
-  final Utilisateur user;
+  //final Utilisateur user;
 
-  AccueilAdmin({required this.user});
+  //AccueilAdmin({required this.user});
 
   @override
   _AccueilAdminState createState() => _AccueilAdminState();
@@ -28,6 +30,8 @@ class _AccueilAdminState extends State<AccueilAdmin> {
   BaseRepository? baseRepository;
   AdminRepository? adminRepository;
   Utilities? utilities;
+
+  Utilisateur? user;
 
   @override
   initState() {
@@ -105,6 +109,8 @@ class _AccueilAdminState extends State<AccueilAdmin> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    //authProviderUser = Provider.of<AuthProviderUser>(context,listen: false);
+    user = Provider.of<AuthProviderUser>(context).utilisateur;
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await getAllAsync();
@@ -251,21 +257,24 @@ class _AccueilAdminState extends State<AccueilAdmin> {
                           builder: (context, specsSnapshot) {
                             if (specsSnapshot.connectionState ==
                                 ConnectionState.waiting) {
-                              return Center(
-                                  child: ListView(
-                                children: [
-                                  Center(
-                                    child:loadingWidget(),
-                                  ),
-                                  SizedBox(
-                                    height: 30,
-                                  ),
-                                  Text(
-                                    'Chargement des données..\n Assurez-vous d\'avoir une connexion internet',
-                                    textAlign: TextAlign.center,
-                                  )
-                                ],
-                              ));
+                              return Padding(
+                                  padding: EdgeInsets.only(top: 150),
+                                  child: Center(
+                                    child: ListView(
+                                      children: [
+                                        Center(
+                                          child: loadingWidget(),
+                                        ),
+                                        const SizedBox(
+                                          height: 30,
+                                        ),
+                                        const Text(
+                                          'Chargement des données..\n Assurez-vous d\'avoir une connexion internet',
+                                          textAlign: TextAlign.center,
+                                        )
+                                      ],
+                                    ),
+                                  ));
                             } else if (specsSnapshot.hasError) {
                               return Center(
                                 child: Text('Erreur: ${specsSnapshot.error}'),
@@ -426,21 +435,24 @@ class _AccueilAdminState extends State<AccueilAdmin> {
                           builder: (context, centersSnapshot) {
                             if (centersSnapshot.connectionState ==
                                 ConnectionState.waiting) {
-                              return Center(
-                                  child: ListView(
-                                children: [
-                                  Center(
-                                    child: loadingWidget(),
-                                  ),
-                                  SizedBox(
-                                    height: 30,
-                                  ),
-                                  Text(
-                                    'Chargement des données..\n Assurez-vous d\'avoir une connexion internet',
-                                    textAlign: TextAlign.center,
-                                  )
-                                ],
-                              ));
+                              return Padding(
+                                  padding: EdgeInsets.only(top: 150),
+                                  child: Center(
+                                    child: ListView(
+                                      children: [
+                                        Center(
+                                          child: loadingWidget(),
+                                        ),
+                                        const SizedBox(
+                                          height: 30,
+                                        ),
+                                        const Text(
+                                          'Chargement des données..\n Assurez-vous d\'avoir une connexion internet',
+                                          textAlign: TextAlign.center,
+                                        )
+                                      ],
+                                    ),
+                                  ));
                             } else if (centersSnapshot.hasError) {
                               return Center(
                                 child: Text('Erreur: ${centersSnapshot.error}'),
@@ -588,21 +600,24 @@ class _AccueilAdminState extends State<AccueilAdmin> {
                           builder: (context, medecinsSnapshot) {
                             if (medecinsSnapshot.connectionState ==
                                 ConnectionState.waiting) {
-                              return Center(
-                                  child: ListView(
-                                children: [
-                                  Center(
-                                    child: loadingWidget(),
-                                  ),
-                                  const SizedBox(
-                                    height: 30,
-                                  ),
-                                  Text(
-                                    'Chargement des données..\n Assurez-vous d\'avoir une connexion internet',
-                                    textAlign: TextAlign.center,
-                                  )
-                                ],
-                              ));
+                              return Padding(
+                                  padding: EdgeInsets.only(top: 150),
+                                  child: Center(
+                                    child: ListView(
+                                      children: [
+                                        Center(
+                                          child: loadingWidget(),
+                                        ),
+                                        const SizedBox(
+                                          height: 30,
+                                        ),
+                                        const Text(
+                                          'Chargement des données..\n Assurez-vous d\'avoir une connexion internet',
+                                          textAlign: TextAlign.center,
+                                        )
+                                      ],
+                                    ),
+                                  ));
                             } else if (medecinsSnapshot.hasError) {
                               return Center(
                                 child:
@@ -881,27 +896,25 @@ class _AccueilAdminState extends State<AccueilAdmin> {
     );
   }
 
-
-
   Widget loadingWidget() {
     return Center(
         child: Container(
-          width: 100,
-          height: 100,
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              LoadingAnimationWidget.hexagonDots(
-                  color: Colors.redAccent, size: 120),
-              Image.asset(
-                'assets/images/logo2.png',
-                width: 80,
-                height: 80,
-                fit: BoxFit.cover,
-              )
-            ],
-          ),
-        ));
+      width: 100,
+      height: 100,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          LoadingAnimationWidget.hexagonDots(
+              color: Colors.redAccent, size: 120),
+          Image.asset(
+            'assets/images/logo2.png',
+            width: 80,
+            height: 80,
+            fit: BoxFit.cover,
+          )
+        ],
+      ),
+    ));
   }
 
   bool isClicked = false;
@@ -1549,7 +1562,7 @@ class _AccueilAdminState extends State<AccueilAdmin> {
             textAlign: TextAlign.center,
           ),
           content: Text(
-            'Voulez-vous vraiment supprimer ce medecin: ${medecin.lastName} ?',
+            'Voulez-vous vraiment supprimer le medecin: Dr ${medecin.lastName} ?',
             textScaleFactor: 1.5,
             style: TextStyle(color: Colors.black.withOpacity(0.8)),
             textAlign: TextAlign.center,

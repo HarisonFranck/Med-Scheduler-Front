@@ -12,6 +12,7 @@ import 'package:med_scheduler_front/UrlBase.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:med_scheduler_front/Utilitie/Utilities.dart';
 import 'package:med_scheduler_front/Repository/BaseRepository.dart';
+import 'package:med_scheduler_front/AuthProviderUser.dart';
 
 class IndexAccueil extends StatefulWidget {
   @override
@@ -21,6 +22,8 @@ class IndexAccueil extends StatefulWidget {
 class _IndexAccueilState extends State<IndexAccueil> {
   late AuthProvider authProvider;
   late String token;
+  late AuthProviderUser authProviderUser;
+
   String baseUrl = UrlBase().baseUrl;
 
 
@@ -41,6 +44,8 @@ class _IndexAccueilState extends State<IndexAccueil> {
     authProvider = Provider.of<AuthProvider>(context);
     token = authProvider.token;
 
+    authProviderUser = Provider.of<AuthProviderUser>(context);
+
     Map<String, dynamic> payload = Jwt.parseJwt(token);
 
     idUser = payload['id'];
@@ -51,28 +56,29 @@ class _IndexAccueilState extends State<IndexAccueil> {
   }
 
   void userGetted() async {
-    utilisateur = await user;
-
-    print('USER OO: ${utilisateur!.lastName}');
-
+    if(utilisateur==null){
+      utilisateur = await user;
+      authProviderUser.setUser(utilisateur!);
+      print('USER OO: ${utilisateur!.lastName}');
+    }
     // Maintenant que l'utilisateur est récupéré, initialisez les pages
     initPages();
   }
 
   void initPages() {
-    if (utilisateur != null) {
+    if (authProviderUser.utilisateur != null) {
       _pages = [
         {
-          'page': AccueilPatient(user: utilisateur!),
+          'page': AccueilPatient(),
         },
         {
-          'page': ListAppointment(user: utilisateur!),
+          'page': ListAppointment(),
         },
         {
-          'page': NotificationPatient(user: utilisateur!),
+          'page': NotificationPatient(),
         },
         {
-          'page': PatientDetails(user: utilisateur!),
+          'page': PatientDetails(),
         }
       ];
 
@@ -138,27 +144,27 @@ class _IndexAccueilState extends State<IndexAccueil> {
             currentIndex: _selectedPageIndex,
             items: const [
               BottomNavigationBarItem(
-                icon: Icon(FontAwesome.house),
+                icon: Icon(FontAwesome.house,size: 20,),
                 label: 'Accueil',
               ),
               BottomNavigationBarItem(
                 icon: Icon(
                   FontAwesome.user_doctor,
-                  size: 30,
+                  size: 20,
                 ),
-                label: 'Mes rendez-vous',
+                label: 'Rendez-vous',
               ),
               BottomNavigationBarItem(
                 icon: Icon(
                   Icons.notifications,
-                  size: 35,
+                  size: 25,
                 ),
                 label: 'Notification',
               ),
               BottomNavigationBarItem(
                 icon: Icon(
                   FontAwesome.user,
-                  size: 28,
+                  size: 18,
                 ),
                 label: 'Profil',
               ),

@@ -463,7 +463,7 @@ class BaseRepository{
         // Filtrer les rendez-vous à venir
         final upcomingAppointments = datas.where((e) {
           final appointmentDate = DateTime.parse(e['startAt']);
-          return appointmentDate.isAfter(DateTime.now());
+          return appointmentDate.isAfter(DateTime.now().subtract(Duration(days: 1)));
         }).toList();
 
         return upcomingAppointments
@@ -655,6 +655,99 @@ class BaseRepository{
       print('ERROR CONNEXION');
       utilities.ErrorConnexion();
       throw Exception('-- Failed to get user. Error: $e\n STACK: $stacktrace');
+    }
+  }
+
+
+
+  Future<List<CustomAppointment>> getAllAppointmentPerPage(int page) async {
+    authProvider = Provider.of<AuthProvider>(context, listen: false);
+    token = authProvider.token;
+
+    final url = Uri.parse("${baseUrl}api/appointments?page=$page");
+
+    final headers = {'Authorization': 'Bearer $token'};
+
+    try {
+      final response = await http.get(url, headers: headers);
+
+      if (response.statusCode == 200) {
+        final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
+        final datas = jsonData['hydra:member'] as List<dynamic>;
+
+        return datas.map((e) => CustomAppointment.fromJson(e)).toList();
+      } else {
+
+        if (response.statusCode == 401) {
+          authProvider.logout();
+          Navigator.pushReplacement(
+              context, MaterialPageRoute(builder: (context) => const MyApp()));
+        }
+        // Gestion des erreurs HTTP
+        throw Exception(
+            '-- Erreur d\'obtention des données\n vérifier votre connexion internet.');
+      }
+    } catch (e) {
+      if (e is http.ClientException) {
+        utilities.ErrorConnexion();
+      } else {
+        // Gérer d'autres exceptions
+        print('Une erreur inattendue s\'est produite: $e');
+      }
+
+      // Retourner une valeur par défaut en cas d'erreur
+      return <CustomAppointment>[];
+    }
+  }
+
+
+  Future<List<Medecin>> searchAllMedecin(String lastName) async {
+    authProvider = Provider.of<AuthProvider>(context, listen: false);
+    token = authProvider.token;
+
+    // Définir l'URL de base
+    Uri url = Uri.parse("${baseUrl}api/doctors?page=1");
+
+    // Ajouter les paramètres en fonction des cas
+    if (lastName.trim().isNotEmpty) {
+
+        url = Uri.parse("$url&lastName=$lastName");
+
+    }
+
+    print('URI: $url');
+
+    final headers = {'Authorization': 'Bearer $token'};
+
+    try {
+      final response = await http.get(url, headers: headers);
+
+      if (response.statusCode == 200) {
+        final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
+        final datas = jsonData['hydra:member'] as List<dynamic>;
+
+        return datas.map((e) => Medecin.fromJson(e)).toList();
+      } else {
+        if (response.statusCode == 401) {
+          authProvider.logout();
+          Navigator.pushReplacement(
+              context, MaterialPageRoute(builder: (context) => const MyApp()));
+        }
+        // Gestion des erreurs HTTP
+        throw Exception(
+          '-- Erreur d\'obtention des données\n vérifier votre connexion internet. Code: ${response.statusCode}',
+        );
+      }
+    } catch (e, stackTrace) {
+      if (e is http.ClientException) {
+        utilities.ErrorConnexion();
+      } else {
+        // Gérer d'autres exceptions
+        print('Une erreur inattendue s\'est produite: $e');
+      }
+
+      // Retourner une valeur par défaut en cas d'erreur
+      return <Medecin>[];
     }
   }
 
