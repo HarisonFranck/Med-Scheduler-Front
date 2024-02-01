@@ -24,6 +24,7 @@ import 'package:timezone/timezone.dart' as tz;
 import 'package:device_calendar/device_calendar.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:med_scheduler_front/Repository/UserRepository.dart';
+import 'package:med_scheduler_front/Repository/BaseRepository.dart';
 import 'package:med_scheduler_front/Utilitie/Utilities.dart';
 import 'package:med_scheduler_front/AuthProviderUser.dart';
 
@@ -38,6 +39,7 @@ class _AccueilPatientState extends State<AccueilPatient> {
   Patient? patient;
 
   UserRepository? userRepository;
+  BaseRepository? baseRepository;
   Utilities? utilities;
 
   Utilisateur? user;
@@ -165,7 +167,7 @@ class _AccueilPatientState extends State<AccueilPatient> {
 
   Future<void> getAllAsync() async {
     medecinsFuture = loadMoreData();
-    specialitesFuture = getAllSpecialite();
+    specialitesFuture = baseRepository!.getAllSpecialite();
   }
 
   @override
@@ -180,21 +182,10 @@ class _AccueilPatientState extends State<AccueilPatient> {
     utilities = Utilities(context: context);
     userRepository = UserRepository(context: context, utilities: utilities!);
 
+
     print('-- INIT --');
     WidgetsFlutterBinding.ensureInitialized();
 
-    //getAll();
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      await getAllAsync();
-      Map<String, dynamic> payload = Jwt.parseJwt(token);
-      idUser = payload['id'] ?? '';
-      dataLoaded = true;
-      patient = Patient(
-          id: user!.id,
-          type: user!.userType,
-          lastName: user!.lastName,
-          firstName:user!.firstName);
-    });
   }
 
   List<CustomAppointment> listAppointment = [];
@@ -294,8 +285,16 @@ class _AccueilPatientState extends State<AccueilPatient> {
       return isInCurrentWeek(appointment.startAt, appointment.timeStart);
     }).toList();
 
+    String nowFormatted = DateFormat('yyyy-MM-dd HH').format(now);
+
+
     // Ajouter les appointments filtrés à la liste résultante
-    filteredAppointments.addAll(appointmentsInCurrentWeek);
+    filteredAppointments.addAll(appointmentsInCurrentWeek.where((element) {
+      String dtAppointFormatted = DateFormat('yyyy-MM-dd HH').format(DateTime(element.startAt.year,element.startAt.month,element.startAt.day,element.timeStart.hour));
+      DateTime dtNow = DateTime.parse(nowFormatted);
+      DateTime dtAppoint = DateTime.parse(dtAppointFormatted);
+      return dtAppoint.isAfter(dtNow);
+    }));
 
     return filteredAppointments;
   }
@@ -347,70 +346,6 @@ class _AccueilPatientState extends State<AccueilPatient> {
   }
 
 
-
-  Future<List<Specialite>> getAllSpecialite() async {
-    authProvider = Provider.of<AuthProvider>(context, listen: false);
-    token = authProvider.token;
-    final url = Uri.parse("${baseUrl}api/specialities?page=1");
-
-    final headers = {'Authorization': 'Bearer $token'};
-
-    try {
-      final response = await http.get(url, headers: headers);
-
-      if (response.statusCode == 200) {
-        final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
-        final datas = jsonData['hydra:member'] as List<dynamic>;
-
-        return datas.map((e) => Specialite.fromJson(e)).toList();
-      } else {
-        if (response.statusCode == 401) {
-          authProvider.logout();
-          Navigator.pushReplacement(
-              context, MaterialPageRoute(builder: (context) => const MyApp()));
-        }
-        // Gestion des erreurs HTTP
-        throw Exception(
-            '-- Erreur d\'obtention des données\n vérifier votre connexion internet.');
-      }
-    } catch (e) {
-      //print('Error: $e \nStack trace: $stackTrace');
-      throw Exception(
-          '-- Erreur de connexion.\n Veuillez vérifier votre connexion internet !');
-    }
-  }
-
-  Future<List<Centre>> getAllCenter() async {
-    final url = Uri.parse("${baseUrl}api/centers?page=1");
-
-    final headers = {'Authorization': 'Bearer $token'};
-
-    try {
-      final response = await http.get(url, headers: headers);
-
-      if (response.statusCode == 200) {
-        final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
-        final datas = jsonData['hydra:member'] as List<dynamic>;
-
-        return datas.map((e) => Centre.fromJson(e)).toList();
-      } else {
-
-        if (response.statusCode == 401) {
-          authProvider.logout();
-          Navigator.pushReplacement(
-              context, MaterialPageRoute(builder: (context) => const MyApp()));
-        }
-        // Gestion des erreurs HTTP
-        throw Exception(
-            '-- Erreur d\'obtention des données\n vérifier votre connexion internet.');
-      }
-    } catch (e) {
-      //print('Error: $e \nStack trace: $stackTrace');
-      throw Exception(
-          '-- Erreur de connexion.\n Veuillez vérifier votre connexion internet !');
-    }
-  }
-
   //Fonction pour stocker les categories trouvés
   void getAll() {
     userRepository!.getAllAppointmentByPatient(user!).then((value) => {
@@ -418,13 +353,13 @@ class _AccueilPatientState extends State<AccueilPatient> {
             listAppointment = value;
           })
         });
-    getAllSpecialite().then((value) => {
+    baseRepository!.getAllSpecialite().then((value) => {
           setState(() {
             listSpec = value;
           })
         });
 
-    getAllCenter().then((value) => {
+    baseRepository!.getAllCenter().then((value) => {
           setState(() {
             listCenter = value;
           })
@@ -434,6 +369,20 @@ class _AccueilPatientState extends State<AccueilPatient> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    authProvider = Provider.of<AuthProvider>(context);
+    token = authProvider.token;
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await getAllAsync();
+      Map<String, dynamic> payload = Jwt.parseJwt(token);
+      idUser = payload['id'] ?? '';
+      dataLoaded = true;
+      patient = Patient(
+          id: user!.id,
+          type: user!.userType,
+          lastName: user!.lastName,
+          firstName:user!.firstName);
+    });
+    baseRepository = BaseRepository(context: context, utilities: utilities!);
     user = Provider.of<AuthProviderUser>(context).utilisateur;
     initializeCalendar();
     getAll();

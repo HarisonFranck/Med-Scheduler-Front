@@ -977,6 +977,9 @@ class _RegistrationState extends State<Registration> {
                 style:const TextStyle(color: Colors.black),
 
                 decoration: InputDecoration(
+                  focusedBorder: const OutlineInputBorder(
+                      borderSide: BorderSide(
+                          color: Color.fromARGB(255, 20, 20, 100))),
                   enabledBorder:const OutlineInputBorder(
                       borderSide: BorderSide(color: Colors.grey)
                   ),
@@ -1006,6 +1009,9 @@ class _RegistrationState extends State<Registration> {
                 style:const TextStyle(color: Colors.black),
 
                 decoration: InputDecoration(
+                  focusedBorder: const OutlineInputBorder(
+                      borderSide: BorderSide(
+                          color: Color.fromARGB(255, 20, 20, 100))),
                   enabledBorder:const OutlineInputBorder(
                       borderSide: BorderSide(color: Colors.grey)
                   ),
@@ -1033,6 +1039,9 @@ class _RegistrationState extends State<Registration> {
 
                 style:const TextStyle(color: Colors.black),
                 decoration: InputDecoration(
+                  focusedBorder: const OutlineInputBorder(
+                      borderSide: BorderSide(
+                          color: Color.fromARGB(255, 20, 20, 100))),
                   enabledBorder:const OutlineInputBorder(
                       borderSide: BorderSide(color: Colors.grey)
                   ),
@@ -1060,6 +1069,9 @@ class _RegistrationState extends State<Registration> {
 
                 style:const TextStyle(color: Colors.black),
                 decoration: InputDecoration(
+                  focusedBorder: const OutlineInputBorder(
+                      borderSide: BorderSide(
+                          color: Color.fromARGB(255, 20, 20, 100))),
                   enabledBorder:const OutlineInputBorder(
                       borderSide: BorderSide(color: Colors.grey)
                   ),
@@ -1089,6 +1101,9 @@ class _RegistrationState extends State<Registration> {
                 style:const TextStyle(color: Colors.black),
                 maxLength: 10,
                 decoration: InputDecoration(
+                  focusedBorder: const OutlineInputBorder(
+                      borderSide: BorderSide(
+                          color: Color.fromARGB(255, 20, 20, 100))),
                   enabledBorder:const OutlineInputBorder(
                       borderSide: BorderSide(color: Colors.grey)
                   ),
@@ -1101,6 +1116,7 @@ class _RegistrationState extends State<Registration> {
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8.0),
                   ),
+
                   prefixIcon:const Icon(Icons.phone,  color: Color.fromARGB(1000, 60, 70, 120)),
 
                 ),
@@ -1138,6 +1154,9 @@ class _RegistrationState extends State<Registration> {
                 style:const TextStyle(color: Colors.black),
 
                 decoration: InputDecoration(
+                    focusedBorder: const OutlineInputBorder(
+                        borderSide: BorderSide(
+                            color: Color.fromARGB(255, 20, 20, 100))),
                     enabledBorder:const OutlineInputBorder(
                         borderSide: BorderSide(color: Colors.grey)
                     ),
@@ -1164,6 +1183,9 @@ class _RegistrationState extends State<Registration> {
 
                 style:const TextStyle(color: Colors.black),
                 decoration: InputDecoration(
+                  focusedBorder: const OutlineInputBorder(
+                      borderSide: BorderSide(
+                          color: Color.fromARGB(255, 20, 20, 100))),
                   enabledBorder:const OutlineInputBorder(
                       borderSide: BorderSide(color: Colors.grey)
                   ),
@@ -1192,6 +1214,9 @@ class _RegistrationState extends State<Registration> {
 
                 style:const TextStyle(color: Colors.black),
                 decoration: InputDecoration(
+                  focusedBorder: const OutlineInputBorder(
+                      borderSide: BorderSide(
+                          color: Color.fromARGB(255, 20, 20, 100))),
                   enabledBorder:const OutlineInputBorder(
                       borderSide: BorderSide(color: Colors.grey)
                   ),
@@ -1217,6 +1242,9 @@ class _RegistrationState extends State<Registration> {
 
                 style:const TextStyle(color: Colors.black),
                 decoration: InputDecoration(
+                  focusedBorder: const OutlineInputBorder(
+                      borderSide: BorderSide(
+                          color: Color.fromARGB(255, 20, 20, 100))),
                   enabledBorder:const OutlineInputBorder(
                       borderSide: BorderSide(color: Colors.grey)
                   ),
@@ -1257,6 +1285,9 @@ class _RegistrationState extends State<Registration> {
 
                 style: const TextStyle(color: Colors.black),
                 decoration: InputDecoration(
+                  focusedBorder: const OutlineInputBorder(
+                      borderSide: BorderSide(
+                          color: Color.fromARGB(255, 20, 20, 100))),
                   enabledBorder: const OutlineInputBorder(
                       borderSide: BorderSide(color: Colors.grey)
                   ),

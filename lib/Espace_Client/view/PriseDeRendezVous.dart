@@ -33,11 +33,8 @@ class PriseDeRendezVous extends StatefulWidget {
 }
 
 class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
-
-
   UserRepository? userRepository;
   Utilities? utilities;
-
 
   Future<void> initializeCalendar() async {
     tz.initializeTimeZones();
@@ -53,8 +50,8 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
     var defaultCalendarId = calendars.data!.first.id;
 
     try {
-      List<CustomAppointment> appoints =
-          await getProcheRendezVous(await userRepository!.getAllAppointmentByUserPatient(widget.patient));
+      List<CustomAppointment> appoints = await getProcheRendezVous(
+          await userRepository!.getAllAppointmentByUserPatient(widget.patient));
 
       if (appoints.isNotEmpty) {
         appoints.forEach((element) async {
@@ -275,15 +272,14 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
     }
   }
 
-
-
   Future<List<CustomAppointment>> InitierAppointment(Medecin medecin) async {
     DateTime now = DateTime.now();
     if (!_isPageActive) {
       return []; // Page n'est plus active, on retourne une liste vide.
     }
     try {
-      List<CustomAppointment> appointmentList = await userRepository!.getAllAppointmentByUserPatient(widget.patient);
+      List<CustomAppointment> appointmentList =
+          await userRepository!.getAllAppointmentByUserPatient(widget.patient);
       List<CustomAppointment> AppointmentList = [];
       for (int a = 0; a < appointmentList.length; a++) {
         CustomAppointment appointment = appointmentList.elementAt(a);
@@ -316,8 +312,8 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       //await getAllAsync();
       listAppointment = await InitierAppointment(medecinCliked!);
-      listUnavalaibleAppointment = await userRepository!.getAllUnavalaibleAppointment(medecinCliked!);
       if (mounted) {
+        listUnavalaibleAppointment = await userRepository!.getAllUnavalaibleAppointment(medecinCliked!);
         if (listAppointment.isEmpty) {
           setState(() {
             dataLoaded = true;
@@ -329,7 +325,6 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
       }
     });
   }
-
 
   late Future<List<UnavalaibleAppointment>> futureAppointmentList;
 
@@ -1171,6 +1166,9 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
                                 ],
                                 if (istoAddAppointment) ...[
                                   addAppointment(dtCliquer),
+                                ] else if (!isAppointment &&
+                                    !istoAddAppointment) ...[
+                                  showNothing()
                                 ]
                               ],
                             )
@@ -1181,6 +1179,43 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
       ),
     );
   }
+
+
+
+  Widget showNothing() {
+    return Column(
+      children: [
+        GestureDetector(
+            onTap: () {},
+            child: Row(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(left: 20, top: 20),
+                  child: Text(
+                    'Veuillez choisir une date',
+                    style: TextStyle(
+                        color: Colors.black.withOpacity(0.4),
+                        letterSpacing: 3,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600),
+                  ),
+                )
+              ],
+            )),
+        Padding(
+          padding: const EdgeInsets.only(top: 5),
+          child: Divider(
+            thickness: 2,
+            color: Colors.grey.withOpacity(0.5),
+            indent: 20,
+            endIndent: 20,
+          ),
+        ),
+      ],
+    );
+  }
+
+
 
   Widget loadingWidget() {
     return Center(
@@ -1302,9 +1337,10 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
               decoration: BoxDecoration(
                 shape: BoxShape.rectangle,
                 borderRadius: BorderRadius.circular(6),
-                color: (appoint.isDeleted != null &&
-    appoint.isDeleted == true)? Color.fromARGB(1000, 238, 239, 244):Colors.redAccent
-                    .withOpacity(0.7), // utilisez la couleur de l'appointment
+                color: (appoint.isDeleted != null && appoint.isDeleted == true)
+                    ? Color.fromARGB(1000, 238, 239, 244)
+                    : Colors.redAccent.withOpacity(
+                        0.7), // utilisez la couleur de l'appointment
               ),
               child: Column(
                 children: [
@@ -1320,7 +1356,10 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
                               fontWeight: FontWeight.w500,
                               letterSpacing: 2,
                               fontSize: 15,
-                              color: (appoint.isDeleted != null && appoint.isDeleted == true)?Colors.black.withOpacity(0.4):Colors.white),
+                              color: (appoint.isDeleted != null &&
+                                      appoint.isDeleted == true)
+                                  ? Colors.black.withOpacity(0.4)
+                                  : Colors.white),
                         ),
                       ),
                     ],
@@ -1337,7 +1376,10 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
                               fontWeight: FontWeight.w500,
                               fontSize: 12,
                               letterSpacing: 2,
-                              color: (appoint.isDeleted != null && appoint.isDeleted == true)?Colors.black.withOpacity(0.4):Colors.white),
+                              color: (appoint.isDeleted != null &&
+                                      appoint.isDeleted == true)
+                                  ? Colors.black.withOpacity(0.4)
+                                  : Colors.white),
                         ),
                       ),
                     ],
@@ -1356,7 +1398,6 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
                             overflow: TextOverflow.ellipsis,
                             'Rendez-vous annulé \nVeuillez contacter votre médecin',
                             style: TextStyle(
-
                                 fontWeight: FontWeight.w500,
                                 fontSize: 12,
                                 letterSpacing: 2,
@@ -1554,7 +1595,9 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
                             children: [
                               Text(
                                 'Dr ${abbreviateName(appointment.medecin!.lastName)} \n ${abbreviateName(appointment.medecin!.firstName)}',
-                                style: TextStyle(fontSize: 20,color: Colors.black.withOpacity(0.6)),
+                                style: TextStyle(
+                                    fontSize: 20,
+                                    color: Colors.black.withOpacity(0.6)),
                                 textAlign: TextAlign.start,
                                 maxLines:
                                     2, // Nombre maximal de lignes avant de tronquer
@@ -1565,14 +1608,16 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
                               ),
                               Text(
                                 '${abbreviateName(appointment.medecin!.speciality!.label)}',
-                                style: TextStyle(fontSize: 20,color: Colors.black.withOpacity(0.5)),
+                                style: TextStyle(
+                                    fontSize: 20,
+                                    color: Colors.black.withOpacity(0.5)),
                                 textAlign: TextAlign.start,
                                 maxLines:
-                                2, // Nombre maximal de lignes avant de tronquer
+                                    2, // Nombre maximal de lignes avant de tronquer
                                 overflow: TextOverflow
                                     .ellipsis, // Que faire en cas de dépassement des lignes maximales
                                 softWrap:
-                                true, // Permettre le retour à la ligne automatique
+                                    true, // Permettre le retour à la ligne automatique
                               ),
                             ],
                           ),

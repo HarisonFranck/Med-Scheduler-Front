@@ -468,7 +468,7 @@ class _NotificationPatientState extends State<NotificationPatient> {
                                               ),
                                               Expanded(
                                               child: Text(
-                                              'Vous avez un rendez-vous avec Dr ${listRDV.elementAt(index).medecin!.lastName} ${abbreviateName(listRDV.elementAt(index).medecin!.firstName)} le:',
+                                              'Vous avez un rendez-vous avec le Dr ${listRDV.elementAt(index).medecin!.lastName} ${abbreviateName(listRDV.elementAt(index).medecin!.firstName)} le:',
                                               style: TextStyle(
                                               color: Colors
                                                   .black

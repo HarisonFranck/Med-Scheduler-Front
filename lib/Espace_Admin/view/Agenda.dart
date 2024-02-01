@@ -517,9 +517,9 @@ class AgendaState extends State<Agenda> {
                                                   letterSpacing: 2,
                                                   color: Colors.green)),
                                       onTap: (CalendarTapDetails details) {
-
                                         listAppointment.forEach((element) {
-                                          print('APPOINTMENT : ${element.timeStart.hour}, ${element.reason} ');
+                                          print(
+                                              'APPOINTMENT : ${element.timeStart.hour}, ${element.reason} ');
                                         });
 
                                         print('DT CLICKED: ${details.date}');
@@ -548,9 +548,9 @@ class AgendaState extends State<Agenda> {
                                                                 details.date!))
                                                     .toList();
                                             list.forEach((element) {
-                                        print('List APPOINTS CLICKED: ${element.reason}');
-                                        });
-
+                                              print(
+                                                  'List APPOINTS CLICKED: ${element.reason}');
+                                            });
 
                                             if (list.length >= 1) {
                                               CustomAppointment appoint =
@@ -616,7 +616,9 @@ class AgendaState extends State<Agenda> {
                                         ],
                                         Row(
                                           children: [
-                                            const Spacer(),
+                                            Container(
+                                              width: 60,
+                                            ),
                                             Padding(
                                               padding: const EdgeInsets.only(
                                                   bottom: 10),
@@ -673,7 +675,9 @@ class AgendaState extends State<Agenda> {
                                       if (istoAddAppointment) ...[
                                         Row(
                                           children: [
-                                            const Spacer(),
+                                            Container(
+                                              width: 60,
+                                            ),
                                             Padding(
                                               padding: const EdgeInsets.only(
                                                   left: 10,
@@ -831,10 +835,11 @@ class AgendaState extends State<Agenda> {
             child: Row(
               children: [
                 Container(
+                  width: 60,
                   child: Column(
                     children: [
                       Padding(
-                        padding: const EdgeInsets.only(left: 10, right: 10),
+                        padding: const EdgeInsets.only(left: 8, right: 10),
                         child: Text(
                           '${clickedDt.day}',
                           style: TextStyle(
@@ -844,7 +849,7 @@ class AgendaState extends State<Agenda> {
                         ),
                       ),
                       Padding(
-                        padding: const EdgeInsets.only(left: 10, right: 10),
+                        padding: const EdgeInsets.only(left: 8, right: 10),
                         child: Text(
                           '${formatDT(clickedDt)}',
                           style: TextStyle(
@@ -961,7 +966,9 @@ class AgendaState extends State<Agenda> {
       children: [
         Row(
           children: [
-            Spacer(),
+            Container(
+              width: 60,
+            ),
             GestureDetector(
                 onTap: () {
                   DetailsAppointment(appoint);
