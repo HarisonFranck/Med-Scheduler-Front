@@ -12,6 +12,7 @@ import 'SearchMedecin.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:med_scheduler_front/Repository/BaseRepository.dart';
 import 'package:med_scheduler_front/Utilitie/Utilities.dart';
+import 'package:med_scheduler_front/AuthProviderUser.dart';
 
 class IndexAccueilAdmin extends StatefulWidget {
   @override
@@ -22,6 +23,7 @@ class _IndexAccueilAdminState extends State<IndexAccueilAdmin> {
 
 
   late AuthProvider authProvider;
+  late AuthProviderUser authProviderUser;
   late String token;
   String baseUrl = UrlBase().baseUrl;
 
@@ -30,7 +32,7 @@ class _IndexAccueilAdminState extends State<IndexAccueilAdmin> {
   Utilities? utilities;
 
 
-
+  Utilisateur? userPassed;
 
 
   List<Map<String, dynamic>>? _pages;
@@ -45,41 +47,46 @@ class _IndexAccueilAdminState extends State<IndexAccueilAdmin> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     authProvider = Provider.of<AuthProvider>(context);
+    authProviderUser = Provider.of<AuthProviderUser>(context);
     token = authProvider.token;
 
     Map<String, dynamic> payload = Jwt.parseJwt(token);
 
     idUser = payload['id'];
+    user = baseRepository!.getUser(idUser);
+
     print('ID USER INDEXED: $idUser');
 
-    user = baseRepository!.getUser(idUser);
     userGetted();
+
+
   }
 
   void userGetted() async {
-    utilisateur = await user;
-
-    print('USER OO: ${utilisateur!.lastName}');
-
+    if(utilisateur==null){
+      utilisateur = await user;
+      authProviderUser.setUser(utilisateur!);
+      print('USER OO: ${utilisateur!.lastName}');
+    }
     // Maintenant que l'utilisateur est récupéré, initialisez les pages
     initPages();
   }
 
   void initPages() {
-    if (utilisateur != null) {
+    if (authProviderUser.utilisateur != null) {
       _pages = [
         {
-          'page': AccueilAdmin(user: utilisateur!),
+          'page': AccueilAdmin(),
 
         },
         {
           'page': SearchMedecin(),
         },
         {
-          'page': NotificationAdmin(user: utilisateur!),
+          'page': NotificationAdmin(),
         },
         {
-          'page': AdminDetails(user: utilisateur!),
+          'page': AdminDetails(),
         }
       ];
 
@@ -116,23 +123,25 @@ class _IndexAccueilAdminState extends State<IndexAccueilAdmin> {
       canPop: false,
       child: Scaffold(
         backgroundColor: Color.fromARGB(1000, 238, 239, 244),
-        body: (utilisateur != null)
+        body: (authProviderUser.isLoggedIn)
             ? _pages![_selectedPageIndex]['page']
             : Center(
-                child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  loadingWidget(),
-                  const SizedBox(
-                    height: 30,
-                  ),
-                  const Text(
-                    'Chargement des données..\n Assurez-vous d\'avoir une connexion internet',
-                    textAlign: TextAlign.center,
-                  )
-                ],
-              )),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              loadingWidget(),
+              const SizedBox(
+                height: 30,
+              ),
+              const Text(
+                'Chargement des données..\n Assurez-vous d\'avoir une connexion internet',
+                textAlign: TextAlign.center,
+              )
+            ],
+          ),
+        ),
         bottomNavigationBar: BottomNavigationBar(
+
           showSelectedLabels: true,
           showUnselectedLabels: false,
           elevation: 5,
@@ -143,27 +152,27 @@ class _IndexAccueilAdminState extends State<IndexAccueilAdmin> {
           currentIndex: _selectedPageIndex,
           items: const [
             BottomNavigationBarItem(
-              icon: Icon(FontAwesome.house),
+              icon: Icon(FontAwesome.house,size: 17,),
               label: 'Accueil',
             ),
             BottomNavigationBarItem(
               icon: Icon(
                 FontAwesome.user_doctor,
-                size: 30,
+                size: 20,
               ),
               label: 'Rendez-vous',
             ),
             BottomNavigationBarItem(
               icon: Icon(
                 Icons.notifications,
-                size: 35,
+                size: 25,
               ),
               label: 'Notification',
             ),
             BottomNavigationBarItem(
               icon: Icon(
                 FontAwesome.user,
-                size: 28,
+                size: 18,
               ),
               label: 'Profil',
             ),

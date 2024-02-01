@@ -25,11 +25,10 @@ import 'package:device_calendar/device_calendar.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:med_scheduler_front/Repository/UserRepository.dart';
 import 'package:med_scheduler_front/Utilitie/Utilities.dart';
+import 'package:med_scheduler_front/AuthProviderUser.dart';
 
 class AccueilPatient extends StatefulWidget {
-  final Utilisateur user;
 
-  AccueilPatient({required this.user});
 
   @override
   _AccueilPatientState createState() => _AccueilPatientState();
@@ -40,6 +39,8 @@ class _AccueilPatientState extends State<AccueilPatient> {
 
   UserRepository? userRepository;
   Utilities? utilities;
+
+  Utilisateur? user;
 
   late Future<List<Medecin>> medecinsFuture;
   late Future<List<Specialite>> specialitesFuture;
@@ -76,6 +77,7 @@ class _AccueilPatientState extends State<AccueilPatient> {
   }
 
   Future<void> initializeCalendar() async {
+
     tz.initializeTimeZones();
     tz.setLocalLocation(tz.getLocation('Indian/Antananarivo'));
 
@@ -91,7 +93,7 @@ class _AccueilPatientState extends State<AccueilPatient> {
 
     try {
       List<CustomAppointment> appoints =
-          await getProcheRendezVous(await userRepository!.getAllAppointmentByPatient(widget.user));
+          await getProcheRendezVous(await userRepository!.getAllAppointmentByPatient(user!));
 
       if (appoints.isNotEmpty) {
         appoints.forEach((element) async {
@@ -180,19 +182,18 @@ class _AccueilPatientState extends State<AccueilPatient> {
 
     print('-- INIT --');
     WidgetsFlutterBinding.ensureInitialized();
-    initializeCalendar();
 
-    getAll();
+    //getAll();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await getAllAsync();
       Map<String, dynamic> payload = Jwt.parseJwt(token);
       idUser = payload['id'] ?? '';
       dataLoaded = true;
       patient = Patient(
-          id: widget.user.id,
-          type: widget.user.userType,
-          lastName: widget.user.lastName,
-          firstName: widget.user.firstName);
+          id: user!.id,
+          type: user!.userType,
+          lastName: user!.lastName,
+          firstName:user!.firstName);
     });
   }
 
@@ -258,7 +259,7 @@ class _AccueilPatientState extends State<AccueilPatient> {
         DateTime(startAt.year, startAt.month, startAt.day, timeStart.hour);
 
     if ((formatedStartAt.isBefore(formatedEndOfWeek)) &&
-        (now.isBefore(TimeDtStart))) {
+        (now.subtract(Duration(days: 1)).isBefore(TimeDtStart))) {
       isIt = true;
     }
 
@@ -412,7 +413,7 @@ class _AccueilPatientState extends State<AccueilPatient> {
 
   //Fonction pour stocker les categories trouvés
   void getAll() {
-    userRepository!.getAllAppointmentByPatient(widget.user).then((value) => {
+    userRepository!.getAllAppointmentByPatient(user!).then((value) => {
           setState(() {
             listAppointment = value;
           })
@@ -433,6 +434,8 @@ class _AccueilPatientState extends State<AccueilPatient> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    user = Provider.of<AuthProviderUser>(context).utilisateur;
+    initializeCalendar();
     getAll();
   }
 
@@ -851,7 +854,7 @@ class _AccueilPatientState extends State<AccueilPatient> {
                                 Text(
                                   textAlign: TextAlign.center,
                                   textScaler: const TextScaler.linear(1.45),
-                                  '${widget.user.firstName ?? 'Chargement...'}',
+                                  '${user!.firstName ?? 'Chargement...'}',
                                   style: const TextStyle(
                                     letterSpacing: 2,
                                     fontWeight: FontWeight.w600,

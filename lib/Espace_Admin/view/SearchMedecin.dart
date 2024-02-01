@@ -118,7 +118,7 @@ class SearchMedecinState extends State<SearchMedecin> {
                             } else {
                               setState(() {
                                 searchLastName.text = nom;
-                                medecinsFuture = baseRepository!.getAllMedecin();
+                                medecinsFuture = baseRepository!.searchAllMedecin(searchLastName.text);
                                 print('LASTNAME: ${searchLastName.text}');
                               });
                             }
@@ -164,25 +164,27 @@ class SearchMedecinState extends State<SearchMedecin> {
                             builder: (context, medecinsSnapshot) {
                               if (medecinsSnapshot.connectionState ==
                                   ConnectionState.waiting) {
-                                return Center(
-                                    child: ListView(
-                                  children: [
-                                    Center(
-                                      child: loadingWidget(),
-                                    ),
-                                    const SizedBox(
-                                      height: 30,
-                                    ),
-                                    const Text(
-                                      'Chargement des données..\n Assurez-vous d\'avoir une connexion internet',
-                                      textAlign: TextAlign.center,
-                                    )
-                                  ],
-                                ));
+                                return Padding(padding: EdgeInsets.only(top: MediaQuery.of(context).size.height/4),child:  Center(
+                                  child: ListView(
+                                    children: [
+                                      Center(
+                                        child: loadingWidget(),
+                                      ),
+                                      const SizedBox(
+                                        height: 30,
+                                      ),
+                                      const Text(
+                                        'Chargement des données..\n Assurez-vous d\'avoir une connexion internet',
+                                        textAlign: TextAlign.center,
+                                      )
+                                    ],
+                                  ),
+                                )
+                                );
                               } else if (medecinsSnapshot.hasError) {
                                 return Center(
                                   child:
-                                      Text('Erreur: ${medecinsSnapshot.error}'),
+                                      Text('Il y a une erreur d\'obtention des données',style: TextStyle(color: Colors.black.withOpacity(0.5)),textAlign: TextAlign.center,),
                                 );
                               } else {
                                 List<Medecin> medecins = medecinsSnapshot.data!;

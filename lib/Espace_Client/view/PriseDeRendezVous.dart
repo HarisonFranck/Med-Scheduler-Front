@@ -54,7 +54,7 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
 
     try {
       List<CustomAppointment> appoints =
-          await getProcheRendezVous(await getAllAppointment());
+          await getProcheRendezVous(await userRepository!.getAllAppointmentByUserPatient(widget.patient));
 
       if (appoints.isNotEmpty) {
         appoints.forEach((element) async {
@@ -283,7 +283,7 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
       return []; // Page n'est plus active, on retourne une liste vide.
     }
     try {
-      List<CustomAppointment> appointmentList = await getAllAppointment();
+      List<CustomAppointment> appointmentList = await userRepository!.getAllAppointmentByUserPatient(widget.patient);
       List<CustomAppointment> AppointmentList = [];
       for (int a = 0; a < appointmentList.length; a++) {
         CustomAppointment appointment = appointmentList.elementAt(a);
@@ -292,7 +292,7 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
             (appointment.medecin!.lastName == medecin.lastName) &&
             (appointment.startAt.year >= now.year &&
                 appointment.startAt.month >= now.month &&
-                appointment.startAt.isAfter(now))) {
+                appointment.startAt.isAfter(now.subtract(Duration(days: 1))))) {
           setState(() {
             AppointmentList.add(appointment);
           });
@@ -330,44 +330,6 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
     });
   }
 
-  Future<List<CustomAppointment>> getAllAppointment() async {
-    authProvider = Provider.of<AuthProvider>(context, listen: false);
-    token = authProvider.token;
-
-    if (!_isPageActive) {
-      return []; // Page n'est plus active, on retourne une liste vide.
-    }
-
-    final url = Uri.parse(
-        "${baseUrl}api/patients/appointments/${extractLastNumber(widget.patient.id)}");
-
-    final headers = {'Authorization': 'Bearer $token'};
-
-    try {
-      final response = await http.get(url, headers: headers);
-
-      print('STATUS CODE APPOINTS AGENDA:  ${response.statusCode} \n');
-
-      if (response.statusCode == 200) {
-        final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
-        final datas = jsonData['hydra:member'] as List<dynamic>;
-
-        return datas.map((e) => CustomAppointment.fromJson(e)).toList();
-      } else {
-        if (response.statusCode == 401) {
-          authProvider.logout();
-          Navigator.pushAndRemoveUntil(
-            context, MaterialPageRoute(builder: (context) => const MyApp()),(route) => false,);
-        }
-        // Gestion des erreurs HTTP
-        throw Exception(
-            '-- Failed to load data. HTTP Status Code: ${response.statusCode}');
-      }
-    } catch (e, stackTrace) {
-      print('Error: $e \nStack trace: $stackTrace');
-      throw e;
-    }
-  }
 
   late Future<List<UnavalaibleAppointment>> futureAppointmentList;
 

@@ -13,6 +13,7 @@ import 'package:med_scheduler_front/Utilitie/Utilities.dart';
 import 'package:med_scheduler_front/Espace_Client/view/PriseDeRendezVous.dart';
 import 'package:med_scheduler_front/Espace_Client/view/Login.dart';
 import 'dart:io';
+import 'package:med_scheduler_front/Patient.dart';
 
 class UserRepository {
   final BuildContext context;
@@ -506,6 +507,44 @@ class UserRepository {
     }
   }
 
+
+
+  Future<List<CustomAppointment>> getAllAppointmentByUserPatient(Patient patient) async {
+
+    authProvider = Provider.of<AuthProvider>(context, listen: false);
+    token = authProvider.token;
+
+
+    final url = Uri.parse(
+        "${baseUrl}api/patients/appointments/${utilities.extractLastNumber(patient.id)}");
+
+    final headers = {'Authorization': 'Bearer $token'};
+
+    try {
+      final response = await http.get(url, headers: headers);
+
+      print('STATUS CODE APPOINTS AGENDA:  ${response.statusCode} \n');
+
+      if (response.statusCode == 200) {
+        final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
+        final datas = jsonData['hydra:member'] as List<dynamic>;
+
+        return datas.map((e) => CustomAppointment.fromJson(e)).toList();
+      } else {
+        if (response.statusCode == 401) {
+          authProvider.logout();
+          Navigator.pushAndRemoveUntil(
+            context, MaterialPageRoute(builder: (context) => const MyApp()),(route) => false,);
+        }
+        // Gestion des erreurs HTTP
+        throw Exception(
+            '-- Failed to load data. HTTP Status Code: ${response.statusCode}');
+      }
+    } catch (e, stackTrace) {
+      print('Error: $e \nStack trace: $stackTrace');
+      throw e;
+    }
+  }
 
 
 

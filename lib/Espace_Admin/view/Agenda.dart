@@ -14,6 +14,7 @@ import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:med_scheduler_front/Repository/BaseRepository.dart';
 import 'package:med_scheduler_front/Utilitie/Utilities.dart';
+import 'package:med_scheduler_front/AuthProviderUser.dart';
 
 class Agenda extends StatefulWidget {
   AgendaState createState() => AgendaState();
@@ -22,19 +23,19 @@ class Agenda extends StatefulWidget {
 class AgendaState extends State<Agenda> {
   late AuthProvider authProvider;
   late String token;
+  late AuthProviderUser authProviderUser;
 
   bool _isPageActive = true;
 
   BaseRepository? baseRepository;
   Utilities? utilities;
 
-
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
     utilities = Utilities(context: context);
-    baseRepository = BaseRepository(context: context,utilities: utilities!);
+    baseRepository = BaseRepository(context: context, utilities: utilities!);
   }
 
   @override
@@ -75,6 +76,7 @@ class AgendaState extends State<Agenda> {
     super.didChangeDependencies();
     calculateBlackoutDates();
     print('FETCH DEPENDECIES');
+    authProviderUser = Provider.of<AuthProviderUser>(context, listen: false);
     authProvider = Provider.of<AuthProvider>(context, listen: false);
     token = authProvider.token;
 
@@ -82,8 +84,10 @@ class AgendaState extends State<Agenda> {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       //await getAllAsync();
 
-      listAppointment = await baseRepository!.getAllAppointmentByMedecin(medecinClicked!);
-      listUnavalaibleAppointment = await baseRepository!.getAllUnavalaibleAppointment(medecinClicked!);
+      listAppointment =
+          await baseRepository!.getAllAppointmentByMedecin(medecinClicked!);
+      listUnavalaibleAppointment =
+          await baseRepository!.getAllUnavalaibleAppointment(medecinClicked!);
       if (listAppointment.isEmpty) {
         print('EMPTY O');
         setState(() {
@@ -95,9 +99,6 @@ class AgendaState extends State<Agenda> {
       });
     });
   }
-
-
-
 
   CalendarController controller = CalendarController();
 
@@ -379,6 +380,7 @@ class AgendaState extends State<Agenda> {
                       ],
                     ),
                     onTap: () {
+                      authProviderUser.logout();
                       Navigator.pushReplacement(
                           context,
                           MaterialPageRoute(
@@ -515,6 +517,13 @@ class AgendaState extends State<Agenda> {
                                                   letterSpacing: 2,
                                                   color: Colors.green)),
                                       onTap: (CalendarTapDetails details) {
+
+                                        listAppointment.forEach((element) {
+                                          print('APPOINTMENT : ${element.timeStart.hour}, ${element.reason} ');
+                                        });
+
+                                        print('DT CLICKED: ${details.date}');
+
                                         setState(() {
                                           dtCliquer = details.date!;
                                         });
@@ -538,6 +547,11 @@ class AgendaState extends State<Agenda> {
                                                             .format(
                                                                 details.date!))
                                                     .toList();
+                                            list.forEach((element) {
+                                        print('List APPOINTS CLICKED: ${element.reason}');
+                                        });
+
+
                                             if (list.length >= 1) {
                                               CustomAppointment appoint =
                                                   list.first;
@@ -605,8 +619,6 @@ class AgendaState extends State<Agenda> {
                                             const Spacer(),
                                             Padding(
                                               padding: const EdgeInsets.only(
-                                                  left: 10,
-                                                  right: 16,
                                                   bottom: 10),
                                               child: ElevatedButton(
                                                 style: ButtonStyle(
@@ -654,6 +666,7 @@ class AgendaState extends State<Agenda> {
                                                 ),
                                               ),
                                             ),
+                                            Spacer(),
                                           ],
                                         )
                                       ],
@@ -874,7 +887,10 @@ class AgendaState extends State<Agenda> {
                                   fontWeight: FontWeight.w500,
                                   letterSpacing: 2,
                                   fontSize: 15,
-                                  color: (appoint.isDeleted != null && appoint.isDeleted == true)?Colors.black.withOpacity(0.4):Colors.white),
+                                  color: (appoint.isDeleted != null &&
+                                          appoint.isDeleted == true)
+                                      ? Colors.black.withOpacity(0.4)
+                                      : Colors.white),
                             ),
                           ),
                         ],
@@ -891,7 +907,10 @@ class AgendaState extends State<Agenda> {
                                   fontWeight: FontWeight.w500,
                                   fontSize: 12,
                                   letterSpacing: 2,
-                                  color: (appoint.isDeleted != null && appoint.isDeleted == true)?Colors.black.withOpacity(0.4):Colors.white),
+                                  color: (appoint.isDeleted != null &&
+                                          appoint.isDeleted == true)
+                                      ? Colors.black.withOpacity(0.4)
+                                      : Colors.white),
                             ),
                           ),
                         ],
@@ -940,66 +959,98 @@ class AgendaState extends State<Agenda> {
 
     return Column(
       children: [
-        GestureDetector(
-            onTap: () {
-              DetailsAppointment(appoint);
-            },
-            child: Padding(
-              padding: const EdgeInsets.only(left: 40),
-              child: Container(
-                width: MediaQuery.of(context).size.width / 1.30,
-                height: 55,
-                // ajustez la taille du point en fonction de vos besoins
+        Row(
+          children: [
+            Spacer(),
+            GestureDetector(
+                onTap: () {
+                  DetailsAppointment(appoint);
+                },
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 0),
+                  child: Container(
+                    width: MediaQuery.of(context).size.width / 1.30,
+                    height:
+                        (appoint.isDeleted != null && appoint.isDeleted == true)
+                            ? 75
+                            : 55,
+                    // ajustez la taille du point en fonction de vos besoins
 
-                decoration: BoxDecoration(
-                  shape: BoxShape.rectangle,
-                  borderRadius: BorderRadius.circular(6),
-                  color:
-                      (appoint.isDeleted != null && appoint.isDeleted == true)
+                    decoration: BoxDecoration(
+                      shape: BoxShape.rectangle,
+                      borderRadius: BorderRadius.circular(6),
+                      color: (appoint.isDeleted != null &&
+                              appoint.isDeleted == true)
                           ? Colors.black.withOpacity(0.3)
                           : Colors.redAccent.withOpacity(
                               0.7), // utilisez la couleur de l'appointment
-                ),
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
+                    ),
+                    child: Column(
                       children: [
-                        Padding(
-                          padding: const EdgeInsets.only(left: 10),
-                          child: Text(
-                            textAlign: TextAlign.start,
-                            '${abreviateRaison(appoint.reason)}',
-                            style: const TextStyle(
-                                fontWeight: FontWeight.w500,
-                                letterSpacing: 2,
-                                fontSize: 15,
-                                color: Colors.white),
-                          ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.only(left: 10),
+                              child: Text(
+                                textAlign: TextAlign.start,
+                                '${abreviateRaison(appoint.reason)}',
+                                style: TextStyle(
+                                    fontWeight: FontWeight.w500,
+                                    letterSpacing: 2,
+                                    fontSize: 15,
+                                    color: (appoint.isDeleted != null &&
+                                            appoint.isDeleted == true)
+                                        ? Colors.black.withOpacity(0.4)
+                                        : Colors.white),
+                              ),
+                            ),
+                          ],
                         ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.only(left: 10),
+                              child: Text(
+                                textAlign: TextAlign.start,
+                                '${formatDateTimeAppointment(appoint.startAt, appoint.timeStart, appoint.timeEnd)}',
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.w500,
+                                    fontSize: 12,
+                                    letterSpacing: 2,
+                                    color: Colors.white),
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (appoint.isDeleted != null &&
+                            appoint.isDeleted == true) ...[
+                          const Row(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            children: [
+                              Padding(
+                                padding: EdgeInsets.only(left: 10),
+                                child: Text(
+                                  textAlign: TextAlign.start,
+                                  'Rendez-vous annulé',
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.w500,
+                                      fontSize: 13,
+                                      letterSpacing: 2,
+                                      color: Colors.redAccent),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ]
                       ],
                     ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.only(left: 10),
-                          child: Text(
-                            textAlign: TextAlign.start,
-                            '${formatDateTimeAppointment(appoint.startAt, appoint.timeStart, appoint.timeEnd)}',
-                            style: const TextStyle(
-                                fontWeight: FontWeight.w500,
-                                fontSize: 12,
-                                letterSpacing: 2,
-                                color: Colors.white),
-                          ),
-                        ),
-                      ],
-                    )
-                  ],
-                ),
-              ),
-            )),
+                  ),
+                )),
+            Spacer(),
+          ],
+        ),
         Padding(
           padding: const EdgeInsets.only(top: 5),
           child: Divider(
@@ -1198,8 +1249,8 @@ class AgendaState extends State<Agenda> {
                     Row(
                       children: [
                         Padding(
-                          padding:
-                              const EdgeInsets.only(top: 20, left: 20, bottom: 50),
+                          padding: const EdgeInsets.only(
+                              top: 20, left: 20, bottom: 50),
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(50),
                             child: Container(

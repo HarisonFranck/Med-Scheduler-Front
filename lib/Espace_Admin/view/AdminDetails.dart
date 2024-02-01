@@ -17,12 +17,16 @@ import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
 import 'package:med_scheduler_front/Repository/AdminRepository.dart';
 import 'package:med_scheduler_front/Utilitie/Utilities.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
+import 'package:med_scheduler_front/AuthProviderUser.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:med_scheduler_front/AuthProviderUser.dart';
 
 class AdminDetails extends StatefulWidget {
   _AdminDetailsState createState() => _AdminDetailsState();
-  final Utilisateur user;
+  //final Utilisateur user;
 
-  AdminDetails({required this.user});
+  //AdminDetails({required this.user});
 }
 
 class _AdminDetailsState extends State<AdminDetails> {
@@ -33,37 +37,25 @@ class _AdminDetailsState extends State<AdminDetails> {
 
   Utilisateur? user;
 
-  bool _isPageActive = true;
-
-
   Widget loadingWidget() {
     return Center(
         child: Container(
-          width: 100,
-          height: 100,
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              LoadingAnimationWidget.hexagonDots(
-                  color: Colors.redAccent, size: 120),
-              Image.asset(
-                'assets/images/logo2.png',
-                width: 80,
-                height: 80,
-                fit: BoxFit.cover,
-              )
-            ],
-          ),
-        ));
-  }
-
-  @override
-  void dispose() {
-    // TODO: implement dispose
-    _isPageActive = false;
-    super.dispose();
-
-    print('--- DESTRUCTION PAGE ---');
+      width: 100,
+      height: 100,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          LoadingAnimationWidget.hexagonDots(
+              color: Colors.redAccent, size: 120),
+          Image.asset(
+            'assets/images/logo2.png',
+            width: 80,
+            height: 80,
+            fit: BoxFit.cover,
+          )
+        ],
+      ),
+    ));
   }
 
   String generateUniqueImageName() {
@@ -96,9 +88,6 @@ class _AdminDetailsState extends State<AdminDetails> {
 
     return true;
   }
-
-
-
 
   File? _profileImageFile;
 
@@ -193,6 +182,7 @@ class _AdminDetailsState extends State<AdminDetails> {
 
   late AuthProvider authProvider;
   late String token;
+  late AuthProviderUser authProviderUser;
 
   TextEditingController nomController = TextEditingController();
   TextEditingController prenomController = TextEditingController();
@@ -213,6 +203,73 @@ class _AdminDetailsState extends State<AdminDetails> {
     return null;
   }
 
+  Future<void> UserUpdate(Utilisateur utilisateur) async {
+
+    authProviderUser = Provider.of<AuthProviderUser>(context,listen: false);
+
+    setState(() {
+      isLoading = true;
+      dataLoaded = false;
+    });
+
+    final url = Uri.parse(
+        "${baseUrl}api/users/${utilities!.extractLastNumber(utilisateur.id)}");
+    //final headers = {'Content-Type': 'application/json'};
+
+    final headers = {'Content-Type': 'application/merge-patch+json'};
+
+    print('URL: $url');
+
+    try {
+      String jsonUser = jsonEncode(utilisateur.toJson());
+      print('Request Body: $jsonUser');
+      final response = await http.patch(url, headers: headers, body: jsonUser);
+      print(response.statusCode);
+
+      if (response.statusCode == 200) {
+        setState(() {
+          isLoading = false;
+        });
+        final Map<String, dynamic> jsonResponse = json.decode(response.body);
+        print('ERRRR: $jsonResponse');
+
+        if (jsonResponse.containsKey('error')) {
+          utilities!.error('Erreur de modification');
+        } else {
+          authProviderUser.setUser(utilisateur);
+          utilities!.ModificationUtilisateur();
+          setState(() {
+            isLoading = false;
+            dataLoaded = false;
+          });
+    didChangeDependencies();
+        }
+      } else {
+        setState(() {
+          isLoading = false;
+        });
+        if (response.statusCode == 401) {
+          authProvider.logout();
+          Navigator.pushReplacement(
+              context, MaterialPageRoute(builder: (context) => const MyApp()));
+        }
+        // Gestion des erreurs HTTP
+        utilities!.error(
+            'Il y a une erreur. HTTP Status Code: ${response.statusCode}');
+        throw Exception(
+            '-- Failed to add user. HTTP Status Code: ${response.statusCode}');
+      }
+    } catch (e, exception) {
+      if (e is http.ClientException) {
+        utilities!.ErrorConnexion();
+      } else {
+        // Gérer d'autres exceptions
+        print('Une erreur inattendue s\'est produite: $e');
+      }
+      throw Exception('-- CATCH Failed to add user. Error: $e');
+    }
+  }
+
   bool EditEmail = false;
   bool EditPhone = false;
 
@@ -226,20 +283,9 @@ class _AdminDetailsState extends State<AdminDetails> {
 
     utilities = Utilities(context: context);
     adminRepository = AdminRepository(context: context, utilities: utilities!);
-
-    print('INIT ZAO');
-    utilisateur = widget.user;
-
-    profilImage =
-        (utilisateur.imageName != null) ? File(utilisateur.imageName!) : null;
-    nomController.text = utilisateur.firstName;
-    prenomController.text = utilisateur.lastName;
-    phoneController.text = utilisateur.phone;
-    emailController.text = utilisateur.email;
-    categorieController.text = (utilisateur.category != null)
-        ? categorieSet(utilisateur.category!)
-        : "";
   }
+
+  bool isLoading = false;
 
   bool dataLoaded = false;
 
@@ -247,12 +293,16 @@ class _AdminDetailsState extends State<AdminDetails> {
   void didChangeDependencies() {
     // TODO: implement didChangeDependencies
     super.didChangeDependencies();
+    authProviderUser = Provider.of<AuthProviderUser>(context,listen: false);
+
+
+    user = Provider.of<AuthProviderUser>(context).utilisateur;
     print('DID ZAO');
-    authProvider = Provider.of<AuthProvider>(context);
+    authProvider = Provider.of<AuthProvider>(context,listen: false);
     token = authProvider.token;
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      utilisateur = await adminRepository!.getUser(widget.user.id);
-      if (mounted) {
+      utilisateur = await adminRepository!.getUser(user!.id);
+
         setState(() {
           profilImage = (utilisateur.imageName != null)
               ? File(utilisateur.imageName!)
@@ -265,9 +315,13 @@ class _AdminDetailsState extends State<AdminDetails> {
               ? categorieSet(utilisateur.category!)
               : "";
 
-          dataLoaded = true;
+          EditEmail = false;
+          EditPhone = false;
+
+      dataLoaded = true;
         });
-      }
+
+
     });
   }
 
@@ -432,13 +486,12 @@ class _AdminDetailsState extends State<AdminDetails> {
 
   @override
   Widget build(BuildContext context) {
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
     return PopScope(
       canPop: false,
       child: Scaffold(
           backgroundColor: const Color.fromARGB(1000, 238, 239, 244),
-          body: (dataLoaded)
+          body: (!isLoading&&dataLoaded)
               ? ListView(
                   children: [
                     Padding(
@@ -684,7 +737,9 @@ class _AdminDetailsState extends State<AdminDetails> {
                                             roles: utilisateur.roles,
                                             createdAt: utilisateur.createdAt,
                                             city: utilisateur.city);
-                                        adminRepository!.UserUpdate(userInterm);
+
+                                        UserUpdate(userInterm);
+
                                         if (mounted) {
                                           setState(() {});
                                         }
@@ -783,7 +838,7 @@ class _AdminDetailsState extends State<AdminDetails> {
                                           roles: utilisateur.roles,
                                           createdAt: utilisateur.createdAt,
                                           city: utilisateur.city);
-                                      adminRepository!.UserUpdate(userInterm);
+                                      UserUpdate(userInterm);
                                       if (mounted) {
                                         setState(() {});
                                       }
@@ -806,7 +861,8 @@ class _AdminDetailsState extends State<AdminDetails> {
                                 child: GestureDetector(
                                   onTap: () {
                                     authProvider.logout();
-
+                                    //Provider.of<AuthProviderUser>(context).dispose();
+                                    authProviderUser.logout();
                                     print(
                                         'TOKEN PRVIDED: ${authProvider.token}');
                                     Navigator.pushAndRemoveUntil(

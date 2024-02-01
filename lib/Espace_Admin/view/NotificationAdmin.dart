@@ -9,11 +9,13 @@ import 'IndexAccueilAdmin.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:med_scheduler_front/Repository/BaseRepository.dart';
 import 'package:med_scheduler_front/Utilitie/Utilities.dart';
+import 'package:provider/provider.dart';
+import 'package:med_scheduler_front/AuthProviderUser.dart';
 
 class NotificationAdmin extends StatefulWidget {
-  final Utilisateur user;
+  //final Utilisateur user;
 
-  NotificationAdmin({required this.user});
+  //NotificationAdmin({required this.user});
 
   _NotificationAdminState createState() => _NotificationAdminState();
 }
@@ -26,6 +28,9 @@ class _NotificationAdminState extends State<NotificationAdmin> {
   BaseRepository? baseRepository;
   Utilities? utilities;
 
+
+  Utilisateur? user;
+
   @override
   void initState() {
     // TODO: implement initState
@@ -37,9 +42,11 @@ class _NotificationAdminState extends State<NotificationAdmin> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    user = Provider.of<AuthProviderUser>(context).utilisateur;
   }
 
-  bool isToday(DateTime startAt, DateTime timeStart) {
+
+  bool isToday(DateTime startAt,DateTime timeStart) {
     DateTime now = DateTime.now();
     DateTime startOfWeek = DateTime(now.year, now.month, now.day - now.weekday);
     DateTime endOfWeek = startOfWeek.add(const Duration(days: 6));
@@ -55,23 +62,20 @@ class _NotificationAdminState extends State<NotificationAdmin> {
       }
     }
 
+
     return isIt;
   }
 
   Future<List<CustomAppointment>> filterAppointments(
       Future<List<CustomAppointment>> appointmentsFuture) async {
-    print('FILTER');
-    List<CustomAppointment> allAppointments = await appointmentsFuture;
+   List<CustomAppointment> allAppointments = await appointmentsFuture;
 
-    print('ALL APPOINTS: ${allAppointments.length}');
-    print('DATE: ${DateFormat('yyyy-MM-dd').format(DateTime(1970, 1, 26))}');
 
     // Filtrer les rendez-vous avec startAt égal à DateTime.now()
     List<CustomAppointment> filteredAppointments = allAppointments
         .where((appointment) =>
             isToday(appointment.startAt, appointment.timeStart))
         .toList();
-    print('SIZE FILTER: ${filteredAppointments.length}');
 
     return filteredAppointments;
   }
@@ -157,6 +161,7 @@ class _NotificationAdminState extends State<NotificationAdmin> {
     }
   }
 
+
   String abreviateRaison(String fullName) {
     List<String> nameParts = fullName.split(' ');
 
@@ -171,6 +176,17 @@ class _NotificationAdminState extends State<NotificationAdmin> {
       return fullName;
     }
   }
+
+
+
+  Future<List<CustomAppointment>> addAllAppointmentPage()async{
+    List<CustomAppointment> firstList = await baseRepository!.getAllAppointmentPerPage(1);
+    for(int p=1;p<10;p++){
+      firstList.addAll(await baseRepository!.getAllAppointmentPerPage(p));
+    }
+    return firstList;
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -223,14 +239,13 @@ class _NotificationAdminState extends State<NotificationAdmin> {
                   padding:
                       const EdgeInsets.only(top: 20, bottom: 20, right: 5, left: 5),
                   child: FutureBuilder<List<CustomAppointment>>(
-                    future: filterAppointments(
-                        baseRepository!.getAllAppointment()), // Appelez votre fonction de récupération de données ici
+                    future: filterAppointments(addAllAppointmentPage()), // Appelez votre fonction de récupération de données ici
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
                         // Affichez un indicateur de chargement pendant le chargement
                         return Padding(
                           padding: EdgeInsets.only(
-                              top: MediaQuery.of(context).size.height / 3),
+                              top: MediaQuery.of(context).size.height / 4),
                           child: Center(child: loadingWidget()),
                         );
                       } else if (snapshot.hasError) {
@@ -531,20 +546,25 @@ class _NotificationAdminState extends State<NotificationAdmin> {
 
   Widget loadingWidget(){
     return Center(
-        child:Container(
-          width: 100,
-          height: 100,
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
+        child:Column(
+          children: [
+            Container(
+              width: 100,
+              height: 100,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
 
-              LoadingAnimationWidget.hexagonDots(
-                  color: Colors.redAccent,
-                  size: 120),
+                  LoadingAnimationWidget.hexagonDots(
+                      color: Colors.redAccent,
+                      size: 120),
 
-              Image.asset('assets/images/logo2.png',width: 80,height: 80,fit: BoxFit.cover,)
-            ],
-          ),
+                  Image.asset('assets/images/logo2.png',width: 80,height: 80,fit: BoxFit.cover,)
+                ],
+              ),
+            ),
+            Padding(padding: EdgeInsets.only(top: 30,left: 10,right: 10),child:   Text('Veuillez attendre pendant que les données sont récupérées.',textAlign: TextAlign.center,style: TextStyle(color: Colors.black.withOpacity(0.5),letterSpacing: 2),),)
+          ],
         ));
   }
 

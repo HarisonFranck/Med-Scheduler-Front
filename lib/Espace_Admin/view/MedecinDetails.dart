@@ -17,6 +17,7 @@ import 'package:med_scheduler_front/UrlBase.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
+import 'package:med_scheduler_front/AuthProviderUser.dart';
 
 class MedecinDetails extends StatefulWidget {
   _MedecinDetailsState createState() => _MedecinDetailsState();
@@ -36,6 +37,8 @@ class _MedecinDetailsState extends State<MedecinDetails> {
   File? profilImage;
 
   late Medecin utilisateur;
+
+  late AuthProviderUser authProviderUser;
 
   @override
   void initState() {
@@ -60,6 +63,7 @@ class _MedecinDetailsState extends State<MedecinDetails> {
   void didChangeDependencies() {
     // TODO: implement didChangeDependencies
     super.didChangeDependencies();
+    authProviderUser = Provider.of<AuthProviderUser>(context, listen: false);
   }
 
   @override
@@ -87,6 +91,7 @@ class _MedecinDetailsState extends State<MedecinDetails> {
                           ],
                         ),
                         onTap: () {
+                          authProviderUser.logout();
                           Navigator.pushReplacement(
                               context,
                               MaterialPageRoute(

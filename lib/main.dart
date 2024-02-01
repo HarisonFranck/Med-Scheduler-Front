@@ -5,6 +5,7 @@ import 'AuthProvider.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz;
+import 'package:med_scheduler_front/AuthProviderUser.dart';
 
 
 
@@ -12,8 +13,12 @@ void main()async {
   tz.initializeTimeZones();
 
   runApp(
-    ChangeNotifierProvider(
-      create: (context) => AuthProvider(),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => AuthProviderUser()),
+        // D'autres providers peuvent être ajoutés ici selon vos besoins.
+      ],
       child: MyApp(),
     ),
   );
