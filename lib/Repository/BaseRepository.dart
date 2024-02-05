@@ -17,6 +17,7 @@ import 'package:med_scheduler_front/Espace_Client/view/IndexAccueil.dart';
 import 'package:med_scheduler_front/Espace_Medecin/view/IndexAcceuilMedecin.dart';
 import 'package:jwt_decode/jwt_decode.dart';
 import 'package:med_scheduler_front/Categorie.dart';
+import 'package:med_scheduler_front/ConnectionError.dart';
 
 class BaseRepository{
 
@@ -36,18 +37,20 @@ class BaseRepository{
   Future<void> patchAppointment(
       CustomAppointment appointment) async {
 
-    authProvider = Provider.of<AuthProvider>(context, listen: false);
-    token = authProvider.token;
+    if(await utilities.isConnectionAvailable()){
 
-    final url = Uri.parse("${baseUrl}api/appointments/${utilities.extractLastNumber(appointment.id)}");
-    //final headers = {'Content-Type': 'application/json'};
 
-    final headers = {
-      'Content-Type': 'application/merge-patch+json',
-      'Authorization': 'Bearer $token'
-    };
+      authProvider = Provider.of<AuthProvider>(context, listen: false);
+      token = authProvider.token;
 
-    try {
+      final url = Uri.parse("${baseUrl}api/appointments/${utilities.extractLastNumber(appointment.id)}");
+      //final headers = {'Content-Type': 'application/json'};
+
+      final headers = {
+        'Content-Type': 'application/merge-patch+json',
+        'Authorization': 'Bearer $token'
+      };
+
       print('PATCH ISDELETED: ${appointment.isDeleted}');
       String jsonUser = jsonEncode(appointment.toJsonUnav());
 
@@ -80,16 +83,13 @@ class BaseRepository{
               'Il y a une erreur APPOINTMENT. HTTP Status Code: ${response.statusCode}');
         }
       }
-    } catch (e, stackTrace) {
-      if (e is http.ClientException) {
-        utilities.ErrorConnexion();
-      } else {
-        // Gérer d'autres exceptions
-        print('Une erreur inattendue s\'est produite: $e');
-      }
 
-      throw e;
+    }else{
+
+      utilities.handleConnectionError(ConnectionError("Une erreur de connexion s'est produite!"));
+
     }
+
   }
 
 
@@ -98,18 +98,20 @@ class BaseRepository{
   Future<void> createUnavalaibleAppointment(
       CustomAppointment appointment) async {
 
-    authProvider = Provider.of<AuthProvider>(context, listen: false);
-    token = authProvider.token;
+    if(await utilities.isConnectionAvailable()){
 
-    final url = Uri.parse("${baseUrl}api/unavailable_appointments");
-    //final headers = {'Content-Type': 'application/json'};
 
-    final headers = {
-      'Content-Type': 'application/ld+json',
-      'Authorization': 'Bearer $token'
-    };
+      authProvider = Provider.of<AuthProvider>(context, listen: false);
+      token = authProvider.token;
 
-    try {
+      final url = Uri.parse("${baseUrl}api/unavailable_appointments");
+      //final headers = {'Content-Type': 'application/json'};
+
+      final headers = {
+        'Content-Type': 'application/ld+json',
+        'Authorization': 'Bearer $token'
+      };
+
       String jsonUser = jsonEncode(appointment.toJsonUnav());
 
       final response = await http.post(url, headers: headers, body: jsonUser);
@@ -138,31 +140,29 @@ class BaseRepository{
               'Il y a une erreur APPOINTMENT. HTTP Status Code: ${response.statusCode}');
         }
       }
-    } catch (e, stackTrace) {
-      if (e is http.ClientException) {
-        utilities.ErrorConnexion();
-      } else {
-        // Gérer d'autres exceptions
-        print('Une erreur inattendue s\'est produite: $e');
-      }
 
-      throw e;
+    }else{
+
+      utilities.handleConnectionError(ConnectionError("Une erreur de connexion s'est produite!"));
+
     }
+
   }
 
   Future<void> deleteUnavalaibleAppointment(
       CustomAppointment appointment) async {
 
-    authProvider = Provider.of<AuthProvider>(context, listen: false);
-    token = authProvider.token;
+    if(await utilities.isConnectionAvailable()){
 
-    final url = Uri.parse(
-        "${baseUrl}api/unavailable_appointments/${utilities.extractLastNumber(appointment.id)}");
-    //final headers = {'Content-Type': 'application/json'};
+      authProvider = Provider.of<AuthProvider>(context, listen: false);
+      token = authProvider.token;
 
-    final headers = {'Authorization': 'Bearer $token'};
+      final url = Uri.parse(
+          "${baseUrl}api/unavailable_appointments/${utilities.extractLastNumber(appointment.id)}");
+      //final headers = {'Content-Type': 'application/json'};
 
-    try {
+      final headers = {'Authorization': 'Bearer $token'};
+
       //print('Request Body: $jsonUser');
       final response = await http.delete(url, headers: headers);
       print(response.statusCode);
@@ -189,15 +189,11 @@ class BaseRepository{
               'Il y a une erreur APPOINTMENT. HTTP Status Code: ${response.statusCode}');
         }
       }
-    } catch (e, stackTrace) {
-      if (e is http.ClientException) {
-        utilities.ErrorConnexion();
-      } else {
-        // Gérer d'autres exceptions
-        print('Une erreur inattendue s\'est produite: $e');
-      }
 
-      throw e;
+    }else{
+
+      utilities.handleConnectionError(ConnectionError("Une erreur de connexion s'est produite!"));
+
     }
   }
 
@@ -207,14 +203,17 @@ class BaseRepository{
 
 
   Future<Utilisateur> getUser(int id) async {
-    final url = Uri.parse("${baseUrl}api/users/$id");
 
-    authProvider = Provider.of<AuthProvider>(context, listen: false);
-    token = authProvider.token;
+    if(await utilities.isConnectionAvailable()){
 
-    final headers = {'Authorization': 'Bearer $token'};
 
-    try {
+      final url = Uri.parse("${baseUrl}api/users/$id");
+
+      authProvider = Provider.of<AuthProvider>(context, listen: false);
+      token = authProvider.token;
+
+      final headers = {'Authorization': 'Bearer $token'};
+
       final response = await http.get(url, headers: headers);
 
       if (response.statusCode == 200) {
@@ -236,17 +235,12 @@ class BaseRepository{
         throw Exception(
             '-- Failed to load data. HTTP Status Code: ${response.statusCode}');
       }
-    } catch (e, stackTrace) {
-      // Gérer l'exception spécifique (ClientException dans ce cas)
-      if (e is http.ClientException) {
-       utilities.ErrorConnexion();
-      } else {
-        // Gérer d'autres exceptions
-        print('Une erreur inattendue s\'est produite: $e');
-      }
 
-      // Retourner une valeur par défaut en cas d'erreur
-      throw e;
+    }else{
+      utilities.handleConnectionError(ConnectionError("Une erreur de connexion s'est produite!"));
+      throw Exception(
+          '-- Failed to load data.');
+
     }
   }
 
@@ -256,17 +250,18 @@ class BaseRepository{
 
   Future<List<Medecin>> getAllMedecin() async {
 
-    authProvider = Provider.of<AuthProvider>(context, listen: false);
-    token = authProvider.token;
+    if(await utilities.isConnectionAvailable()){
 
-    // Définir l'URL de base
-    Uri url = Uri.parse("${baseUrl}api/doctors?page=1");
+      authProvider = Provider.of<AuthProvider>(context, listen: false);
+      token = authProvider.token;
 
-    print('URI: $url');
+      // Définir l'URL de base
+      Uri url = Uri.parse("${baseUrl}api/doctors?page=1");
 
-    final headers = {'Authorization': 'Bearer $token'};
+      print('URI: $url');
 
-    try {
+      final headers = {'Authorization': 'Bearer $token'};
+
       final response = await http.get(url, headers: headers);
       print('STATUS CODE MEDS: ${response.statusCode} \n');
 
@@ -287,17 +282,15 @@ class BaseRepository{
           '-- Erreur d\'obtention des données\n vérifier votre connexion internet. Code: ${response.statusCode}',
         );
       }
-    } catch (e, stackTrace) {
-      if (e is http.ClientException) {
-        utilities.ErrorConnexion();
-      } else {
-        // Gérer d'autres exceptions
-        print('Une erreur inattendue s\'est produite: $e');
-      }
 
+    }else{
+
+      utilities.handleConnectionError(ConnectionError("Une erreur de connexion s'est produite!"));
       // Retourner une valeur par défaut en cas d'erreur
       return <Medecin>[];
     }
+
+
   }
 
 
@@ -305,14 +298,15 @@ class BaseRepository{
 
   Future<List<Centre>> getAllCenter() async {
 
-    authProvider = Provider.of<AuthProvider>(context, listen: false);
-    token = authProvider.token;
+    if(await utilities.isConnectionAvailable()){
 
-    final url = Uri.parse("${baseUrl}api/centers?page=1");
+      authProvider = Provider.of<AuthProvider>(context, listen: false);
+      token = authProvider.token;
 
-    final headers = {'Authorization': 'Bearer $token'};
+      final url = Uri.parse("${baseUrl}api/centers?page=1");
 
-    try {
+      final headers = {'Authorization': 'Bearer $token'};
+
       final response = await http.get(url, headers: headers);
 
       if (response.statusCode == 200) {
@@ -331,28 +325,26 @@ class BaseRepository{
         throw Exception(
             '-- Erreur d\'obtention des données\n vérifier votre connexion internet.');
       }
-    } catch (e) {
 
-      if (e is http.ClientException) {
-        utilities.ErrorConnexion();
-      } else {
-        // Gérer d'autres exceptions
-        print('Une erreur inattendue s\'est produite: $e');
-      }
+    }else{
+
+      utilities.handleConnectionError(ConnectionError("Une erreur de connexion s'est produite!"));
 
       // Retourner une valeur par défaut en cas d'erreur
       return <Centre>[];
     }
+
   }
 
   Future<List<Specialite>> getAllSpecialite() async {
-    authProvider = Provider.of<AuthProvider>(context, listen: false);
-    token = authProvider.token;
-    final url = Uri.parse("${baseUrl}api/specialities?page=1");
+    if(await utilities.isConnectionAvailable()){
 
-    final headers = {'Authorization': 'Bearer $token'};
+      authProvider = Provider.of<AuthProvider>(context, listen: false);
+      token = authProvider.token;
+      final url = Uri.parse("${baseUrl}api/specialities?page=1");
 
-    try {
+      final headers = {'Authorization': 'Bearer $token'};
+
       final response = await http.get(url, headers: headers);
       print('STATUS CODE SPECS: ${response.statusCode} \n');
 
@@ -372,18 +364,15 @@ class BaseRepository{
         throw Exception(
             '-- Erreur d\'obtention des données\n vérifier votre connexion internet.');
       }
-    } catch (e) {
 
-      if (e is http.ClientException) {
-        utilities.ErrorConnexion();
-      } else {
-        // Gérer d'autres exceptions
-        print('Une erreur inattendue s\'est produite: $e');
-      }
+    }else{
 
+      utilities.handleConnectionError(ConnectionError("Une erreur de connexion s'est produite!"));
       // Retourner une valeur par défaut en cas d'erreur
       return <Specialite>[];
     }
+
+
   }
 
 
@@ -391,17 +380,18 @@ class BaseRepository{
 
   Future<List<CustomAppointment>> getAllUnavalaibleAppointment(Medecin medecinClicked) async {
 
-    authProvider = Provider.of<AuthProvider>(context, listen: false);
-    token = authProvider.token;
+    if(await utilities.isConnectionAvailable()){
+      authProvider = Provider.of<AuthProvider>(context, listen: false);
+      token = authProvider.token;
 
 
-    print('MED ID: ${medecinClicked.id}');
-    final url = Uri.parse(
-        "${baseUrl}api/doctors/unavailable/appointments/${utilities.extractLastNumber(medecinClicked.id)}");
+      print('MED ID: ${medecinClicked.id}');
+      final url = Uri.parse(
+          "${baseUrl}api/doctors/unavailable/appointments/${utilities.extractLastNumber(medecinClicked.id)}");
 
-    final headers = {'Authorization': 'Bearer $token'};
+      final headers = {'Authorization': 'Bearer $token'};
 
-    try {
+
       final response = await http.get(url, headers: headers);
 
       print('STATUS CODE APPOINTS AGENDA:  ${response.statusCode} \n');
@@ -425,32 +415,31 @@ class BaseRepository{
         throw Exception(
             '-- Failed to load data. HTTP Status Code: ${response.statusCode}');
       }
-    } catch (e, stackTrace) {
+    }else{
 
-      if (e is http.ClientException) {
-        utilities.ErrorConnexion();
-      } else {
-        // Gérer d'autres exceptions
-        print('Une erreur inattendue s\'est produite: $e');
-      }
-
+      utilities.handleConnectionError(ConnectionError("Une erreur de connexion s'est produite!"));
       // Retourner une valeur par défaut en cas d'erreur
       return <CustomAppointment>[];
     }
+
+
   }
 
   Future<List<CustomAppointment>> getAllAppointmentByMedecin(Medecin medecinClicked) async {
 
-    authProvider = Provider.of<AuthProvider>(context, listen: false);
-    token = authProvider.token;
+
+    if(await utilities.isConnectionAvailable()){
 
 
-    final url = Uri.parse(
-        "${baseUrl}api/doctors/appointments/${utilities.extractLastNumber(medecinClicked.id)}");
+      authProvider = Provider.of<AuthProvider>(context, listen: false);
+      token = authProvider.token;
 
-    final headers = {'Authorization': 'Bearer $token'};
 
-    try {
+      final url = Uri.parse(
+          "${baseUrl}api/doctors/appointments/${utilities.extractLastNumber(medecinClicked.id)}");
+
+      final headers = {'Authorization': 'Bearer $token'};
+
       final response = await http.get(url, headers: headers);
 
       print('STATUS CODE APPOINTS AGNENDAAA: ${response.statusCode} \n');
@@ -482,31 +471,29 @@ class BaseRepository{
         // Gestion des erreurs HTTP
         throw Exception('-- TOKEN EXPIRED.');
       }
-    } catch (e) {
-      if (e is http.ClientException) {
-        utilities.ErrorConnexion();
-      } else {
-        // Gérer d'autres exceptions
-        print('Une erreur inattendue s\'est produite: $e');
-      }
 
+    }else{
+      utilities.handleConnectionError(ConnectionError("Une erreur de connexion s'est produite!"));
       // Retourner une valeur par défaut en cas d'erreur
       return <CustomAppointment>[];
     }
+
   }
 
 
 
 
   Future<List<CustomAppointment>> getAllAppointment() async {
-    authProvider = Provider.of<AuthProvider>(context, listen: false);
-    token = authProvider.token;
 
-    final url = Uri.parse("${baseUrl}api/appointments?page=1");
+    if(await utilities.isConnectionAvailable()){
 
-    final headers = {'Authorization': 'Bearer $token'};
+      authProvider = Provider.of<AuthProvider>(context, listen: false);
+      token = authProvider.token;
 
-    try {
+      final url = Uri.parse("${baseUrl}api/appointments?page=1");
+
+      final headers = {'Authorization': 'Bearer $token'};
+
       final response = await http.get(url, headers: headers);
 
       print('STATUS CODE APPOINTS: ${response.statusCode} \n');
@@ -529,17 +516,14 @@ class BaseRepository{
         throw Exception(
             '-- Erreur d\'obtention des données\n vérifier votre connexion internet.');
       }
-    } catch (e) {
-      if (e is http.ClientException) {
-        utilities.ErrorConnexion();
-      } else {
-        // Gérer d'autres exceptions
-        print('Une erreur inattendue s\'est produite: $e');
-      }
 
+    }else{
+
+      utilities.handleConnectionError(ConnectionError("Une erreur de connexion s'est produite!"));
       // Retourner une valeur par défaut en cas d'erreur
       return <CustomAppointment>[];
     }
+
   }
 
 
@@ -548,15 +532,16 @@ class BaseRepository{
   Future<Utilisateur> getUserById(int id,String token) async {
 
 
-    authProvider = Provider.of<AuthProvider>(context, listen: false);
-    token = authProvider.token;
+    if(await utilities.isConnectionAvailable()){
 
-    final url = Uri.parse(
-        "${baseUrl}api/users/$id");
+      authProvider = Provider.of<AuthProvider>(context, listen: false);
+      token = authProvider.token;
 
-    final headers = {'Authorization': 'Bearer $token'};
+      final url = Uri.parse(
+          "${baseUrl}api/users/$id");
 
-    try {
+      final headers = {'Authorization': 'Bearer $token'};
+
       final response = await http.get(url, headers: headers);
 
       if (response.statusCode == 200) {
@@ -576,24 +561,27 @@ class BaseRepository{
         throw Exception(
             '-- Failed to load data. HTTP Status Code: ${response.statusCode}');
       }
-    } catch (e, stackTrace) {
+    }else{
 
+      utilities.handleConnectionError(ConnectionError("Une erreur de connexion s'est produite!"));
+      throw Exception(
+          '-- Failed to load data.');
 
-      print('Error: $e \nStack trace: $stackTrace');
-      throw Exception('-- Failed to load data. Error: $e');
     }
+
   }
 
 
 
   Future<void> getUserByUsernameAndPassword(String email,String password) async {
 
-
-    final url = Uri.parse("${baseUrl}api/login_check");
-    final headers = {'Content-Type': 'application/json'};
+    if(await utilities.isConnectionAvailable()){
 
 
-    try {
+
+      final url = Uri.parse("${baseUrl}api/login_check");
+      final headers = {'Content-Type': 'application/json'};
+
       Map<String, String> requestData = {
         'username': email,
         'password': password
@@ -650,26 +638,29 @@ class BaseRepository{
         utilities.error('Utilisateur introuvable');
         //throw Exception('-- Failed to get user. HTTP Status Code: ${response.statusCode}');
       }
-    } catch (e,stacktrace) {
+    }else{
 
-      // Gestion des erreurs autres que HTTP
-      print('ERROR CONNEXION');
-      utilities.ErrorConnexion();
-      throw Exception('-- Failed to get user. Error: $e\n STACK: $stacktrace');
+
+      utilities.handleConnectionError(ConnectionError("Une erreur de connexion s'est produite!"));
+      throw Exception(
+          '-- Failed to load data.');
     }
+
   }
 
 
 
   Future<List<CustomAppointment>> getAllAppointmentPerPage(int page) async {
-    authProvider = Provider.of<AuthProvider>(context, listen: false);
-    token = authProvider.token;
 
-    final url = Uri.parse("${baseUrl}api/appointments?page=$page");
+    if(await utilities.isConnectionAvailable()){
 
-    final headers = {'Authorization': 'Bearer $token'};
+      authProvider = Provider.of<AuthProvider>(context, listen: false);
+      token = authProvider.token;
 
-    try {
+      final url = Uri.parse("${baseUrl}api/appointments?page=$page");
+
+      final headers = {'Authorization': 'Bearer $token'};
+
       final response = await http.get(url, headers: headers);
 
       if (response.statusCode == 200) {
@@ -688,39 +679,38 @@ class BaseRepository{
         throw Exception(
             '-- Erreur d\'obtention des données\n vérifier votre connexion internet.');
       }
-    } catch (e) {
-      if (e is http.ClientException) {
-        utilities.ErrorConnexion();
-      } else {
-        // Gérer d'autres exceptions
-        print('Une erreur inattendue s\'est produite: $e');
-      }
+    }else{
 
+      utilities.handleConnectionError(ConnectionError("Une erreur de connexion s'est produite!"));
       // Retourner une valeur par défaut en cas d'erreur
       return <CustomAppointment>[];
     }
+
+
   }
 
 
   Future<List<Medecin>> searchAllMedecin(String lastName) async {
-    authProvider = Provider.of<AuthProvider>(context, listen: false);
-    token = authProvider.token;
 
-    // Définir l'URL de base
-    Uri url = Uri.parse("${baseUrl}api/doctors?page=1");
+    if(await utilities.isConnectionAvailable()){
 
-    // Ajouter les paramètres en fonction des cas
-    if (lastName.trim().isNotEmpty) {
+      authProvider = Provider.of<AuthProvider>(context, listen: false);
+      token = authProvider.token;
+
+      // Définir l'URL de base
+      Uri url = Uri.parse("${baseUrl}api/doctors?page=1");
+
+      // Ajouter les paramètres en fonction des cas
+      if (lastName.trim().isNotEmpty) {
 
         url = Uri.parse("$url&lastName=$lastName");
 
-    }
+      }
 
-    print('URI: $url');
+      print('URI: $url');
 
-    final headers = {'Authorization': 'Bearer $token'};
+      final headers = {'Authorization': 'Bearer $token'};
 
-    try {
       final response = await http.get(url, headers: headers);
 
       if (response.statusCode == 200) {
@@ -739,24 +729,23 @@ class BaseRepository{
           '-- Erreur d\'obtention des données\n vérifier votre connexion internet. Code: ${response.statusCode}',
         );
       }
-    } catch (e, stackTrace) {
-      if (e is http.ClientException) {
-        utilities.ErrorConnexion();
-      } else {
-        // Gérer d'autres exceptions
-        print('Une erreur inattendue s\'est produite: $e');
-      }
 
+    }else{
+
+      utilities.handleConnectionError(ConnectionError("Une erreur de connexion s'est produite!"));
       // Retourner une valeur par défaut en cas d'erreur
       return <Medecin>[];
     }
+
   }
 
 
   Future<List<Categorie>> getAllCategorie() async {
-    final url = Uri.parse("${baseUrl}api/categories?page=1");
 
-    try {
+    if(await utilities.isConnectionAvailable()){
+
+      final url = Uri.parse("${baseUrl}api/categories?page=1");
+
       final response = await http.get(url);
 
 
@@ -769,24 +758,21 @@ class BaseRepository{
         return datas.map((e) => Categorie.fromJson(e)).toList();
       } else {
         // Gestion des erreurs HTTP
-       utilities.ErrorConnexion();
-
-       throw Exception(
-           '-- Erreur d\'obtention des données\n vérifier votre connexion internet.');
-      }
-    } catch (e, stackTrace) {
-
-      if (e is http.ClientException) {
         utilities.ErrorConnexion();
-      } else {
-        // Gérer d'autres exceptions
-        print('Une erreur inattendue s\'est produite: $e');
+
+        throw Exception(
+            '-- Erreur d\'obtention des données\n vérifier votre connexion internet.');
       }
+
+    }else{
+
+      utilities.handleConnectionError(ConnectionError("Une erreur de connexion s'est produite!"));
+
       return <Categorie>[];
     }
+
+
   }
-
-
 
 
 }

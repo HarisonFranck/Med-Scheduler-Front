@@ -36,7 +36,7 @@ android {
 
     defaultConfig {
         applicationId "com.example.med_scheduler_front"
-        minSdkVersion flutter.minSdkVersion
+        minSdkVersion 21
         targetSdkVersion flutter.targetSdkVersion
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName

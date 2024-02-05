@@ -1,9 +1,13 @@
 import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
 import 'package:flutter/material.dart';
 import 'package:awesome_dialog/awesome_dialog.dart';
+import 'package:med_scheduler_front/ConnectionError.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+
 
 class Utilities {
   final BuildContext context;
+  bool connectionErrorHandled = false;
 
   Utilities({required this.context});
 
@@ -472,6 +476,22 @@ class Utilities {
       chemin = '/images/profiles/' + chemin;
     }
     return chemin;
+  }
+
+  void handleConnectionError(error) {
+    if (!connectionErrorHandled) {
+      if (error is ConnectionError) {
+          ErrorConnexion();
+      } else {
+        print("Une erreur s'est produite: $error");
+      }
+      connectionErrorHandled = true;
+    }
+  }
+
+  Future<bool> isConnectionAvailable() async {
+    var connectivityResult = await Connectivity().checkConnectivity();
+    return connectivityResult != ConnectivityResult.none;
   }
 
 
