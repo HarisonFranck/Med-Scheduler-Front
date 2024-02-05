@@ -213,7 +213,7 @@ class _AccueilAdminState extends State<AccueilAdmin> {
                             height: 60,
                             child: CachedNetworkImage(
                               imageUrl:
-                              '$baseUrl${user!.imageName}',
+                              '$baseUrl${utilities!.ajouterPrefixe(user!.imageName!)}',
                               placeholder: (context, url) =>
                                   CircularProgressIndicator(
                                     color: Colors.redAccent,

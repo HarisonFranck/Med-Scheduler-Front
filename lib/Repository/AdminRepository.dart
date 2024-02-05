@@ -11,6 +11,7 @@ import 'package:med_scheduler_front/Centre.dart';
 import 'package:med_scheduler_front/Utilitie/Utilities.dart';
 import 'package:provider/provider.dart';
 import 'package:med_scheduler_front/Medecin.dart';
+import 'package:med_scheduler_front/ConnectionError.dart';
 
 
 
@@ -33,16 +34,18 @@ class AdminRepository{
 
   Future<Utilisateur> getUser(String id) async {
 
-    authProvider = Provider.of<AuthProvider>(context, listen: false);
-    token = authProvider.token;
 
-    final url = Uri.parse("${baseUrl}api/users/${utilities.extractLastNumber(id)}");
+    if(await utilities.isConnectionAvailable()){
 
-    print('URL USER: $url');
+      authProvider = Provider.of<AuthProvider>(context, listen: false);
+      token = authProvider.token;
 
-    final headers = {'Authorization': 'Bearer $token'};
+      final url = Uri.parse("${baseUrl}api/users/${utilities.extractLastNumber(id)}");
 
-    try {
+      print('URL USER: $url');
+
+      final headers = {'Authorization': 'Bearer $token'};
+
       final response = await http.get(url, headers: headers);
       print(' --- ST CODE: ${response.statusCode}');
 
@@ -64,10 +67,11 @@ class AdminRepository{
         }
         throw Exception('ANOTHER ERROR');
       }
-    } catch (e, stackTrace) {
-      print('Error: $e \nStack trace: $stackTrace');
-      throw Exception('-- Failed to load data. Error: $e');
+    }else{
+      utilities.handleConnectionError(ConnectionError("Une erreur de connexion s'est produite!"));
+      throw Exception('Failed to get User');
     }
+
   }
 
 
@@ -79,21 +83,22 @@ class AdminRepository{
 
   Future<void> deleteCenter(String idCenter) async {
 
-    authProvider = Provider.of<AuthProvider>(context, listen: false);
-    token = authProvider.token;
+    if(await utilities.isConnectionAvailable()){
 
-    final url =
-    Uri.parse("${baseUrl}api/centers/${utilities.extractLastNumber(idCenter)}");
-    //final headers = {'Content-Type': 'application/merge-patch+json'};
+      authProvider = Provider.of<AuthProvider>(context, listen: false);
+      token = authProvider.token;
 
-    print('URL DELETE: $url');
+      final url =
+      Uri.parse("${baseUrl}api/centers/${utilities.extractLastNumber(idCenter)}");
+      //final headers = {'Content-Type': 'application/merge-patch+json'};
 
-    final headers = {
-      'Content-Type': 'application/merge-patch+json',
-      'Authorization': 'Bearer $token'
-    };
+      print('URL DELETE: $url');
 
-    try {
+      final headers = {
+        'Content-Type': 'application/merge-patch+json',
+        'Authorization': 'Bearer $token'
+      };
+
       final response = await http.delete(url, headers: headers);
       print(response.statusCode);
       print('RESP: ${response.body}');
@@ -113,12 +118,12 @@ class AdminRepository{
           utilities.error('Il y a une erreur.\n Veuillez ressayer ulterieurement.');
         }
       }
-    } catch (e, exception) {
-      // Gestion des erreurs autres que HTTP
-      utilities.error("Il y a une erreur de connexion\nVeuillez ressayer ulterierement ou verifiez votre connexion!");
-      print('EXCPEPT: $exception');
-      throw Exception('-- CATCH Failed to add user. Error: $e');
+
+    }else{
+
+      utilities.handleConnectionError(ConnectionError("Une erreur de connexion s'est produite!"));
     }
+
   }
 
 
@@ -128,17 +133,19 @@ class AdminRepository{
 
   Future<void> addCenter(Centre centre) async {
 
-    authProvider = Provider.of<AuthProvider>(context, listen: false);
-    token = authProvider.token;
-    final url = Uri.parse("${baseUrl}api/centers");
-    //final headers = {'Content-Type': 'application/json'};
 
-    final headers = {
-      'Content-Type': 'application/ld+json',
-      'Authorization': 'Bearer $token'
-    };
+    if(await utilities.isConnectionAvailable()){
 
-    try {
+      authProvider = Provider.of<AuthProvider>(context, listen: false);
+      token = authProvider.token;
+      final url = Uri.parse("${baseUrl}api/centers");
+      //final headers = {'Content-Type': 'application/json'};
+
+      final headers = {
+        'Content-Type': 'application/ld+json',
+        'Authorization': 'Bearer $token'
+      };
+
       String jsonSpec = jsonEncode(centre.toJson());
       print('Request Body: $jsonSpec');
       final response = await http.post(url, headers: headers, body: jsonSpec);
@@ -159,12 +166,12 @@ class AdminRepository{
           utilities.error('Il y a une erreur.\n Veuillez ressayer ulterieurement.');
         }
       }
-    } catch (e, exception) {
-      // Gestion des erreurs autres que HTTP
-      utilities.error("Il y a une erreur de connexion\nVeuillez ressayer ulterierement ou verifiez votre connexion!");
-      print('EXCPEPT: $exception');
-      throw Exception('-- CATCH Failed to add user. Error: $e');
+
+    }else{
+
+      utilities.handleConnectionError(ConnectionError("Une erreur de connexion s'est produite!"));
     }
+
   }
 
 
@@ -172,28 +179,29 @@ class AdminRepository{
 
   Future<void> updateCenter(Centre centre) async {
 
-    authProvider = Provider.of<AuthProvider>(context, listen: false);
-    token = authProvider.token;
-    print('CENTER ID: ${centre.id}');
+    if(await utilities.isConnectionAvailable()){
 
-    final url =
-    Uri.parse("${baseUrl}api/centers/${utilities.extractLastNumber(centre.id)}");
-    //final headers = {'Content-Type': 'application/json'};
+      authProvider = Provider.of<AuthProvider>(context, listen: false);
+      token = authProvider.token;
+      print('CENTER ID: ${centre.id}');
 
-    final headers = {
-      'Content-Type': 'application/merge-patch+json',
-      'Authorization': 'Bearer $token'
-    };
+      final url =
+      Uri.parse("${baseUrl}api/centers/${utilities.extractLastNumber(centre.id)}");
+      //final headers = {'Content-Type': 'application/json'};
 
-    try {
+      final headers = {
+        'Content-Type': 'application/merge-patch+json',
+        'Authorization': 'Bearer $token'
+      };
+
       String jsonSpec = jsonEncode(centre.toJson());
-      print('Request Body: $jsonSpec');
+
       final response = await http.patch(url, headers: headers, body: jsonSpec);
       print(response.statusCode);
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonResponse = json.decode(response.body);
-        print('ERRRR: $jsonResponse');
+
 
         if (jsonResponse.containsKey('error')) {
           utilities.error('Centre déja existant');
@@ -206,11 +214,10 @@ class AdminRepository{
         throw Exception(
             '-- Failed to add user. HTTP Status Code: ${response.statusCode}');
       }
-    } catch (e, exception) {
-      // Gestion des erreurs autres que HTTP
-      utilities.error("Il y a une erreur de connexion\nVérifiez votre connexion ou ressayer ultérieurement !");
-      print('EXCPEPT: $exception');
-      throw e;
+
+    }else{
+
+      utilities.handleConnectionError(ConnectionError("Une erreur de connexion s'est produite!"));
     }
   }
 
@@ -221,21 +228,23 @@ class AdminRepository{
 
   Future<void> deleteSpecialite(String idSpec) async {
 
-    authProvider = Provider.of<AuthProvider>(context, listen: false);
-    token = authProvider.token;
+    if(await utilities.isConnectionAvailable()){
 
-    final url =
-    Uri.parse("${baseUrl}api/specialities/${utilities.extractLastNumber(idSpec)}");
-    //final headers = {'Content-Type': 'application/merge-patch+json'};
 
-    print('URL DELETE: $url');
+      authProvider = Provider.of<AuthProvider>(context, listen: false);
+      token = authProvider.token;
 
-    final headers = {
-      'Content-Type': 'application/merge-patch+json',
-      'Authorization': 'Bearer $token'
-    };
+      final url =
+      Uri.parse("${baseUrl}api/specialities/${utilities.extractLastNumber(idSpec)}");
+      //final headers = {'Content-Type': 'application/merge-patch+json'};
 
-    try {
+      print('URL DELETE: $url');
+
+      final headers = {
+        'Content-Type': 'application/merge-patch+json',
+        'Authorization': 'Bearer $token'
+      };
+
       final response = await http.delete(url, headers: headers);
       print(response.statusCode);
       print('RESP: ${response.body}');
@@ -255,12 +264,13 @@ class AdminRepository{
           utilities.error('Il y a une erreur.\n Veuillez ressayer ulterieurement.');
         }
       }
-    } catch (e, exception) {
-      // Gestion des erreurs autres que HTTP
-      utilities.error("Il y a une erreur de connexion\nVérifiez votre connexion ou ressayer ultérieurement !");
-      print('EXCPEPT: $exception');
-      throw Exception('-- CATCH Failed to add user. Error: $e');
+
+    }else{
+
+      utilities.handleConnectionError(ConnectionError("Une erreur de connexion s'est produite!"));
     }
+
+
   }
 
 
@@ -269,26 +279,27 @@ class AdminRepository{
 
   Future<void> addSpecialite(Specialite specialite) async {
 
-    authProvider = Provider.of<AuthProvider>(context, listen: false);
-    token = authProvider.token;
+    if(await utilities.isConnectionAvailable()){
 
-    final url = Uri.parse("${baseUrl}api/specialities");
-    //final headers = {'Content-Type': 'application/json'};
+      authProvider = Provider.of<AuthProvider>(context, listen: false);
+      token = authProvider.token;
 
-    final headers = {
-      'Content-Type': 'application/ld+json',
-      'Authorization': 'Bearer $token'
-    };
+      final url = Uri.parse("${baseUrl}api/specialities");
+      //final headers = {'Content-Type': 'application/json'};
 
-    try {
+      final headers = {
+        'Content-Type': 'application/ld+json',
+        'Authorization': 'Bearer $token'
+      };
+
       String jsonSpec = jsonEncode(specialite.toJson());
-      print('Request Body: $jsonSpec');
+
       final response = await http.post(url, headers: headers, body: jsonSpec);
       print(response.statusCode);
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonResponse = json.decode(response.body);
-        print('ERRRR: $jsonResponse');
+
 
         if (jsonResponse.containsKey('error')) {
           utilities.error('Specialite déja existant');
@@ -301,12 +312,12 @@ class AdminRepository{
           utilities.error('Il y a une erreur.\n Veuillez ressayer ulterieurement.');
         }
       }
-    } catch (e, exception) {
-      // Gestion des erreurs autres que HTTP
-      utilities.error("Il y a une erreur de connexion\nVérifiez votre connexion ou ressayer ultérieurement !");
-      print('EXCPEPT: $exception');
-      throw Exception('-- CATCH Failed to add user. Error: $e');
+
+    }else{
+
+      utilities.handleConnectionError(ConnectionError("Une erreur de connexion s'est produite!"));
     }
+
   }
 
 
@@ -316,27 +327,28 @@ class AdminRepository{
   Future<void> updateSpecialite(Specialite specialite) async {
 
 
-    authProvider = Provider.of<AuthProvider>(context, listen: false);
-    token = authProvider.token;
+    if(await utilities.isConnectionAvailable()){
 
-    final url = Uri.parse(
-        "${baseUrl}api/specialities/${utilities.extractLastNumber(specialite.id)}");
-    //final headers = {'Content-Type': 'application/json'};
+      authProvider = Provider.of<AuthProvider>(context, listen: false);
+      token = authProvider.token;
 
-    final headers = {
-      'Content-Type': 'application/merge-patch+json',
-      'Authorization': 'Bearer $token'
-    };
+      final url = Uri.parse(
+          "${baseUrl}api/specialities/${utilities.extractLastNumber(specialite.id)}");
+      //final headers = {'Content-Type': 'application/json'};
 
-    try {
+      final headers = {
+        'Content-Type': 'application/merge-patch+json',
+        'Authorization': 'Bearer $token'
+      };
+
       String jsonSpec = jsonEncode(specialite.toJson());
-      print('Request Body: $jsonSpec');
+
       final response = await http.patch(url, headers: headers, body: jsonSpec);
       print(response.statusCode);
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonResponse = json.decode(response.body);
-        print('ERRRR: $jsonResponse');
+
 
         if (jsonResponse.containsKey('error')) {
           utilities.error('Specialite déja existant');
@@ -349,12 +361,12 @@ class AdminRepository{
         throw Exception(
             '-- Failed to add user. HTTP Status Code: ${response.statusCode}');
       }
-    } catch (e, exception) {
-      // Gestion des erreurs autres que HTTP
-      utilities.error("Il y a une erreur de connexion\nVérifiez votre connexion ou ressayer ultérieurement !");
-      print('EXCPEPT: $exception');
-      throw e;
+
+    }else{
+
+      utilities.handleConnectionError(ConnectionError("Une erreur de connexion s'est produite!"));
     }
+
   }
 
 
@@ -366,22 +378,24 @@ class AdminRepository{
 
   Future<void> updateMedecin(Utilisateur medecin) async {
 
+    if(await utilities.isConnectionAvailable()){
 
 
-    authProvider = Provider.of<AuthProvider>(context, listen: false);
-    token = authProvider.token;
+      authProvider = Provider.of<AuthProvider>(context, listen: false);
+      token = authProvider.token;
 
-    final url =
-    Uri.parse("${baseUrl}api/users/${utilities.extractLastNumber(medecin.id)}");
-    //final headers = {'Content-Type': 'application/json'};
+      final url =
+      Uri.parse("${baseUrl}api/users/${utilities.extractLastNumber(medecin.id)}");
+      //final headers = {'Content-Type': 'application/json'};
 
-    final headers = {
-      'Content-Type': 'application/merge-patch+json',
-      'Authorization': 'Bearer $token'
-    };
+      final headers = {
+        'Content-Type': 'application/merge-patch+json',
+        'Authorization': 'Bearer $token'
+      };
 
-    try {
       String jsonSpec = jsonEncode(medecin.toJson());
+
+
       print('Request Body: $jsonSpec');
       final response = await http.patch(url, headers: headers, body: jsonSpec);
       print(response.statusCode);
@@ -411,13 +425,11 @@ class AdminRepository{
         throw Exception(
             '-- Failed to add user. HTTP Status Code: ${response.statusCode}');
       }
-    } catch (e, stackTrace) {
-      // Gestion des erreurs autres que HTTP
-      utilities.error("Il y a une erreur de connexion\nVérifiez votre connexion ou ressayer ultérieurement !");
-      //error('Erreur de connexion ou voir ceci: $e');
-      print('CATCH: $e,\n EXCPEPT: $stackTrace');
-      throw e;
+    }else{
+
+      utilities.handleConnectionError(ConnectionError("Une erreur de connexion s'est produite!"));
     }
+
   }
 
 
@@ -426,22 +438,24 @@ class AdminRepository{
 
   Future<void> addMedecin(Utilisateur medecin) async {
 
+    if(await utilities.isConnectionAvailable()){
 
-    authProvider = Provider.of<AuthProvider>(context, listen: false);
-    token = authProvider.token;
 
-    authProvider = Provider.of<AuthProvider>(context, listen: false);
-    token = authProvider.token;
+      authProvider = Provider.of<AuthProvider>(context, listen: false);
+      token = authProvider.token;
 
-    final url = Uri.parse("${baseUrl}api/users");
-    //final headers = {'Content-Type': 'application/json'};
+      authProvider = Provider.of<AuthProvider>(context, listen: false);
+      token = authProvider.token;
 
-    final headers = {
-      'Content-Type': 'application/ld+json',
-      'Authorization': 'Bearer $token'
-    };
+      final url = Uri.parse("${baseUrl}api/users");
+      //final headers = {'Content-Type': 'application/json'};
 
-    try {
+      final headers = {
+        'Content-Type': 'application/ld+json',
+        'Authorization': 'Bearer $token'
+      };
+
+
       String jsonSpec = jsonEncode(medecin.toJson());
       print('Request Body: $jsonSpec');
       final response = await http.post(url, headers: headers, body: jsonSpec);
@@ -463,12 +477,12 @@ class AdminRepository{
           utilities.error('Il y a une erreur.\n Veuillez ressayer ulterieurement.');
         }
       }
-    } catch (e, exception) {
-      // Gestion des erreurs autres que HTTP
-      utilities.error("Il y a une erreur de connexion\nVérifiez votre connexion ou ressayer ultérieurement !");
-      print('EXCPEPT: $exception');
-      throw Exception('-- CATCH Failed to add user. Error: $e');
+
+    }else{
+
+      utilities.handleConnectionError(ConnectionError("Une erreur de connexion s'est produite!"));
     }
+
   }
 
 
@@ -476,28 +490,30 @@ class AdminRepository{
 
   Future<void> deleteMedecin(Medecin medecin) async {
 
-    authProvider = Provider.of<AuthProvider>(context, listen: false);
-    token = authProvider.token;
 
-    final url =
-    Uri.parse("${baseUrl}api/users/${utilities.extractLastNumber(medecin.id)}");
-    //final headers = {'Content-Type': 'application/merge-patch+json'};
+    if(await utilities.isConnectionAvailable()){
 
-    print('URL DELETE: $url');
+      authProvider = Provider.of<AuthProvider>(context, listen: false);
+      token = authProvider.token;
 
-    final headers = {
-      'Content-Type': 'application/merge-patch+json',
-      'Authorization': 'Bearer $token'
-    };
+      final url =
+      Uri.parse("${baseUrl}api/users/${utilities.extractLastNumber(medecin.id)}");
+      //final headers = {'Content-Type': 'application/merge-patch+json'};
 
-    try {
+      print('URL DELETE: $url');
+
+      final headers = {
+        'Content-Type': 'application/merge-patch+json',
+        'Authorization': 'Bearer $token'
+      };
+
+
       final response = await http.delete(url, headers: headers);
       print(response.statusCode);
-      print('RESP: ${response.body}');
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonResponse = json.decode(response.body);
-        print('ERRRR: $jsonResponse');
+
 
         if (jsonResponse.containsKey('error')) {
           utilities.error('Il y a une erreur de connexion');
@@ -510,34 +526,32 @@ class AdminRepository{
           utilities.error('Il y a une erreur.\n Veuillez ressayer ulterieurement.');
         }
       }
-    } catch (e, exception) {
-      // Gestion des erreurs autres que HTTP
-      utilities.error("Il y a une erreur de connexion\nVeuillez ressayer ulterierement ou verifiez votre connexion!");
-      print('EXCPEPT: $exception');
-      throw Exception('-- CATCH Failed to add user. Error: $e');
+    }else{
+
+      utilities.handleConnectionError(ConnectionError("Une erreur de connexion s'est produite!"));
     }
+
   }
 
 
 
   Future<void> UserUpdate(Utilisateur utilisateur) async {
-    final url = Uri.parse(
-        "${baseUrl}api/users/${utilities.extractLastNumber(utilisateur.id)}");
-    //final headers = {'Content-Type': 'application/json'};
 
-    final headers = {'Content-Type': 'application/merge-patch+json'};
+    if(await utilities.isConnectionAvailable()){
 
-    print('URL: $url');
+      final url = Uri.parse(
+          "${baseUrl}api/users/${utilities.extractLastNumber(utilisateur.id)}");
+      //final headers = {'Content-Type': 'application/json'};
 
-    try {
+      final headers = {'Content-Type': 'application/merge-patch+json'};
+
       String jsonUser = jsonEncode(utilisateur.toJson());
-      print('Request Body: $jsonUser');
+
       final response = await http.patch(url, headers: headers, body: jsonUser);
       print(response.statusCode);
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonResponse = json.decode(response.body);
-        print('ERRRR: $jsonResponse');
 
         if (jsonResponse.containsKey('error')) {
           utilities.error('Erreur de modification');
@@ -556,15 +570,11 @@ class AdminRepository{
         throw Exception(
             '-- Failed to add user. HTTP Status Code: ${response.statusCode}');
       }
-    } catch (e, exception) {
-      if (e is http.ClientException) {
-        utilities.ErrorConnexion();
-      } else {
-        // Gérer d'autres exceptions
-        print('Une erreur inattendue s\'est produite: $e');
-      }
-      throw Exception('-- CATCH Failed to add user. Error: $e');
+
+    }else{
+      utilities.handleConnectionError(ConnectionError("Une erreur de connexion s'est produite!"));
     }
+
   }
 
 
