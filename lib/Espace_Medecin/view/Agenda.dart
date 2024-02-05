@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_calendar/calendar.dart';
 import 'package:med_scheduler_front/Medecin.dart';
 import 'package:med_scheduler_front/CustomAppointment.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 import 'dart:async';
 import 'package:med_scheduler_front/AuthProvider.dart';
 import 'package:provider/provider.dart';
@@ -17,12 +15,12 @@ import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:device_calendar/device_calendar.dart';
-import 'package:med_scheduler_front/main.dart';
 import 'package:med_scheduler_front/Utilitie/Utilities.dart';
 import 'package:med_scheduler_front/Repository/MedecinRepository.dart';
 import 'package:med_scheduler_front/Repository/BaseRepository.dart';
 import 'package:med_scheduler_front/Utilisateur.dart';
 import 'package:med_scheduler_front/AuthProviderUser.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class Agenda extends StatefulWidget {
   @override
@@ -569,14 +567,27 @@ class AgendaState extends State<Agenda> {
                     )),
                 const Spacer(),
                 Padding(
-                  padding: const EdgeInsets.only(right: 15, top: 20),
-                  child: Image.asset(
-                    'assets/images/Medhome.png',
-                    fit: BoxFit.cover,
-                    width: 50,
-                    height: 50,
-                  ),
-                )
+                    padding: const EdgeInsets.only(right: 15, top: 20),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(60),
+                      child: Container(
+                        width: 60,
+                        height: 60,
+                        child: CachedNetworkImage(
+                          imageUrl: '$baseUrl${utilities!.ajouterPrefixe(user!.imageName!)}',
+                          placeholder: (context, url) =>
+                              CircularProgressIndicator(
+                            color: Colors.redAccent,
+                          ), // Affiche un indicateur de chargement en attendant l'image
+                          errorWidget: (context, url, error) => Image.asset(
+                            'assets/images/Medhome.png',
+                            fit: BoxFit.cover,
+                            width: 50,
+                            height: 50,
+                          ), // Affiche une icône d'erreur si le chargement échoue
+                        ),
+                      ),
+                    ))
               ],
             ),
             Padding(
@@ -707,7 +718,6 @@ class AgendaState extends State<Agenda> {
                                             ),
                                             Padding(
                                               padding: const EdgeInsets.only(
-
                                                   bottom: 10),
                                               child: ElevatedButton(
                                                 style: ButtonStyle(
@@ -766,7 +776,6 @@ class AgendaState extends State<Agenda> {
                                             ),
                                             Padding(
                                               padding: const EdgeInsets.only(
-
                                                   bottom: 10),
                                               child: ElevatedButton(
                                                 style: ButtonStyle(

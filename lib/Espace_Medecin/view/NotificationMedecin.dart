@@ -64,19 +64,15 @@ class _NotificationMedecinState extends State<NotificationMedecin> {
 
   Future<List<CustomAppointment>> filterAppointments(
       Future<List<CustomAppointment>> appointmentsFuture) async {
-    print('FILTER');
+
     List<CustomAppointment> allAppointments = await appointmentsFuture;
 
-    print('ALL APPOINTS: ${allAppointments.length}');
-    print('DATE: ${DateFormat('yyyy-MM-dd').format(DateTime(1970, 1, 26))}');
 
     // Filtrer les rendez-vous avec startAt égal à DateTime.now()
     List<CustomAppointment> filteredAppointments = allAppointments
         .where((appointment) =>
             isToday(appointment.startAt, appointment.timeStart))
         .toList();
-    print('SIZE FILTER: ${filteredAppointments.length}');
-
 
 
     return filteredAppointments;
@@ -90,7 +86,7 @@ class _NotificationMedecinState extends State<NotificationMedecin> {
 
     if (match != null) {
       String val = match.group(0)!;
-    print('VAL: $val');
+
     return val;
     } else {
     // Aucun nombre trouvé dans la chaîne

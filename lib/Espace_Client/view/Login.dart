@@ -78,7 +78,6 @@ class _LoginState extends State<Login> {
           Map<String, dynamic> payload = Jwt.parseJwt(token);
 
           int idUser = payload['id'];
-          print('ID USER INDEXED: $idUser');
 
           Utilisateur utilisateur =
               await baseRepository!.getUserById(idUser, token);
@@ -103,7 +102,7 @@ class _LoginState extends State<Login> {
           isLoading = false;
         });
         // Gestion des erreurs HTTP
-        print('ERROR');
+
         utilities!.loginFailed();
         //throw Exception('-- Failed to get user. HTTP Status Code: ${response.statusCode}');
       }
@@ -112,7 +111,6 @@ class _LoginState extends State<Login> {
         isLoading = false;
       });
       // Gestion des erreurs autres que HTTP
-      print('ERROR CONNEXION');
       utilities!.ErrorConnexion();
       throw Exception('-- Failed to get user. Error: $e\n STACK: $stacktrace');
     }
@@ -122,47 +120,13 @@ class _LoginState extends State<Login> {
   void didChangeDependencies() {
     // TODO: implement didChangeDependencies
     super.didChangeDependencies();
-    print('DID OO: $isLoading');
 
     setState(() {
       isLoading = isLoading;
     });
-    print('FARANY DID OO: $isLoading');
+
   }
 
-  void errorConnexion(String description) {
-    AwesomeDialog(
-      context: context,
-      dialogBackgroundColor: Colors.redAccent,
-      dialogType: DialogType.info,
-      btnCancelColor: Colors.grey,
-      animType: AnimType.rightSlide,
-      titleTextStyle: const TextStyle(letterSpacing: 2, color: Colors.white),
-      descTextStyle: TextStyle(
-          letterSpacing: 2, color: Colors.white.withOpacity(0.8), fontSize: 16),
-      title: 'Erreur de connexion',
-      desc: '$description',
-      btnCancelOnPress: () {},
-      btnOkOnPress: () {},
-    ).show();
-  }
-
-  void error(String description) {
-    AwesomeDialog(
-      dialogBackgroundColor: Colors.redAccent,
-      btnCancelColor: Colors.grey,
-      titleTextStyle: const TextStyle(letterSpacing: 2, color: Colors.white),
-      descTextStyle: TextStyle(
-          letterSpacing: 2, color: Colors.white.withOpacity(0.8), fontSize: 16),
-      context: context,
-      dialogType: DialogType.info,
-      animType: AnimType.rightSlide,
-      title: 'Erreur',
-      desc: '$description',
-      btnCancelOnPress: () {},
-      btnOkOnPress: () {},
-    ).show();
-  }
 
   TextEditingController passwordController = TextEditingController();
   TextEditingController identifiantController = TextEditingController();
@@ -339,7 +303,7 @@ class _LoginState extends State<Login> {
                         style: TextStyle(color: Colors.redAccent),
                       ),
                       onPressed: () {
-                        print('Inscription');
+
 
                         Navigator.push(
                             context,
@@ -462,7 +426,6 @@ class _LoginState extends State<Login> {
 
   @override
   Widget build(BuildContext context) {
-    print('LOADING IS: $isLoading');
 
     return PopScope(
       canPop: false,
@@ -688,7 +651,7 @@ class _LoginState extends State<Login> {
   }
 
   void Connecter() {
-    print('IS LOADING: $isLoading');
+
     FocusScope.of(context).unfocus();
 
     if (identifiantController.text != "" && passwordController.text != "") {
@@ -710,25 +673,21 @@ class _LoginState extends State<Login> {
             getUserByUsernameAndPassword(email, motdepasse);
 
 
-            print('IS LOADING: $isLoading');
+
           } else {
             utilities!.emailInvalide();
 
 
-            print('IS LOADING: $isLoading');
           }
         }
       } else {
         utilities!.emailInvalide();
 
 
-        print('IS LOADING: $isLoading');
       }
     } else {
       utilities!.ChampsIncomplets();
 
-
-      print('IS LOADING: $isLoading');
     }
   }
 

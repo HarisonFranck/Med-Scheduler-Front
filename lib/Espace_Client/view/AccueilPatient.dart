@@ -5,8 +5,6 @@ import 'dart:math';
 import 'package:icons_plus/icons_plus.dart';
 import 'PriseDeRendezVous.dart';
 import 'package:med_scheduler_front/Utilisateur.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 import 'package:med_scheduler_front/AuthProvider.dart';
 import 'package:provider/provider.dart';
 import 'package:med_scheduler_front/Specialite.dart';
@@ -16,7 +14,6 @@ import 'package:jwt_decode/jwt_decode.dart';
 import 'package:med_scheduler_front/Centre.dart';
 import 'AppointmentDetails.dart';
 import 'package:intl/intl.dart';
-import 'package:med_scheduler_front/main.dart';
 import 'package:med_scheduler_front/UrlBase.dart';
 import 'package:med_scheduler_front/Patient.dart';
 import 'package:timezone/data/latest.dart' as tz;
@@ -27,6 +24,7 @@ import 'package:med_scheduler_front/Repository/UserRepository.dart';
 import 'package:med_scheduler_front/Repository/BaseRepository.dart';
 import 'package:med_scheduler_front/Utilitie/Utilities.dart';
 import 'package:med_scheduler_front/AuthProviderUser.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class AccueilPatient extends StatefulWidget {
 
@@ -73,8 +71,7 @@ class _AccueilPatientState extends State<AccueilPatient> {
       return moreMedecins;
     } catch (e) {
       // Gérez les erreurs de chargement de données supplémentaires ici
-      print('Erreur lors du chargement de données supplémentaires: $e');
-      return []; // ou lancez une exception appropriée selon votre logique
+     return []; // ou lancez une exception appropriée selon votre logique
     }
   }
 
@@ -157,11 +154,9 @@ class _AccueilPatientState extends State<AccueilPatient> {
 
           }
 
-          print('-- FINISHED --');
         });
       }
     } catch (e, stackTrace) {
-      print(' -- ERROR E: $e \n -- STACK: $stackTrace');
     }
   }
 
@@ -182,9 +177,7 @@ class _AccueilPatientState extends State<AccueilPatient> {
     utilities = Utilities(context: context);
     userRepository = UserRepository(context: context, utilities: utilities!);
 
-
-    print('-- INIT --');
-    WidgetsFlutterBinding.ensureInitialized();
+WidgetsFlutterBinding.ensureInitialized();
 
   }
 
@@ -209,13 +202,7 @@ class _AccueilPatientState extends State<AccueilPatient> {
           appointment.timeStart.hour,
           appointment.timeStart.minute,
           appointment.timeStart.second);
-      DateTime endDate = DateTime(
-          appointment.startAt.year,
-          appointment.startAt.month,
-          appointment.startAt.day,
-          appointment.timeEnd.hour,
-          appointment.timeEnd.minute,
-          appointment.timeEnd.second);
+
 
       if (startDate.isAfter(now) &&
           isInCurrentWeek(startDate, rendezVousList.elementAt(i).timeStart)) {
@@ -272,7 +259,6 @@ class _AccueilPatientState extends State<AccueilPatient> {
   List<CustomAppointment> filterAppointmentsForCurrentWeek(
       List<CustomAppointment> appointmentFuture) {
     DateTime now = DateTime.now();
-    DateTime startOfWeek = DateTime(now.year, now.month, now.day);
 
     List<CustomAppointment> filteredAppointments = [];
 
@@ -299,51 +285,6 @@ class _AccueilPatientState extends State<AccueilPatient> {
     return filteredAppointments;
   }
 
-  Future<Specialite> getSpecialite(String uri) async {
-    final url = Uri.parse("https://dev-api-medscheduler.raketa.mg$uri");
-
-    final headers = {'Authorization': 'Bearer $token'};
-
-    try {
-      final response = await http.get(url, headers: headers);
-
-      if (response.statusCode == 200) {
-        final jsonData = jsonDecode(response.body);
-
-        Specialite specialite = Specialite.fromJson(jsonData);
-
-        return specialite;
-      } else {
-
-        if (response.statusCode == 401) {
-          authProvider.logout();
-          Navigator.pushReplacement(
-              context, MaterialPageRoute(builder: (context) => const MyApp()));
-        }
-        // Gestion des erreurs HTTP
-        throw Exception(
-            '-- Erreur d\'obtention des données\n vérifier votre connexion internet.');
-      }
-    } catch (e) {
-      //print('Error: $e \nStack trace: $stackTrace');
-      throw Exception(
-          '-- Erreur de connexion.\n Veuillez vérifier votre connexion internet !');
-    }
-  }
-
-  String extractLastNumber(String input) {
-    RegExp regExp = RegExp(r'\d+$');
-    Match? match = regExp.firstMatch(input);
-
-    if (match != null) {
-      String val = match.group(0)!;
-
-      return val;
-    } else {
-      // Aucun nombre trouvé dans la chaîne
-      throw const FormatException("Aucun nombre trouvé dans la chaîne.");
-    }
-  }
 
 
   //Fonction pour stocker les categories trouvés
@@ -385,7 +326,10 @@ class _AccueilPatientState extends State<AccueilPatient> {
     baseRepository = BaseRepository(context: context, utilities: utilities!);
     user = Provider.of<AuthProviderUser>(context).utilisateur;
     initializeCalendar();
-    getAll();
+    if(mounted){
+      getAll();
+    }
+
   }
 
   String abbreviateName(String fullName) {
@@ -761,9 +705,6 @@ class _AccueilPatientState extends State<AccueilPatient> {
   List<Centre> listCenter = [];
   List<Specialite> listSpec = [];
 
-  String center = "Analamahintsy";
-  String spec = "Dermatologue";
-
   Specialite? speciality;
   Centre? centre;
 
@@ -814,13 +755,30 @@ class _AccueilPatientState extends State<AccueilPatient> {
                             )),
                         const Spacer(),
                         Padding(
-                          padding: const EdgeInsets.only(right: 15, top: 20),
-                          child: Image.asset(
-                            'assets/images/Medhome.png',
-                            fit: BoxFit.cover,
-                            width: 50,
-                            height: 50,
-                          ),
+                            padding: const EdgeInsets.only(right: 15, top: 20),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(60),
+                              child: Container(
+                                width: 60,
+                                height: 60,
+                                child: CachedNetworkImage(
+                                  imageUrl:
+                                  '$baseUrl${user!.imageName}',
+                                  placeholder: (context, url) =>
+                                      CircularProgressIndicator(
+                                        color: Colors.redAccent,
+                                      ), // Affiche un indicateur de chargement en attendant l'image
+                                  errorWidget:
+                                      (context, url, error) =>
+                                      Image.asset(
+                                        'assets/images/Medhome.png',
+                                        fit: BoxFit.cover,
+                                        width: 50,
+                                        height: 50,
+                                      ),// Affiche une icône d'erreur si le chargement échoue
+                                ),
+                              ),
+                            )
                         )
                       ],
                     ),
@@ -864,7 +822,6 @@ class _AccueilPatientState extends State<AccueilPatient> {
                             setState(() {
                               searchLastName.text = nom;
                               medecinsFuture = userRepository!.getAllMedecin(currentPage,searchLastName.text,searchCenter.text,searchSpecialite.text,searchLocation.text);
-                              print('LASTNAME: ${searchLastName.text}');
                             });
                           }
                         },
@@ -1015,8 +972,7 @@ class _AccueilPatientState extends State<AccueilPatient> {
                                 medecinsFuture = userRepository!.getAllMedecin(currentPage,searchLastName.text,searchCenter.text,searchSpecialite.text,searchLocation.text);
                               }
                             });
-                            print('isLocation: $isLocation');
-                          },
+                         },
                           child: Column(
                             children: [
                               ClipRRect(
@@ -1069,7 +1025,6 @@ class _AccueilPatientState extends State<AccueilPatient> {
                               searchSpecialite.text = "";
                               centre = newval!;
                               searchCenter.text = centre!.label;
-                              print('CENTER CLICKED: ${searchCenter.text}');
 
                               medecinsFuture = userRepository!.getAllMedecin(currentPage,searchLastName.text,searchCenter.text,searchSpecialite.text,searchLocation.text);
                             });
@@ -1135,9 +1090,7 @@ class _AccueilPatientState extends State<AccueilPatient> {
                                 searchCenter.text = "";
                                 speciality = newval!;
                                 searchSpecialite.text = speciality!.label;
-                                print(
-                                    ' SPEC CLICKED: ${searchSpecialite.text}');
-                                medecinsFuture = userRepository!.getAllMedecin(currentPage,searchLastName.text,searchCenter.text,searchSpecialite.text,searchLocation.text);
+                               medecinsFuture = userRepository!.getAllMedecin(currentPage,searchLastName.text,searchCenter.text,searchSpecialite.text,searchLocation.text);
 
                               });
                             },
@@ -1266,8 +1219,7 @@ class _AccueilPatientState extends State<AccueilPatient> {
                               List<Medecin> medecins = medecinsSnapshot.data!;
 
                               if (medecins.isEmpty) {
-                                print('NOTHING');
-                                return Padding(
+                               return Padding(
                                     padding: const EdgeInsets.only(
                                         right: 18,
                                         left: 18,
@@ -1318,8 +1270,7 @@ class _AccueilPatientState extends State<AccueilPatient> {
                                     if (scrollInfo is ScrollEndNotification &&
                                         scrollController.position.extentAfter ==
                                             0) {
-                                      print('-- FARANY --');
-                                      // L'utilisateur a atteint la fin de la liste, chargez plus de données
+                                     // L'utilisateur a atteint la fin de la liste, chargez plus de données
                                       loadMoreData();
                                     }
                                     return false;

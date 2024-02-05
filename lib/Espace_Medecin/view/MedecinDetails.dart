@@ -4,27 +4,22 @@ import 'package:med_scheduler_front/main.dart';
 import 'dart:io';
 import 'package:provider/provider.dart';
 import 'package:med_scheduler_front/AuthProvider.dart';
-import 'package:image_picker/image_picker.dart';
 import 'dart:async';
 import 'dart:typed_data';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:image/image.dart' as img;
 import 'package:uuid/uuid.dart';
 import 'package:med_scheduler_front/UrlBase.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
 import 'IndexAcceuilMedecin.dart';
 import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
 import 'package:med_scheduler_front/Centre.dart';
-import 'ModificationPassword.dart';
-import 'package:med_scheduler_front/UtilisateurNewPassword.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:med_scheduler_front/Repository/BaseRepository.dart';
 import 'package:med_scheduler_front/Repository/MedecinRepository.dart';
 import 'package:med_scheduler_front/Utilitie/Utilities.dart';
 import 'package:med_scheduler_front/AuthProviderUser.dart';
 import 'UpdateMedecin.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class MedecinDetails extends StatefulWidget {
   @override
@@ -337,6 +332,8 @@ class _MedecinDetailsState extends State<MedecinDetails> {
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
+    print('IMG: $baseUrl${user!.imageName}');
+
     return PopScope(
       canPop: false,
       child: Scaffold(
@@ -395,29 +392,31 @@ class _MedecinDetailsState extends State<MedecinDetails> {
                             Row(
                               children: [
                                 Padding(
-                                  padding: const EdgeInsets.only(
-                                      top: 20, left: 30, bottom: 50),
+                                  padding: const EdgeInsets.only(left:30, top: 20,bottom: 50),
                                   child: ClipRRect(
                                     borderRadius: BorderRadius.circular(60),
                                     child: Container(
-                                        width: 120,
-                                        height: 120,
-                                        decoration: BoxDecoration(
-                                          borderRadius:
-                                              BorderRadius.circular(60),
-                                        ),
-                                        child: ((profilImage != null) &&
-                                                profilImage!.existsSync())
-                                            ? Image.file(
-                                                profilImage!,
-                                                fit: BoxFit.fill,
-                                              )
-                                            :Image.asset(
-                                      'assets/images/medecin.png',
-                                      fit: BoxFit.fill,
-                                    )),
-                                  ),
-                                ),
+                                      width: 120,
+                                      height: 120,
+                                      child: CachedNetworkImage(
+                                        imageUrl:
+                                        '$baseUrl${utilities!.ajouterPrefixe(user!.imageName!)}',
+                                        placeholder: (context, url) =>
+                                            CircularProgressIndicator(
+                                              color: Colors.redAccent,
+                                            ), // Affiche un indicateur de chargement en attendant l'image
+                                        errorWidget:
+                                            (context, url, error) =>
+                                            Image.asset(
+                                              'assets/images/medecin.png',
+                                              fit: BoxFit.cover,
+                                              width: 50,
+                                              height: 50,
+                                            ),// Affiche une icône d'erreur si le chargement échoue
+                                      ),
+                                    ),
+                                  )
+                              ),
                                 const Spacer()
                               ],
                             ),

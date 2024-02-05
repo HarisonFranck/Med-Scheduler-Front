@@ -21,28 +21,20 @@ class Utilities {
   }
 
   void error(String description) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
-          title: const Text('Error'),
-          content: Text(
-            '$description.',
-            textScaleFactor: 1.5,
-            style: const TextStyle(color: Colors.red),
-            textAlign: TextAlign.center,
-          ),
-        );
-      },
-    );
+    AwesomeDialog(
 
-    // Fermer la boîte de dialogue après 5 secondes
-    Future.delayed(const Duration(seconds: 5), () {
-      Navigator.of(context).pop();
-    });
+      context: context,
+      dialogBackgroundColor: Colors.redAccent,
+      dialogType: DialogType.info,
+      btnCancelColor: Colors.grey,
+      animType: AnimType.rightSlide,
+      titleTextStyle: const TextStyle(letterSpacing: 2,color: Colors.white),
+      descTextStyle: TextStyle(letterSpacing: 2,color: Colors.white.withOpacity(0.8),fontSize: 16),
+      title: 'Taille de l\'image trop grande',
+      desc: '$description',
+      btnCancelOnPress: () {},
+      btnOkOnPress: () {},
+    ).show();
   }
 
   void UpdateCenter() {
@@ -464,6 +456,22 @@ class Utilities {
       // La chaîne ne commence pas par le préfixe attendu
       return fullPath;
     }
+  }
+
+
+  String extraireNomFichier(String url) {
+    // Extraire le nom du fichier de l'URL
+    return url.substring(url.lastIndexOf('/') + 1);
+  }
+
+
+  String ajouterPrefixe(String chemin) {
+    // Vérifier si le préfixe est déjà présent
+    if (!chemin.startsWith('/images/profiles/')) {
+      // Ajouter le préfixe s'il n'est pas déjà inclus
+      chemin = '/images/profiles/' + chemin;
+    }
+    return chemin;
   }
 
 
