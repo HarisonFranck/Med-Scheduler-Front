@@ -20,7 +20,10 @@ import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:med_scheduler_front/AuthProviderUser.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:med_scheduler_front/AuthProviderUser.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:med_scheduler_front/UtilisateurImage.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:image_cropper/image_cropper.dart';
 
 class AdminDetails extends StatefulWidget {
   _AdminDetailsState createState() => _AdminDetailsState();
@@ -91,58 +94,66 @@ class _AdminDetailsState extends State<AdminDetails> {
 
   File? _profileImageFile;
 
-  Future<List<int>> _resizeImage(String imagePath) async {
-    final bytes = await File(imagePath).readAsBytes();
-    final originalImage = img.decodeImage(Uint8List.fromList(bytes))!;
-
-    // Define la taille maximale souhaitée pour la nouvelle image
-    const int maxSize = 500;
-
-    // Calculer les nouvelles dimensions tout en conservant le rapport hauteur/largeur
-    int newWidth, newHeight;
-    if (originalImage.width > originalImage.height) {
-      newWidth = maxSize;
-      newHeight =
-          (originalImage.height * maxSize / originalImage.width).round();
-    } else {
-      newWidth = (originalImage.width * maxSize / originalImage.height).round();
-      newHeight = maxSize;
-    }
-
-    // Redimensionner l'image
-    final resizedImage =
-        img.copyResize(originalImage, width: newWidth, height: newHeight);
-
-    // Convertir l'image redimensionnée en bytes
-    final resizedBytes = img.encodeJpg(resizedImage, quality: 85);
-
-    return resizedBytes;
-  }
-
-  Future<void> _pickImage(String imageName) async {
-    bool isGranted = await _requestGalleryPermission();
+  Future<File?> resizeImage(File file,
+      {int width = 300, int height = 300}) async {
     try {
-      if (isGranted) {
-        final picker = ImagePicker();
-        final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+      // Lire le fichier image
+      List<int> imageBytes = await file.readAsBytes();
+      img.Image originalImage =
+          img.decodeImage(Uint8List.fromList(imageBytes))!;
 
-        if (pickedFile != null) {
-          AjouterImage(pickedFile, imageName);
-          print('NOT NULL');
+      // Redimensionner l'image
+      img.Image resizedImage =
+          img.copyResize(originalImage, width: width, height: height);
 
-          //AjouterImage(_profileImageFile!);
-        } else {
-          print('Il y a une erreur');
-        }
-      } else {
-        AutorisationParametre();
-      }
+      // Créer un nouveau fichier avec l'image redimensionnée
+      File resizedFile = File('${file.path}_resized.jpg');
+      await resizedFile.writeAsBytes(img.encodeJpg(resizedImage));
+
+      return resizedFile;
     } catch (e) {
-      print('CATCH : $e');
+      print('Erreur lors du redimensionnement de l\'image : $e');
+      return null;
     }
   }
 
-  File? _selectedImage;
+  Future<void> _cropImage(File? file) async {
+    CroppedFile? croppedFile = await ImageCropper().cropImage(
+      sourcePath: file!.path,
+      aspectRatio: CropAspectRatio(ratioX: 1, ratioY: 1),
+      maxWidth: 500,
+      maxHeight: 500,
+      cropStyle: CropStyle.circle,
+      compressQuality: 100,
+      aspectRatioPresets: [CropAspectRatioPreset.ratio3x2],
+      compressFormat: ImageCompressFormat.jpg,
+      uiSettings: [
+        AndroidUiSettings(
+            showCropGrid: false,
+            backgroundColor: Color.fromARGB(1000, 238, 239, 244),
+            toolbarTitle: 'Rogner votre profil',
+            toolbarColor: Color.fromARGB(230, 20, 20, 90),
+            toolbarWidgetColor: Colors.white,
+            initAspectRatio: CropAspectRatioPreset.ratio3x2,
+            lockAspectRatio: true),
+        IOSUiSettings(
+          title: 'Rogner',
+        ),
+        WebUiSettings(
+          context: context,
+        ),
+      ],
+    );
+
+    if (croppedFile != null) {
+      // Faites quelque chose avec le fichier rogné (par exemple, l'envoyer au serveur)
+      print('Chemin du fichier rogné : ${croppedFile.path}');
+
+      File? newFile = File(croppedFile.path);
+
+      UserUpdateImage(newFile, utilisateur);
+    }
+  }
 
   void AutorisationParametre() {
     // L'utilisateur a refusé la permission, afficher un message d'information
@@ -203,9 +214,132 @@ class _AdminDetailsState extends State<AdminDetails> {
     return null;
   }
 
-  Future<void> UserUpdate(Utilisateur utilisateur) async {
+  Future<void> UserUpdateImage(File file, Utilisateur utilisateur) async {
+    authProvider = Provider.of<AuthProvider>(context, listen: false);
+    token = authProvider.token;
 
-    authProviderUser = Provider.of<AuthProviderUser>(context,listen: false);
+    print('TOKEN: $token');
+
+    setState(() {
+      isLoading = true;
+    });
+
+    final url = Uri.parse(
+        "${baseUrl}api/image-profile/${utilities!.extractLastNumber(utilisateur.id)}");
+
+    print('URL PHOTO UPDATE: $url');
+
+    try {
+      // Limiter la taille du fichier à, par exemple, 2 Mo (ajustez selon vos besoins)
+      const maxSizeInBytes = 2 * 1024 * 1024; // 2 Mo
+      if (await file.length() > maxSizeInBytes) {
+        utilities!.error(
+            'La taille du fichier est trop grande. Veuillez sélectionner un fichier plus petit.');
+        return;
+      } else {
+        var request = http.MultipartRequest('POST', url);
+
+        // Ajouter les en-têtes
+        request.headers['Content-Type'] = 'multipart/form-data';
+        request.headers['Authorization'] = 'Bearer $token';
+
+        // Ajouter le fichier au champ de données multipartes
+        var fileStream = http.ByteStream(file.openRead());
+        print('BYTE STREAM: ${fileStream.isBroadcast}');
+        var length = await file.length();
+        var multipartFile = http.MultipartFile('image', fileStream, length,
+            filename: file.path.split('/').last);
+        request.files.add(multipartFile);
+
+        print(
+            'REQUEST FILES: ${request.files.first.field}, ${request.files.first.filename}, ${request.files.first.contentType}');
+
+        // Logs supplémentaires
+        print('Request URL: ${request.url}');
+        print('Request Headers: ${request.headers}');
+        print('File Length: $length');
+        print('File Name: ${file.path.split('/').last}');
+
+        var response = await request.send();
+
+        // Lire la réponse
+        var responseBody = await response.stream.bytesToString();
+        print('Response Status Code: ${response.statusCode}');
+        print('Response Body: $responseBody');
+
+        if (response.statusCode == 200) {
+          setState(() {
+            isLoading = false;
+          });
+          utilities!.ModificationUtilisateur();
+          Map<String, dynamic> map = json.decode(responseBody);
+
+          UtilisateurImage utilisateurImage = UtilisateurImage.fromJson(map);
+          print('IMAGE USER: ${utilisateurImage.imageName}');
+          if (utilisateurImage.imageName != "") {
+            print('NEFA MAKATO');
+            setState(() {
+              utilisateur = Utilisateur(
+                  id: utilisateur.id,
+                  lastName: utilisateur.lastName,
+                  firstName: utilisateur.firstName,
+                  userType: utilisateur.userType,
+                  phone: utilisateur.phone,
+                  password: utilisateur.password,
+                  email: utilisateur.email,
+                  imageName: utilisateurImage.imageName,
+                  category: utilisateur.category,
+                  address: utilisateur.address,
+                  roles: utilisateur.roles,
+                  city: utilisateur.city);
+              authProviderUser.setUser(utilisateur);
+            });
+            print('IMAGE USER: ${utilisateur.imageName}');
+          } else {
+            print('IMAGE USER NULL');
+          }
+
+          setState(() {});
+          final Map<String, dynamic> jsonResponse = json.decode(responseBody);
+
+          if (jsonResponse.containsKey('error')) {
+            utilities!.error('Erreur de modification');
+          } else {
+            setState(() {
+              isLoading = false;
+            });
+          }
+        } else if (response.statusCode == 401) {
+          setState(() {
+            isLoading = false;
+          });
+          authProvider.logout();
+          Navigator.pushReplacement(
+              context, MaterialPageRoute(builder: (context) => const MyApp()));
+        } else {
+          setState(() {
+            isLoading = false;
+          });
+          // Gestion des erreurs HTTP
+          utilities!.ErrorConnexion();
+        }
+      }
+    } catch (e, exception) {
+      setState(() {
+        isLoading = false;
+      });
+      if (e is http.ClientException) {
+        utilities!.ErrorConnexion();
+      } else {
+        // Gérer d'autres exceptions
+        print('Une erreur inattendue s\'est produite: $e');
+      }
+      throw Exception('-- CATCH Failed to add user. Error: $e');
+    }
+  }
+
+  Future<void> UserUpdate(Utilisateur utilisateur) async {
+    authProviderUser = Provider.of<AuthProviderUser>(context, listen: false);
 
     setState(() {
       isLoading = true;
@@ -242,7 +376,7 @@ class _AdminDetailsState extends State<AdminDetails> {
             isLoading = false;
             dataLoaded = false;
           });
-    didChangeDependencies();
+          didChangeDependencies();
         }
       } else {
         setState(() {
@@ -293,35 +427,32 @@ class _AdminDetailsState extends State<AdminDetails> {
   void didChangeDependencies() {
     // TODO: implement didChangeDependencies
     super.didChangeDependencies();
-    authProviderUser = Provider.of<AuthProviderUser>(context,listen: false);
-
+    authProviderUser = Provider.of<AuthProviderUser>(context, listen: false);
 
     user = Provider.of<AuthProviderUser>(context).utilisateur;
     print('DID ZAO');
-    authProvider = Provider.of<AuthProvider>(context,listen: false);
+    authProvider = Provider.of<AuthProvider>(context, listen: false);
     token = authProvider.token;
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       utilisateur = await adminRepository!.getUser(user!.id);
 
-        setState(() {
-          profilImage = (utilisateur.imageName != null)
-              ? File(utilisateur.imageName!)
-              : null;
-          nomController.text = utilisateur.firstName;
-          prenomController.text = utilisateur.lastName;
-          phoneController.text = utilisateur.phone;
-          emailController.text = utilisateur.email;
-          categorieController.text = (utilisateur.category != null)
-              ? categorieSet(utilisateur.category!)
-              : "";
+      setState(() {
+        profilImage = (utilisateur.imageName != null)
+            ? File(utilisateur.imageName!)
+            : null;
+        nomController.text = utilisateur.firstName;
+        prenomController.text = utilisateur.lastName;
+        phoneController.text = utilisateur.phone;
+        emailController.text = utilisateur.email;
+        categorieController.text = (utilisateur.category != null)
+            ? categorieSet(utilisateur.category!)
+            : "";
 
-          EditEmail = false;
-          EditPhone = false;
+        EditEmail = false;
+        EditPhone = false;
 
-      dataLoaded = true;
-        });
-
-
+        dataLoaded = true;
+      });
     });
   }
 
@@ -339,125 +470,6 @@ class _AdminDetailsState extends State<AdminDetails> {
 
   FocusNode nodeEmail = FocusNode();
   FocusNode nodePhone = FocusNode();
-
-  void AjouterImage(XFile xfProfilImage, String imageName) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(6.0),
-          ),
-          title: const Text(
-            'Confirmation',
-            style: TextStyle(letterSpacing: 2),
-            textAlign: TextAlign.center,
-          ),
-          content: Container(
-            padding: const EdgeInsets.only(top: 20),
-            color: Colors.transparent,
-            width: MediaQuery.of(context).size.width - 40,
-            height: MediaQuery.of(context).size.height / 3,
-            child: Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(
-                      top: 10, left: 20, right: 20, bottom: 20),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(60),
-                    child: Container(
-                      decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(60)),
-                      width: 120,
-                      height: 120,
-                      child: ((File(xfProfilImage.path) != null) &&
-                              (File(xfProfilImage.path)!.existsSync()))
-                          ? Image.file(
-                              File(xfProfilImage.path)!,
-                              fit: BoxFit.cover,
-                            )
-                          : const Icon(
-                              Icons.account_circle,
-                            ),
-                    ),
-                  ),
-                ),
-                const Expanded(
-                    child: Text(
-                  'Voulez-vous vraiment enregistrer cette image pour votre profil?',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(letterSpacing: 2),
-                ))
-              ],
-            ),
-          ),
-          scrollable: true,
-          actions: [
-            TextButton(
-              child: const Text(
-                'Annuler',
-                style: TextStyle(
-                    color: Colors.redAccent,
-                    letterSpacing: 2,
-                    fontWeight: FontWeight.w700),
-              ),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-            TextButton(
-              child: const Text(
-                'Confirmer',
-                style: TextStyle(
-                    color: Colors.green,
-                    letterSpacing: 2,
-                    fontWeight: FontWeight.w700),
-              ),
-              onPressed: () async {
-                final appDocumentsDirectory =
-                    await getApplicationDocumentsDirectory();
-                final fileName = '$imageName.jpg';
-                final localCopyFile =
-                    File('${appDocumentsDirectory.path}/$fileName');
-
-                await localCopyFile
-                    .writeAsBytes(await _resizeImage(xfProfilImage.path));
-
-                print('Local copy file path: ${localCopyFile.path}');
-                Utilisateur userInterm = Utilisateur(
-                    id: utilisateur.id,
-                    lastName: utilisateur.lastName,
-                    firstName: utilisateur.firstName,
-                    userType: utilisateur.userType,
-                    phone: utilisateur.phone,
-                    password: utilisateur.password,
-                    email: utilisateur.email,
-                    imageName: localCopyFile.path,
-                    category: utilisateur.category,
-                    address: utilisateur.address,
-                    roles: utilisateur.roles,
-                    createdAt: utilisateur.createdAt,
-                    city: utilisateur.city);
-
-                adminRepository!.UserUpdate(userInterm);
-
-                if (mounted) {
-                  setState(() {
-                    _profileImageFile = localCopyFile;
-                    path.text = _profileImageFile!.path;
-                    profilImage = File(path.text);
-                    print('IMAGE PATH :${path.text}');
-                  });
-                }
-                Navigator.pop(context);
-              },
-            )
-          ],
-        );
-      },
-    );
-  }
 
   void error(String description) {
     showDialog(
@@ -486,12 +498,11 @@ class _AdminDetailsState extends State<AdminDetails> {
 
   @override
   Widget build(BuildContext context) {
-
     return PopScope(
       canPop: false,
       child: Scaffold(
           backgroundColor: const Color.fromARGB(1000, 238, 239, 244),
-          body: (!isLoading&&dataLoaded)
+          body: (!isLoading && dataLoaded)
               ? ListView(
                   children: [
                     Padding(
@@ -545,62 +556,113 @@ class _AdminDetailsState extends State<AdminDetails> {
                             Row(
                               children: [
                                 Padding(
-                                  padding: const EdgeInsets.only(
-                                      top: 20, left: 30, bottom: 50),
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(60),
-                                    child: Container(
-                                        width: 120,
-                                        height: 120,
-                                        decoration: BoxDecoration(
+                                    padding: const EdgeInsets.only(
+                                        top: 20, left: 30, bottom: 50),
+                                    child: Stack(
+                                      children: [
+                                        ClipRRect(
                                           borderRadius:
                                               BorderRadius.circular(60),
-                                        ),
-                                        child: ((profilImage != null) &&
-                                                profilImage!.existsSync())
-                                            ? Image.file(
-                                                profilImage!,
-                                                fit: BoxFit.fill,
-                                              )
-                                            : Stack(
+                                          child: Container(
+                                            width: 120,
+                                            height: 120,
+                                            decoration: BoxDecoration(
+                                              borderRadius:
+                                                  BorderRadius.circular(60),
+                                            ),
+                                            child: CachedNetworkImage(
+                                              imageUrl:
+                                                  '$baseUrl${utilisateur.imageName}',
+                                              placeholder: (context, url) =>
+                                                  CircularProgressIndicator(
+                                                color: Colors.redAccent,
+                                              ), // Affiche un indicateur de chargement en attendant l'image
+                                              errorWidget:
+                                                  (context, url, error) =>
+                                                      Stack(
                                                 children: [
                                                   Icon(
                                                     Icons.account_circle,
-                                                    size: 100,
+                                                    size: 120,
                                                     color: Colors.black
                                                         .withOpacity(0.6),
                                                   ),
-                                                  Positioned(
-                                                    bottom: 15,
-                                                    right: 10,
-                                                    child: IconButton(
-                                                      onPressed: () {
-                                                        String imageName =
-                                                            generateUniqueImageName()
-                                                                .trim();
-                                                        print(
-                                                            'IMAGE NAME: $imageName');
-
-                                                        _pickImage(imageName);
-                                                      },
-                                                      icon: const Icon(
-                                                        Icons.add_a_photo,
-                                                        size: 30,
-                                                        color: Color.fromARGB(
-                                                            230, 20, 20, 90),
-                                                        shadows: [
-                                                          Shadow(
-                                                              color:
-                                                                  Colors.white,
-                                                              blurRadius: 6)
-                                                        ],
-                                                      ),
-                                                    ),
-                                                  )
                                                 ],
-                                              )),
-                                  ),
-                                ),
+                                              ), // Affiche une icône d'erreur si le chargement échoue
+                                            ),
+                                          ),
+                                        ),
+                                        Positioned(
+                                            bottom: -5,
+                                            right: -10,
+                                            child: ClipRRect(
+                                              borderRadius:
+                                                  BorderRadius.circular(50),
+                                              child: Container(
+                                                width: 50,
+                                                height: 50,
+                                                decoration: BoxDecoration(
+                                                  color: Colors.white,
+                                                  borderRadius:
+                                                      BorderRadius.circular(50),
+                                                ),
+                                                child: IconButton(
+                                                  onPressed: () async {
+                                                    bool isGranted =
+                                                        await _requestGalleryPermission();
+                                                    if (isGranted) {
+                                                      String imageName =
+                                                          generateUniqueImageName()
+                                                              .trim();
+                                                      print(
+                                                          'IMAGE NAME: $imageName');
+                                                      FilePickerResult? result =
+                                                          await FilePicker
+                                                              .platform
+                                                              .pickFiles(
+                                                        type: FileType.image,
+                                                        allowMultiple:
+                                                            false, // Extensions d'images autorisées
+                                                      );
+
+                                                      if (result != null &&
+                                                          result.files
+                                                              .isNotEmpty) {
+                                                        String originalPath =
+                                                            result.files.first
+                                                                .path!;
+                                                        File originalFile =
+                                                            File(originalPath);
+
+                                                        _cropImage(
+                                                            originalFile);
+
+                                                        print(
+                                                            'Chemin du fichier original : $originalPath');
+                                                      } else {
+                                                        print(
+                                                            'Aucun fichier sélectionné');
+                                                      }
+                                                    } else {
+                                                      print('NOT GRANTED');
+                                                    }
+                                                  },
+                                                  icon: const Icon(
+                                                    Icons.add_a_photo,
+                                                    size: 30,
+                                                    color: Color.fromARGB(
+                                                        230, 20, 20, 90),
+                                                    shadows: [
+                                                      Shadow(
+                                                          color: Colors.white,
+                                                          blurRadius: 6)
+                                                    ],
+                                                  ),
+                                                ),
+                                              ),
+                                            ))
+                                      ],
+                                    )),
                                 const Spacer()
                               ],
                             ),
@@ -731,7 +793,10 @@ class _AdminDetailsState extends State<AdminDetails> {
                                             phone: utilisateur.phone,
                                             password: utilisateur.password,
                                             email: email,
-                                            imageName: utilisateur.imageName,
+                                            imageName: (user!.imageName != null)
+                                                ? utilities!.extraireNomFichier(
+                                                    user!.imageName!)
+                                                : null,
                                             category: utilisateur.category,
                                             address: utilisateur.address,
                                             roles: utilisateur.roles,
@@ -832,7 +897,7 @@ class _AdminDetailsState extends State<AdminDetails> {
                                           phone: phone,
                                           password: utilisateur.password,
                                           email: utilisateur.email,
-                                          imageName: utilisateur.imageName,
+                                          imageName: (user!.imageName!=null)?utilities!.extraireNomFichier(user!.imageName!):null,
                                           category: utilisateur.category,
                                           address: utilisateur.address,
                                           roles: utilisateur.roles,

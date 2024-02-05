@@ -16,6 +16,7 @@ import 'package:med_scheduler_front/Espace_Admin/view/IndexAccueilAdmin.dart';
 import 'package:med_scheduler_front/Espace_Client/view/IndexAccueil.dart';
 import 'package:med_scheduler_front/Espace_Medecin/view/IndexAcceuilMedecin.dart';
 import 'package:jwt_decode/jwt_decode.dart';
+import 'package:med_scheduler_front/Categorie.dart';
 
 class BaseRepository{
 
@@ -750,6 +751,41 @@ class BaseRepository{
       return <Medecin>[];
     }
   }
+
+
+  Future<List<Categorie>> getAllCategorie() async {
+    final url = Uri.parse("${baseUrl}api/categories?page=1");
+
+    try {
+      final response = await http.get(url);
+
+
+      if (response.statusCode == 200) {
+
+        final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
+
+        final datas = jsonData['hydra:member'] as List<dynamic>;
+
+        return datas.map((e) => Categorie.fromJson(e)).toList();
+      } else {
+        // Gestion des erreurs HTTP
+       utilities.ErrorConnexion();
+
+       throw Exception(
+           '-- Erreur d\'obtention des données\n vérifier votre connexion internet.');
+      }
+    } catch (e, stackTrace) {
+
+      if (e is http.ClientException) {
+        utilities.ErrorConnexion();
+      } else {
+        // Gérer d'autres exceptions
+        print('Une erreur inattendue s\'est produite: $e');
+      }
+      return <Categorie>[];
+    }
+  }
+
 
 
 

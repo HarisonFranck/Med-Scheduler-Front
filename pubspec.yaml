@@ -53,6 +53,9 @@ dependencies:
   awesome_dialog: ^3.2.0
   flutter_native_splash: ^2.3.9
   loading_animation_widget: ^1.2.0+4
+  file_picker: ^6.1.1
+  cached_network_image: ^3.3.1
+  image_cropper: ^5.0.1
 
 
   # The following adds the Cupertino Icons font to your application.

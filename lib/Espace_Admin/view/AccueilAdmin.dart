@@ -16,6 +16,7 @@ import 'package:med_scheduler_front/Utilitie/Utilities.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:med_scheduler_front/AuthProviderUser.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class AccueilAdmin extends StatefulWidget {
   //final Utilisateur user;
@@ -205,12 +206,29 @@ class _AccueilAdminState extends State<AccueilAdmin> {
                       const Spacer(),
                       Padding(
                         padding: const EdgeInsets.only(right: 15, top: 20),
-                        child: Image.asset(
-                          'assets/images/Medhome.png',
-                          fit: BoxFit.cover,
-                          width: 50,
-                          height: 50,
-                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(60),
+                          child: Container(
+                            width: 60,
+                            height: 60,
+                            child: CachedNetworkImage(
+                              imageUrl:
+                              '$baseUrl${user!.imageName}',
+                              placeholder: (context, url) =>
+                                  CircularProgressIndicator(
+                                    color: Colors.redAccent,
+                                  ), // Affiche un indicateur de chargement en attendant l'image
+                              errorWidget:
+                                  (context, url, error) =>
+                                  Image.asset(
+                                    'assets/images/Medhome.png',
+                                    fit: BoxFit.cover,
+                                    width: 50,
+                                    height: 50,
+                                  ),// Affiche une icône d'erreur si le chargement échoue
+                            ),
+                          ),
+                        )
                       )
                     ],
                   ),

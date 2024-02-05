@@ -49,7 +49,6 @@ class _IndexAccueilState extends State<IndexAccueil> {
     Map<String, dynamic> payload = Jwt.parseJwt(token);
 
     idUser = payload['id'];
-    print('ID USER INDEXED: $idUser');
 
     user = baseRepository!.getUser(idUser);
     userGetted();
@@ -59,8 +58,7 @@ class _IndexAccueilState extends State<IndexAccueil> {
     if(utilisateur==null){
       utilisateur = await user;
       authProviderUser.setUser(utilisateur!);
-      print('USER OO: ${utilisateur!.lastName}');
-    }
+   }
     // Maintenant que l'utilisateur est récupéré, initialisez les pages
     initPages();
   }
@@ -92,9 +90,6 @@ class _IndexAccueilState extends State<IndexAccueil> {
 
   @override
   void initState() {
-    print('INIT STATE');
-
-    //userGetted();
 
     super.initState();
     utilities = Utilities(context: context);
@@ -106,8 +101,7 @@ class _IndexAccueilState extends State<IndexAccueil> {
       _selectedPageIndex = index;
     });
 
-    print('WIDGET: ${_pages![_selectedPageIndex]['page']}');
-  }
+ }
 
   @override
   Widget build(BuildContext context) {

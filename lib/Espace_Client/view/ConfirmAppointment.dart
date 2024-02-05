@@ -62,16 +62,24 @@ class _ConfirmAppointmentState extends State<ConfirmAppointment> {
         if (jsonResponse.containsKey('error')) {
           utilities!.error('Rendez-vous déja existant');
         } else {
-    Navigator.pushReplacement(context,
-    MaterialPageRoute(builder: (context) => const MyApp()),);
+    Navigator.pushReplacement(
+    context,
+    MaterialPageRoute(
+    builder: (context) =>
+    PriseDeRendezVous(patient: widgetAppointment.patient!),
+    settings: RouteSettings(arguments: appointment.medecin)));
         }
       } else {
         if (response.statusCode == 201) {
           setState(() {
             isLoading = false;
           });
-    Navigator.pushReplacement(context,
-    MaterialPageRoute(builder: (context) => const MyApp()),);
+    Navigator.pushReplacement(
+    context,
+    MaterialPageRoute(
+    builder: (context) =>
+    PriseDeRendezVous(patient: widgetAppointment.patient!),
+    settings: RouteSettings(arguments: appointment.medecin)));
         } else {
           setState(() {
             isLoading = false;
@@ -141,8 +149,12 @@ class _ConfirmAppointmentState extends State<ConfirmAppointment> {
           setState(() {
             isLoading = false;
           });
-    Navigator.pushReplacement(context,
-    MaterialPageRoute(builder: (context) => const MyApp()),);
+    Navigator.pushReplacement(
+    context,
+    MaterialPageRoute(
+    builder: (context) =>
+    PriseDeRendezVous(patient: widgetAppointment.patient!),
+    settings: RouteSettings(arguments: appointment.medecin)));
         }
       } else {
         setState(() {
@@ -150,8 +162,12 @@ class _ConfirmAppointmentState extends State<ConfirmAppointment> {
         });
         if (response.statusCode == 201) {
           utilities!.RdvValider();
-          Navigator.pushReplacement(context,
-    MaterialPageRoute(builder: (context) => const MyApp()),);
+          Navigator.pushReplacement(
+    context,
+    MaterialPageRoute(
+    builder: (context) =>
+    PriseDeRendezVous(patient: widgetAppointment.patient!),
+    settings: RouteSettings(arguments: appointment.medecin)));
         } else {
           setState(() {
             isLoading = false;

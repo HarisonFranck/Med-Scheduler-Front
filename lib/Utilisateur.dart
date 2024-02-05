@@ -37,7 +37,7 @@ class Utilisateur{
     required this.phone,
     required this.password,
     required this.email,
-    required this.imageName,
+    this.imageName,
     required this.category,
     required this.address,
     required this.roles,
