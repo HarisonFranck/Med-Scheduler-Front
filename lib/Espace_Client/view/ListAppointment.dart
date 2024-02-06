@@ -932,15 +932,14 @@ class _ListAppointmentState extends State<ListAppointment> {
                                                     const Size(250.0, 40.0)),
                                           ),
                                           onPressed: () {
+                                            print('FINISHED APPOINT: ${listFinished.elementAt(index).medecin!.imageName}');
                                             Navigator.push(
                                                 context,
                                                 MaterialPageRoute(
                                                     builder: (context) =>
                                                         AppointmentDetails(),
                                                     settings: RouteSettings(
-                                                        arguments: listFinished
-                                                            .elementAt(
-                                                                index))));
+                                                        arguments: listFinished.elementAt(index))));
                                           },
                                           child: const Text(
                                             'Details',

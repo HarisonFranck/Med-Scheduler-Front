@@ -1,16 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:med_scheduler_front/CustomAppointment.dart';
 import 'Dart:io';
+import 'package:med_scheduler_front/Utilitie/Utilities.dart';
+import 'package:med_scheduler_front/UrlBase.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class AppointmentDetails extends StatefulWidget {
   const AppointmentDetails({super.key});
-
 
   @override
   _AppointmentDetailsState createState() => _AppointmentDetailsState();
 }
 
 class _AppointmentDetailsState extends State<AppointmentDetails> {
+
+  Utilities? utilities;
+
+  String baseUrl = UrlBase().baseUrl;
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    utilities = Utilities(context: context);
+  }
+
   String abbreviateName(String fullName) {
     List<String> nameParts = fullName.split(' ');
 
@@ -229,22 +243,29 @@ class _AppointmentDetailsState extends State<AppointmentDetails> {
                           padding: const EdgeInsets.only(
                               top: 20, left: 30, bottom: 50),
                           child: ClipRRect(
-                            borderRadius: BorderRadius.circular(50),
+                            borderRadius: BorderRadius.circular(60),
                             child: Container(
-                                width: 100,
-                                height: 120,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(60),
-                                ),
-                                child: ((appointment.medecin!.imageName !=
-                                            null) &&
-                                        (File(appointment.medecin!.imageName!)
-                                            .existsSync()))
-                                    ? Image.file(
-                                        File(appointment.medecin!.imageName!),
-                                        fit: BoxFit.fill,
-                                      )
-                                    : Image.asset('assets/images/medecin.png')),
+                              width: 120,
+                              height: 120,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(60),
+                              ),
+                              child: CachedNetworkImage(
+                                imageUrl:
+                                    '$baseUrl${utilities!.ajouterPrefixe(appointment.medecin!.imageName!)}',
+                                placeholder: (context, url) =>
+                                    const CircularProgressIndicator(
+                                  color: Colors.redAccent,
+                                ), // Affiche un indicateur de chargement en attendant l'image
+                                errorWidget: (context, url, error) =>
+                                    Image.asset(
+                                  'assets/images/medecin.png',
+                                  fit: BoxFit.cover,
+                                  width: 50,
+                                  height: 50,
+                                ), // Affiche une icône d'erreur si le chargement échoue
+                              ),
+                            ),
                           ),
                         ),
                         const SizedBox(

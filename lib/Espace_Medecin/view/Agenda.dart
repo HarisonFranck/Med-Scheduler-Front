@@ -1381,15 +1381,21 @@ class AgendaState extends State<Agenda> {
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(60),
                                 ),
-                                child: ((appointment.medecin!.imageName !=
-                                            null) &&
-                                        (File(appointment.medecin!.imageName!)
-                                            .existsSync()))
-                                    ? Image.file(
-                                        File(appointment.medecin!.imageName!),
-                                        fit: BoxFit.fill,
-                                      )
-                                    : Image.asset('assets/images/medecin.png')),
+                                child:  CachedNetworkImage(
+                                    imageUrl:
+                                    '$baseUrl${utilities!.ajouterPrefixe(appointment.medecin!.imageName!)}',
+                              placeholder: (context, url) =>
+                              const CircularProgressIndicator(
+                                color: Colors.redAccent,
+                              ), // Affiche un indicateur de chargement en attendant l'image
+                              errorWidget: (context, url, error) =>
+                                  Image.asset(
+                                    'assets/images/medecin.png',
+                                    fit: BoxFit.cover,
+                                    width: 50,
+                                    height: 50,
+                                  ), // Affiche une icône d'erreur si le chargement échoue
+                            ),),
                           ),
                         ),
                         Expanded(

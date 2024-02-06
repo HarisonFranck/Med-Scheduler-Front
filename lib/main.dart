@@ -6,11 +6,14 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:med_scheduler_front/AuthProviderUser.dart';
+import 'AppLifecycleManager.dart';
 
 
 
 void main()async {
   tz.initializeTimeZones();
+  WidgetsFlutterBinding.ensureInitialized();
+  AppLifecycleManager().startListening();
 
   runApp(
     MultiProvider(
