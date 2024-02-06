@@ -11,22 +11,17 @@ import 'package:med_scheduler_front/Repository/UserRepository.dart';
 import 'package:med_scheduler_front/Utilitie/Utilities.dart';
 import 'package:med_scheduler_front/AuthProviderUser.dart';
 import 'package:provider/provider.dart';
-
+import 'package:cached_network_image/cached_network_image.dart';
 
 class NotificationPatient extends StatefulWidget {
-
   _NotificationPatientState createState() => _NotificationPatientState();
 }
 
 class _NotificationPatientState extends State<NotificationPatient> {
-
-
-
   UserRepository? userRepository;
   Utilities? utilities;
 
   Utilisateur? user;
-
 
   @override
   void initState() {
@@ -36,17 +31,14 @@ class _NotificationPatientState extends State<NotificationPatient> {
     userRepository = UserRepository(context: context, utilities: utilities!);
   }
 
-
   late AuthProvider authProvider;
   late String token;
   String baseUrl = UrlBase().baseUrl;
 
   @override
   void didChangeDependencies() {
-
     super.didChangeDependencies();
     user = Provider.of<AuthProviderUser>(context).utilisateur;
-
   }
 
   Future<List<CustomAppointment>> filterAppointments(
@@ -61,15 +53,12 @@ class _NotificationPatientState extends State<NotificationPatient> {
     List<CustomAppointment> filteredAppointments = allAppointments
         .where((appointment) =>
             DateFormat('yyyy-MM-dd').format(appointment.startAt) ==
-                DateFormat('yyyy-MM-dd').format(DateTime.now()))
+            DateFormat('yyyy-MM-dd').format(DateTime.now()))
         .toList();
     print('SIZE FILTER: ${filteredAppointments.length}');
 
     return filteredAppointments;
   }
-
-
-
 
   String formatTimeAppointment(
       DateTime startDateTime, DateTime timeStart, DateTime timeEnd) {
@@ -169,372 +158,389 @@ class _NotificationPatientState extends State<NotificationPatient> {
 
   @override
   Widget build(BuildContext context) {
-    return PopScope(canPop: false,child:  Scaffold(
-        backgroundColor: const Color.fromARGB(1000, 238, 239, 244),
-        body: ListView(
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(top: 10, left: 10, bottom: 10),
-              child: Row(
-                children: [
-                  GestureDetector(
-                    child: const Row(
-                      children: [
-                        Icon(
-                          Icons.keyboard_arrow_left,
-                          size: 40,
-                        ),
-                        Text('Retour'),
-                      ],
+    return PopScope(
+      canPop: false,
+      child: Scaffold(
+          backgroundColor: const Color.fromARGB(1000, 238, 239, 244),
+          body: ListView(
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(top: 10, left: 10, bottom: 10),
+                child: Row(
+                  children: [
+                    GestureDetector(
+                      child: const Row(
+                        children: [
+                          Icon(
+                            Icons.keyboard_arrow_left,
+                            size: 40,
+                          ),
+                          Text('Retour'),
+                        ],
+                      ),
+                      onTap: () {
+                        Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => IndexAccueil()));
+                      },
                     ),
-                    onTap: () {
-                      Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => IndexAccueil()));
-                    },
-                  ),
-                  const Spacer(),
-                  Center(
-                    child: Container(
-                      width: 60,
-                      height: 60,
-                      child: Card(
-                        color: Colors.transparent,
-                        elevation: 0,
-                        child: Image.asset(
-                          'assets/images/logo2.png',
-                          fit: BoxFit.cover,
+                    const Spacer(),
+                    Center(
+                      child: Container(
+                        width: 60,
+                        height: 60,
+                        child: Card(
+                          color: Colors.transparent,
+                          elevation: 0,
+                          child: Image.asset(
+                            'assets/images/logo2.png',
+                            fit: BoxFit.cover,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.only(top:20,bottom:20,right:5,left:5),
-              child: FutureBuilder<List<CustomAppointment>>(
-                future: filterAppointments(
-                    userRepository!.getAllAppointmentByPatient(user!)), // Appelez votre fonction de récupération de données ici
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    // Affichez un indicateur de chargement pendant le chargement
-                    return Padding(
-                      padding: EdgeInsets.only(
-                          top: MediaQuery.of(context).size.height / 3),
-                      child: Center(child: loadingWidget()),
-                    );
-                  } else if (snapshot.hasError) {
-                    // Gérez les erreurs de requête ici
-                    return const Center(
-                        child: Text('Erreur de chargement des données'));
-                  } else {
-                    if (snapshot.data!.length == 0) {
-                      return Center(
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(6),
-                            child: Container(
-                              color: Colors.white,
-                              width: MediaQuery.of(context).size.width / 1.2,
-                              height: MediaQuery.of(context).size.height / 1.4,
-                              child: Card(
-                                  color: Colors.transparent,
-                                  elevation: 0,
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Padding(
-                                        padding:
-                                        const EdgeInsets.only(bottom: 20, top: 10),
-                                        child: Center(
-                                          child: Container(
-                                              width: MediaQuery.of(context)
-                                                  .size
-                                                  .width -
-                                                  90,
-                                              height: 50,
-                                              decoration: BoxDecoration(
-                                                borderRadius:
-                                                BorderRadius.circular(6),
-                                                border: Border.all(
-                                                    color: Colors.redAccent,
-                                                    width: 1),
-                                              ),
-                                              child: const Row(
-                                                children: [
-                                                  Icon(
-                                                    Icons.notifications,
-                                                    color: Colors.redAccent,
-                                                  ),
-                                                  Spacer(),
-                                                  Text(
-                                                    'Historique des notifications',
-                                                    textAlign: TextAlign.center,
-                                                    style: TextStyle(
-                                                        color: Colors.redAccent,
-                                                        letterSpacing: 2),
-                                                  ),
-                                                  Spacer()
-                                                ],
-                                              )),
-                                        ),
-                                      ),
-                                      const Spacer(),
-                                      const Padding(
-                                        padding: EdgeInsets.only(bottom: 10),
-                                        child: Icon(
-                                          Icons.update,
-                                          size: 30,
-                                          color: Color.fromARGB(230, 20, 20, 90),
-                                        ),
-                                      ),
-                                      const Text(
-                                        'Aucune notification récente.',
-                                        textAlign: TextAlign.center,
-                                        style: TextStyle(
-                                            letterSpacing: 2,
-                                            color: Colors.black,
-                                            fontSize: 16),
-                                      ),
-                                      const Spacer()
-                                    ],
-                                  )),
-                            ),
-                          ));
+              Padding(
+                padding: const EdgeInsets.only(
+                    top: 20, bottom: 20, right: 5, left: 5),
+                child: FutureBuilder<List<CustomAppointment>>(
+                  future: filterAppointments(userRepository!
+                      .getAllAppointmentByPatient(
+                          user!)), // Appelez votre fonction de récupération de données ici
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      // Affichez un indicateur de chargement pendant le chargement
+                      return Padding(
+                        padding: EdgeInsets.only(
+                            top: MediaQuery.of(context).size.height / 3),
+                        child: Center(child: loadingWidget()),
+                      );
+                    } else if (snapshot.hasError) {
+                      // Gérez les erreurs de requête ici
+                      return const Center(
+                          child: Text('Erreur de chargement des données'));
                     } else {
-                      return Center(
-                        child: Container(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(6),
-                              color: Colors.white,
-                            ),
+                      if (snapshot.data!.length == 0) {
+                        return Center(
+                            child: ClipRRect(
+                          borderRadius: BorderRadius.circular(6),
+                          child: Container(
+                            color: Colors.white,
                             width: MediaQuery.of(context).size.width / 1.2,
                             height: MediaQuery.of(context).size.height / 1.4,
                             child: Card(
                                 color: Colors.transparent,
                                 elevation: 0,
                                 child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Padding(
-                                        padding: const EdgeInsets.only(
-                                            bottom: 20, top: 10),
-                                        child: Center(
-                                          child: Container(
-                                              width: MediaQuery.of(context)
-                                                  .size
-                                                  .width -
-                                                  90,
-                                              height: 50,
-                                              decoration: BoxDecoration(
-                                                borderRadius:
-                                                BorderRadius.circular(6),
-                                                border: Border.all(
-                                                    color: Colors.redAccent,
-                                                    width: 1),
-                                              ),
-                                              child: const Row(
-                                                children: [
-                                                  Icon(
-                                                    Icons.notifications,
-                                                    color: Colors.redAccent,
-                                                  ),
-                                                  Spacer(),
-                                                  Text(
-                                                    'Historique des notifications',
-                                                    textAlign: TextAlign.center,
-                                                    style: TextStyle(
-                                                        color: Colors.redAccent,
-                                                        letterSpacing: 2),
-                                                  ),
-                                                  Spacer()
-                                                ],
-                                              )),
-                                        ),
-                                      ),
-                                      Expanded(
-                                          child: ListView.builder(
-                                            padding: const EdgeInsets.only(
-                                                top: 30),
-                                            itemCount: snapshot.data!.length,
-                                            itemBuilder: (context, index) {
-                                              List<CustomAppointment> listRDV =
-                                                  snapshot.data!;
-                                              // Utilisez snapshot.data[index] pour accéder aux éléments de la liste
-
-                                              return Padding(
-                                              padding: const EdgeInsets.only(
-                                              bottom: 40,
-                                              ),
-                                              child: Container(
-                                              width:410,
-                                              height: 200,
-                                              decoration: BoxDecoration(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Padding(
+                                      padding: const EdgeInsets.only(
+                                          bottom: 20, top: 10),
+                                      child: Center(
+                                        child: Container(
+                                            width: MediaQuery.of(context)
+                                                    .size
+                                                    .width -
+                                                90,
+                                            height: 50,
+                                            decoration: BoxDecoration(
+                                              borderRadius:
+                                                  BorderRadius.circular(6),
                                               border: Border.all(
-                                              color: Colors.redAccent,
-                                              width: 1,
-                                              ),
-                                              borderRadius:
-                                              BorderRadius.circular(
-                                              6),
-                                              ),
-                                              child: Card(
-                                              elevation: 0,
-                                              color: Colors.white,
-                                              child: Column(
+                                                  color: Colors.redAccent,
+                                                  width: 1),
+                                            ),
+                                            child: const Row(
                                               children: [
-                                              const SizedBox(
-                                              height: 20,
-                                              ),
-                                              Row(
-                                              mainAxisAlignment:
-                                              MainAxisAlignment
-                                                  .spaceEvenly,
-                                              children: [
-                                              ClipRRect(
-                                              borderRadius:
-                                              BorderRadius
-                                                  .circular(
-                                              6),
-                                              child: Container(
-                                              width: 60,
-                                              height: 60,
-                                              decoration:
-                                              BoxDecoration(
-                                              borderRadius:
-                                              BorderRadius
-                                                  .circular(
-                                              6),
-                                              ),
-                                              child: ((listRDV.elementAt(index).medecin!.imageName !=
-                                              null) &&
-                                              (File(listRDV.elementAt(index).medecin!.imageName!)
-                                                  .existsSync()))
-                                              ? Image.file(File(listRDV
-                                                  .elementAt(
-                                              index)
-                                                  .medecin!
-                                                  .imageName!))
-                                                  : Image
-                                                  .asset(
-                                              'assets/images/medecin.png',
-                                              fit: BoxFit
-                                                  .fill,
-                                              ),
-                                              ),
-                                              ),
-                                              Column(
-                                              children: [
-                                              Text(
-                                              '${listRDV.elementAt(index).medecin!.lastName[0]}.${abbreviateName(listRDV.elementAt(index).medecin!.firstName)}',
-                                              style: const TextStyle(
-                                              color: Color.fromARGB(
-                                              1000,
-                                              60,
-                                              70,
-                                              120),
-                                              fontWeight:
-                                              FontWeight
-                                                  .w500),
-                                              ),
-                                              Text(
-                                              '${abreviateRaison(listRDV.elementAt(index).reason)}',
-                                              style: const TextStyle(
-                                              color: Color.fromARGB(
-                                              1000,
-                                              60,
-                                              70,
-                                              120),
-                                              fontWeight:
-                                              FontWeight
-                                                  .w300),
-                                              )
+                                                Icon(
+                                                  Icons.notifications,
+                                                  color: Colors.redAccent,
+                                                ),
+                                                Spacer(),
+                                                Text(
+                                                  'Historique des notifications',
+                                                  textAlign: TextAlign.center,
+                                                  style: TextStyle(
+                                                      color: Colors.redAccent,
+                                                      letterSpacing: 2),
+                                                ),
+                                                Spacer()
                                               ],
-                                              ),
-                                              const SizedBox(
-                                              width: 10,
-                                              ),
-                                              ],
-                                              ),
-                                              const Opacity(
-                                              opacity: 0.4,
-                                              child: Divider(
-                                              thickness: 1,
-                                              indent: 20,
-                                              endIndent: 20,
-                                              color: Colors.grey,
-                                              ),
-                                              ),
-                                              Expanded(
-                                              child: Text(
-                                              'Vous avez un rendez-vous avec le Dr ${listRDV.elementAt(index).medecin!.lastName} ${abbreviateName(listRDV.elementAt(index).medecin!.firstName)} le:',
-                                              style: TextStyle(
-                                              color: Colors
-                                                  .black
-                                                  .withOpacity(
-                                              0.5)))),
-                                              Row(
-                                              mainAxisAlignment:
-                                              MainAxisAlignment
-                                                  .center,
-                                              children: [
-                                              Image.asset(
-                                              'assets/images/date-limite.png',
-                                              width: 20,
-                                              height: 20,
-                                              ),
-                                              const Spacer(),
-                                              Text(
-                                              '${formatTimeAppointment(listRDV.elementAt(index).startAt, listRDV.elementAt(index).timeStart,listRDV.elementAt(index).timeEnd)}',
-                                              textAlign:
-                                              TextAlign
-                                                  .center,
-                                              style: const TextStyle(
-                                              color: Color
-                                                  .fromARGB(
-                                              1000,
-                                              60,
-                                              70,
-                                              120)),
-                                              ),
-                                              const Spacer(),
-                                              ],
-                                              ),
-                                              ],
-                                              ),
-                                              )));
-                                            },
-                                          )),
-                                    ]))),
-                      );
+                                            )),
+                                      ),
+                                    ),
+                                    const Spacer(),
+                                    const Padding(
+                                      padding: EdgeInsets.only(bottom: 10),
+                                      child: Icon(
+                                        Icons.update,
+                                        size: 30,
+                                        color: Color.fromARGB(230, 20, 20, 90),
+                                      ),
+                                    ),
+                                    const Text(
+                                      'Aucune notification récente.',
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                          letterSpacing: 2,
+                                          color: Colors.black,
+                                          fontSize: 16),
+                                    ),
+                                    const Spacer()
+                                  ],
+                                )),
+                          ),
+                        ));
+                      } else {
+                        return Center(
+                          child: Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(6),
+                                color: Colors.white,
+                              ),
+                              width: MediaQuery.of(context).size.width / 1.2,
+                              height: MediaQuery.of(context).size.height / 1.4,
+                              child: Card(
+                                  color: Colors.transparent,
+                                  elevation: 0,
+                                  child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Padding(
+                                          padding: const EdgeInsets.only(
+                                              bottom: 20, top: 10),
+                                          child: Center(
+                                            child: Container(
+                                                width: MediaQuery.of(context)
+                                                        .size
+                                                        .width -
+                                                    90,
+                                                height: 50,
+                                                decoration: BoxDecoration(
+                                                  borderRadius:
+                                                      BorderRadius.circular(6),
+                                                  border: Border.all(
+                                                      color: Colors.redAccent,
+                                                      width: 1),
+                                                ),
+                                                child: const Row(
+                                                  children: [
+                                                    Icon(
+                                                      Icons.notifications,
+                                                      color: Colors.redAccent,
+                                                    ),
+                                                    Spacer(),
+                                                    Text(
+                                                      'Historique des notifications',
+                                                      textAlign:
+                                                          TextAlign.center,
+                                                      style: TextStyle(
+                                                          color:
+                                                              Colors.redAccent,
+                                                          letterSpacing: 2),
+                                                    ),
+                                                    Spacer()
+                                                  ],
+                                                )),
+                                          ),
+                                        ),
+                                        Expanded(
+                                            child: ListView.builder(
+                                          padding:
+                                              const EdgeInsets.only(top: 30),
+                                          itemCount: snapshot.data!.length,
+                                          itemBuilder: (context, index) {
+                                            List<CustomAppointment> listRDV =
+                                                snapshot.data!;
+                                            // Utilisez snapshot.data[index] pour accéder aux éléments de la liste
+
+                                            return Padding(
+                                                padding: const EdgeInsets.only(
+                                                  bottom: 40,
+                                                ),
+                                                child: Container(
+                                                    width: 410,
+                                                    height: 200,
+                                                    decoration: BoxDecoration(
+                                                      border: Border.all(
+                                                        color: Colors.redAccent,
+                                                        width: 1,
+                                                      ),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              6),
+                                                    ),
+                                                    child: Card(
+                                                      elevation: 0,
+                                                      color: Colors.white,
+                                                      child: Column(
+                                                        children: [
+                                                          const SizedBox(
+                                                            height: 20,
+                                                          ),
+                                                          Row(
+                                                            mainAxisAlignment:
+                                                                MainAxisAlignment
+                                                                    .spaceEvenly,
+                                                            children: [
+                                                              ClipRRect(
+                                                                borderRadius:
+                                                                    BorderRadius
+                                                                        .circular(
+                                                                            6),
+                                                                child:
+                                                                    Container(
+                                                                  width: 60,
+                                                                  height: 60,
+                                                                  decoration:
+                                                                      BoxDecoration(
+                                                                    borderRadius:
+                                                                        BorderRadius
+                                                                            .circular(6),
+                                                                  ),
+                                                                  child:
+                                                                      CachedNetworkImage(
+                                                                    imageUrl:
+                                                                        '$baseUrl${utilities!.ajouterPrefixe(listRDV.elementAt(index).medecin!.imageName!)}',
+                                                                    placeholder:
+                                                                        (context,
+                                                                                url) =>
+                                                                            const CircularProgressIndicator(
+                                                                      color: Colors
+                                                                          .redAccent,
+                                                                    ), // Affiche un indicateur de chargement en attendant l'image
+                                                                    errorWidget: (context,
+                                                                            url,
+                                                                            error) =>
+                                                                        Image
+                                                                            .asset(
+                                                                      'assets/images/medecin.png',
+                                                                      fit: BoxFit
+                                                                          .cover,
+                                                                      width: 50,
+                                                                      height:
+                                                                          50,
+                                                                    ), // Affiche une icône d'erreur si le chargement échoue
+                                                                  ),
+                                                                ),
+                                                              ),
+                                                              Column(
+                                                                children: [
+                                                                  Text(
+                                                                    '${listRDV.elementAt(index).medecin!.lastName[0]}.${abbreviateName(listRDV.elementAt(index).medecin!.firstName)}',
+                                                                    style: const TextStyle(
+                                                                        color: Color.fromARGB(
+                                                                            1000,
+                                                                            60,
+                                                                            70,
+                                                                            120),
+                                                                        fontWeight:
+                                                                            FontWeight.w500),
+                                                                  ),
+                                                                  Text(
+                                                                    '${abreviateRaison(listRDV.elementAt(index).reason)}',
+                                                                    style: const TextStyle(
+                                                                        color: Color.fromARGB(
+                                                                            1000,
+                                                                            60,
+                                                                            70,
+                                                                            120),
+                                                                        fontWeight:
+                                                                            FontWeight.w300),
+                                                                  )
+                                                                ],
+                                                              ),
+                                                              const SizedBox(
+                                                                width: 10,
+                                                              ),
+                                                            ],
+                                                          ),
+                                                          const Opacity(
+                                                            opacity: 0.4,
+                                                            child: Divider(
+                                                              thickness: 1,
+                                                              indent: 20,
+                                                              endIndent: 20,
+                                                              color:
+                                                                  Colors.grey,
+                                                            ),
+                                                          ),
+                                                          Expanded(
+                                                              child: Text(
+                                                                  'Vous avez un rendez-vous avec le Dr ${listRDV.elementAt(index).medecin!.lastName} ${abbreviateName(listRDV.elementAt(index).medecin!.firstName)} le:',
+                                                                  style: TextStyle(
+                                                                      color: Colors
+                                                                          .black
+                                                                          .withOpacity(
+                                                                              0.5)))),
+                                                          Row(
+                                                            mainAxisAlignment:
+                                                                MainAxisAlignment
+                                                                    .center,
+                                                            children: [
+                                                              Image.asset(
+                                                                'assets/images/date-limite.png',
+                                                                width: 20,
+                                                                height: 20,
+                                                              ),
+                                                              const Spacer(),
+                                                              Text(
+                                                                '${formatTimeAppointment(listRDV.elementAt(index).startAt, listRDV.elementAt(index).timeStart, listRDV.elementAt(index).timeEnd)}',
+                                                                textAlign:
+                                                                    TextAlign
+                                                                        .center,
+                                                                style: const TextStyle(
+                                                                    color: Color
+                                                                        .fromARGB(
+                                                                            1000,
+                                                                            60,
+                                                                            70,
+                                                                            120)),
+                                                              ),
+                                                              const Spacer(),
+                                                            ],
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    )));
+                                          },
+                                        )),
+                                      ]))),
+                        );
+                      }
+                      // Construisez votre ListView avec les données obtenues
                     }
-                    // Construisez votre ListView avec les données obtenues
-                  }
-                },
+                  },
+                ),
               ),
-            ),
-          ],
-        )),);
+            ],
+          )),
+    );
   }
 
-
-  Widget loadingWidget(){
+  Widget loadingWidget() {
     return Center(
-        child:Container(
-          width: 100,
-          height: 100,
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-
-              LoadingAnimationWidget.hexagonDots(
-                  color: Colors.redAccent,
-                  size: 120),
-
-              Image.asset('assets/images/logo2.png',width: 80,height: 80,fit: BoxFit.cover,)
-            ],
-          ),
-        ));
+        child: Container(
+      width: 100,
+      height: 100,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          LoadingAnimationWidget.hexagonDots(
+              color: Colors.redAccent, size: 120),
+          Image.asset(
+            'assets/images/logo2.png',
+            width: 80,
+            height: 80,
+            fit: BoxFit.cover,
+          )
+        ],
+      ),
+    ));
   }
 }

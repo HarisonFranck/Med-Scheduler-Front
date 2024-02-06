@@ -1,23 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:med_scheduler_front/Medecin.dart';
-import 'package:med_scheduler_front/Utilisateur.dart';
-import 'package:med_scheduler_front/main.dart';
 import 'IndexAccueilAdmin.dart';
 import 'dart:io';
 import 'package:provider/provider.dart';
 import 'package:med_scheduler_front/AuthProvider.dart';
-import 'package:image_picker/image_picker.dart';
-import 'dart:async';
-import 'dart:typed_data';
-import 'package:permission_handler/permission_handler.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:image/image.dart' as img;
-import 'package:uuid/uuid.dart';
-import 'package:med_scheduler_front/UrlBase.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
 import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
 import 'package:med_scheduler_front/AuthProviderUser.dart';
+import 'package:med_scheduler_front/UrlBase.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:med_scheduler_front/Utilitie/Utilities.dart';
 
 class MedecinDetails extends StatefulWidget {
   _MedecinDetailsState createState() => _MedecinDetailsState();
@@ -33,6 +24,10 @@ class _MedecinDetailsState extends State<MedecinDetails> {
   TextEditingController phoneController = TextEditingController();
   TextEditingController villeController = TextEditingController();
   TextEditingController specController = TextEditingController();
+
+  String baseUrl = UrlBase().baseUrl;
+
+  Utilities? utilities;
 
   File? profilImage;
 
@@ -64,11 +59,11 @@ class _MedecinDetailsState extends State<MedecinDetails> {
     // TODO: implement didChangeDependencies
     super.didChangeDependencies();
     authProviderUser = Provider.of<AuthProviderUser>(context, listen: false);
+    utilities = Utilities(context: context);
   }
 
   @override
   Widget build(BuildContext context) {
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
     return PopScope(
         canPop: false,
@@ -137,22 +132,27 @@ class _MedecinDetailsState extends State<MedecinDetails> {
                                     decoration: BoxDecoration(
                                       borderRadius: BorderRadius.circular(60),
                                     ),
-                                    child: ((profilImage != null) &&
-                                            profilImage!.existsSync())
-                                        ? Image.file(
-                                            profilImage!,
-                                            fit: BoxFit.fill,
-                                          )
-                                        : Stack(
-                                            children: [
-                                              Icon(
-                                                Icons.account_circle,
-                                                size: 100,
-                                                color: Colors.black
-                                                    .withOpacity(0.6),
-                                              ),
-                                            ],
-                                          )),
+                                    child: CachedNetworkImage(
+                                        imageUrl:
+                                        '$baseUrl${utilities!.ajouterPrefixe(utilisateur.imageName!)}',
+                                  placeholder: (context,
+                                      url) =>
+                                  const CircularProgressIndicator(
+                                    color: Colors
+                                        .redAccent,
+                                  ), // Affiche un indicateur de chargement en attendant l'image
+                                  errorWidget: (context,
+                                      url,
+                                      error) =>
+                                      Image.asset(
+                                        'assets/images/medecin.png',
+                                        fit: BoxFit
+                                            .cover,
+                                        width: 50,
+                                        height: 50,
+                                      ), // Affiche une icône d'erreur si le chargement échoue
+                                ),
+                              ),
                               ),
                             ),
                             const Spacer()

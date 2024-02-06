@@ -15,8 +15,10 @@ import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:med_scheduler_front/Repository/BaseRepository.dart';
 import 'package:med_scheduler_front/Utilitie/Utilities.dart';
 import 'package:med_scheduler_front/AuthProviderUser.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class Agenda extends StatefulWidget {
+
   AgendaState createState() => AgendaState();
 }
 
@@ -431,15 +433,21 @@ class AgendaState extends State<Agenda> {
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(60),
                                   ),
-                                  child: ((medecinClicked!.imageName != null) &&
-                                          (File(medecinClicked!.imageName!)
-                                              .existsSync()))
-                                      ? Image.file(
-                                          File(medecinClicked!.imageName!))
-                                      : Image.asset(
-                                          'assets/images/medecin.png',
-                                          fit: BoxFit.fill,
-                                        ),
+                                  child: CachedNetworkImage(
+                                      imageUrl:
+                                      '$baseUrl${utilities!.ajouterPrefixe(medecinClicked!.imageName!)}',
+                                  placeholder: (context, url) =>
+                                  const CircularProgressIndicator(
+                                    color: Colors.redAccent,
+                                  ), // Affiche un indicateur de chargement en attendant l'image
+                                  errorWidget: (context, url, error) =>
+                                      Image.asset(
+                                        'assets/images/medecin.png',
+                                        fit: BoxFit.cover,
+                                        width: 50,
+                                        height: 50,
+                                      ), // Affiche une icône d'erreur si le chargement échoue
+                                ),
                                 ),
                               ),
                               Column(
@@ -824,7 +832,6 @@ class AgendaState extends State<Agenda> {
   }
 
   Widget showAppointment(CustomAppointment appoint, DateTime clickedDt) {
-    print('ISDELETED: ${appoint.isDeleted} ');
 
     return Column(
       children: [

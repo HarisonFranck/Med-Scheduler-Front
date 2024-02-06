@@ -11,6 +11,7 @@ import 'package:med_scheduler_front/Repository/BaseRepository.dart';
 import 'package:med_scheduler_front/Utilitie/Utilities.dart';
 import 'package:provider/provider.dart';
 import 'package:med_scheduler_front/AuthProviderUser.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class NotificationAdmin extends StatefulWidget {
   //final Utilisateur user;
@@ -28,7 +29,6 @@ class _NotificationAdminState extends State<NotificationAdmin> {
   BaseRepository? baseRepository;
   Utilities? utilities;
 
-
   Utilisateur? user;
 
   @override
@@ -45,8 +45,7 @@ class _NotificationAdminState extends State<NotificationAdmin> {
     user = Provider.of<AuthProviderUser>(context).utilisateur;
   }
 
-
-  bool isToday(DateTime startAt,DateTime timeStart) {
+  bool isToday(DateTime startAt, DateTime timeStart) {
     DateTime now = DateTime.now();
     DateTime startOfWeek = DateTime(now.year, now.month, now.day - now.weekday);
     DateTime endOfWeek = startOfWeek.add(const Duration(days: 6));
@@ -62,14 +61,12 @@ class _NotificationAdminState extends State<NotificationAdmin> {
       }
     }
 
-
     return isIt;
   }
 
   Future<List<CustomAppointment>> filterAppointments(
       Future<List<CustomAppointment>> appointmentsFuture) async {
-   List<CustomAppointment> allAppointments = await appointmentsFuture;
-
+    List<CustomAppointment> allAppointments = await appointmentsFuture;
 
     // Filtrer les rendez-vous avec startAt égal à DateTime.now()
     List<CustomAppointment> filteredAppointments = allAppointments
@@ -79,7 +76,6 @@ class _NotificationAdminState extends State<NotificationAdmin> {
 
     return filteredAppointments;
   }
-
 
   String formatTimeAppointment(
       DateTime startDateTime, DateTime timeStart, DateTime timeEnd) {
@@ -161,7 +157,6 @@ class _NotificationAdminState extends State<NotificationAdmin> {
     }
   }
 
-
   String abreviateRaison(String fullName) {
     List<String> nameParts = fullName.split(' ');
 
@@ -177,396 +172,412 @@ class _NotificationAdminState extends State<NotificationAdmin> {
     }
   }
 
-
-
-  Future<List<CustomAppointment>> addAllAppointmentPage()async{
-    List<CustomAppointment> firstList = await baseRepository!.getAllAppointmentPerPage(1);
-    for(int p=1;p<10;p++){
+  Future<List<CustomAppointment>> addAllAppointmentPage() async {
+    List<CustomAppointment> firstList =
+        await baseRepository!.getAllAppointmentPerPage(1);
+    for (int p = 1; p < 10; p++) {
       firstList.addAll(await baseRepository!.getAllAppointmentPerPage(p));
     }
     return firstList;
   }
 
-
   @override
   Widget build(BuildContext context) {
     return PopScope(
-        canPop: false,
-        child: Scaffold(
-            backgroundColor: const Color.fromARGB(1000, 238, 239, 244),
-            body: ListView(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(top: 10, left: 10, bottom: 10),
-                  child: Row(
-                    children: [
-                      GestureDetector(
-                        child: const Row(
-                          children: [
-                            Icon(
-                              Icons.keyboard_arrow_left,
-                              size: 40,
-                            ),
-                            Text('Retour'),
-                          ],
-                        ),
-                        onTap: () {
-                          Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => IndexAccueilAdmin()));
-                        },
+      canPop: false,
+      child: Scaffold(
+          backgroundColor: const Color.fromARGB(1000, 238, 239, 244),
+          body: ListView(
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(top: 10, left: 10, bottom: 10),
+                child: Row(
+                  children: [
+                    GestureDetector(
+                      child: const Row(
+                        children: [
+                          Icon(
+                            Icons.keyboard_arrow_left,
+                            size: 40,
+                          ),
+                          Text('Retour'),
+                        ],
                       ),
-                      const Spacer(),
-                      Center(
-                        child: Container(
-                          width: 60,
-                          height: 60,
-                          child: Card(
-                            color: Colors.transparent,
-                            elevation: 0,
-                            child: Image.asset(
-                              'assets/images/logo2.png',
-                              fit: BoxFit.cover,
-                            ),
+                      onTap: () {
+                        Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => IndexAccueilAdmin()));
+                      },
+                    ),
+                    const Spacer(),
+                    Center(
+                      child: Container(
+                        width: 60,
+                        height: 60,
+                        child: Card(
+                          color: Colors.transparent,
+                          elevation: 0,
+                          child: Image.asset(
+                            'assets/images/logo2.png',
+                            fit: BoxFit.cover,
                           ),
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-                Padding(
-                  padding:
-                      const EdgeInsets.only(top: 20, bottom: 20, right: 5, left: 5),
-                  child: FutureBuilder<List<CustomAppointment>>(
-                    future: filterAppointments(addAllAppointmentPage()), // Appelez votre fonction de récupération de données ici
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        // Affichez un indicateur de chargement pendant le chargement
-                        return Padding(
-                          padding: EdgeInsets.only(
-                              top: MediaQuery.of(context).size.height / 4),
-                          child: Center(child: loadingWidget()),
-                        );
-                      } else if (snapshot.hasError) {
-                        // Gérez les erreurs de requête ici
-                        return const Center(
-                            child: Text('Erreur de chargement des données'));
+              ),
+              Padding(
+                padding: const EdgeInsets.only(
+                    top: 20, bottom: 20, right: 5, left: 5),
+                child: FutureBuilder<List<CustomAppointment>>(
+                  future: filterAppointments(
+                      addAllAppointmentPage()), // Appelez votre fonction de récupération de données ici
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      // Affichez un indicateur de chargement pendant le chargement
+                      return Padding(
+                        padding: EdgeInsets.only(
+                            top: MediaQuery.of(context).size.height / 4),
+                        child: Center(child: loadingWidget()),
+                      );
+                    } else if (snapshot.hasError) {
+                      // Gérez les erreurs de requête ici
+                      return const Center(
+                          child: Text('Erreur de chargement des données'));
+                    } else {
+                      if (snapshot.data!.length == 0) {
+                        return Center(
+                            child: ClipRRect(
+                          borderRadius: BorderRadius.circular(6),
+                          child: Container(
+                            color: Colors.white,
+                            width: MediaQuery.of(context).size.width / 1.2,
+                            height: MediaQuery.of(context).size.height / 1.4,
+                            child: Card(
+                                color: Colors.transparent,
+                                elevation: 0,
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Padding(
+                                      padding: const EdgeInsets.only(
+                                          bottom: 20, top: 10),
+                                      child: Center(
+                                        child: Container(
+                                            width: MediaQuery.of(context)
+                                                    .size
+                                                    .width -
+                                                90,
+                                            height: 50,
+                                            decoration: BoxDecoration(
+                                              borderRadius:
+                                                  BorderRadius.circular(6),
+                                              border: Border.all(
+                                                  color: Colors.redAccent,
+                                                  width: 1),
+                                            ),
+                                            child: const Row(
+                                              children: [
+                                                Icon(
+                                                  Icons.notifications,
+                                                  color: Colors.redAccent,
+                                                ),
+                                                Spacer(),
+                                                Text(
+                                                  'Historique des notifications',
+                                                  textAlign: TextAlign.center,
+                                                  style: TextStyle(
+                                                      color: Colors.redAccent,
+                                                      letterSpacing: 2),
+                                                ),
+                                                Spacer()
+                                              ],
+                                            )),
+                                      ),
+                                    ),
+                                    const Spacer(),
+                                    const Padding(
+                                      padding: EdgeInsets.only(bottom: 10),
+                                      child: Icon(
+                                        Icons.update,
+                                        size: 30,
+                                        color: Color.fromARGB(230, 20, 20, 90),
+                                      ),
+                                    ),
+                                    const Text(
+                                      'Aucune notification récente.',
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                          letterSpacing: 2,
+                                          color: Colors.black,
+                                          fontSize: 16),
+                                    ),
+                                    const Spacer()
+                                  ],
+                                )),
+                          ),
+                        ));
                       } else {
-                        if (snapshot.data!.length == 0) {
-                          return Center(
-                              child: ClipRRect(
-                            borderRadius: BorderRadius.circular(6),
-                            child: Container(
-                              color: Colors.white,
+                        return Center(
+                          child: Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(6),
+                                color: Colors.white,
+                              ),
                               width: MediaQuery.of(context).size.width / 1.2,
                               height: MediaQuery.of(context).size.height / 1.4,
                               child: Card(
                                   color: Colors.transparent,
                                   elevation: 0,
                                   child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Padding(
-                                        padding: const EdgeInsets.only(
-                                            bottom: 20, top: 10),
-                                        child: Center(
-                                          child: Container(
-                                              width: MediaQuery.of(context)
-                                                      .size
-                                                      .width -
-                                                  90,
-                                              height: 50,
-                                              decoration: BoxDecoration(
-                                                borderRadius:
-                                                    BorderRadius.circular(6),
-                                                border: Border.all(
-                                                    color: Colors.redAccent,
-                                                    width: 1),
-                                              ),
-                                              child: const Row(
-                                                children: [
-                                                  Icon(
-                                                    Icons.notifications,
-                                                    color: Colors.redAccent,
-                                                  ),
-                                                  Spacer(),
-                                                  Text(
-                                                    'Historique des notifications',
-                                                    textAlign: TextAlign.center,
-                                                    style: TextStyle(
-                                                        color: Colors.redAccent,
-                                                        letterSpacing: 2),
-                                                  ),
-                                                  Spacer()
-                                                ],
-                                              )),
-                                        ),
-                                      ),
-                                      const Spacer(),
-                                      const Padding(
-                                        padding: EdgeInsets.only(bottom: 10),
-                                        child: Icon(
-                                          Icons.update,
-                                          size: 30,
-                                          color:
-                                              Color.fromARGB(230, 20, 20, 90),
-                                        ),
-                                      ),
-                                      const Text(
-                                        'Aucune notification récente.',
-                                        textAlign: TextAlign.center,
-                                        style: TextStyle(
-                                            letterSpacing: 2,
-                                            color: Colors.black,
-                                            fontSize: 16),
-                                      ),
-                                      const Spacer()
-                                    ],
-                                  )),
-                            ),
-                          ));
-                        } else {
-                          return Center(
-                            child: Container(
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(6),
-                                  color: Colors.white,
-                                ),
-                                width: MediaQuery.of(context).size.width / 1.2,
-                                height:
-                                    MediaQuery.of(context).size.height / 1.4,
-                                child: Card(
-                                    color: Colors.transparent,
-                                    elevation: 0,
-                                    child: Column(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          Padding(
-                                            padding: const EdgeInsets.only(
-                                                bottom: 20, top: 10),
-                                            child: Center(
-                                              child: Container(
-                                                  width: MediaQuery.of(context)
-                                                          .size
-                                                          .width -
-                                                      90,
-                                                  height: 50,
-                                                  decoration: BoxDecoration(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            6),
-                                                    border: Border.all(
-                                                        color: Colors.redAccent,
-                                                        width: 1),
-                                                  ),
-                                                  child: const Row(
-                                                    children: [
-                                                      Icon(
-                                                        Icons.notifications,
-                                                        color: Colors.redAccent,
-                                                      ),
-                                                      Spacer(),
-                                                      Text(
-                                                        'Historique des notifications',
-                                                        textAlign:
-                                                            TextAlign.center,
-                                                        style: TextStyle(
-                                                            color: Colors
-                                                                .redAccent,
-                                                            letterSpacing: 2),
-                                                      ),
-                                                      Spacer()
-                                                    ],
-                                                  )),
-                                            ),
-                                          ),
-                                          Expanded(
-                                              child: ListView.builder(
-                                            padding: const EdgeInsets.only(top: 30),
-                                            itemCount: snapshot.data!.length,
-                                            itemBuilder: (context, index) {
-                                              List<CustomAppointment> listRDV =
-                                                  snapshot.data!;
-                                              // Utilisez snapshot.data[index] pour accéder aux éléments de la liste
-
-                                              return Padding(
-                                                  padding: const EdgeInsets.only(
-                                                    bottom: 40,
-                                                  ),
-                                                  child: Container(
-                                                      width: 410,
-                                                      height: 200,
-                                                      decoration: BoxDecoration(
-                                                        border: Border.all(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Padding(
+                                          padding: const EdgeInsets.only(
+                                              bottom: 20, top: 10),
+                                          child: Center(
+                                            child: Container(
+                                                width: MediaQuery.of(context)
+                                                        .size
+                                                        .width -
+                                                    90,
+                                                height: 50,
+                                                decoration: BoxDecoration(
+                                                  borderRadius:
+                                                      BorderRadius.circular(6),
+                                                  border: Border.all(
+                                                      color: Colors.redAccent,
+                                                      width: 1),
+                                                ),
+                                                child: const Row(
+                                                  children: [
+                                                    Icon(
+                                                      Icons.notifications,
+                                                      color: Colors.redAccent,
+                                                    ),
+                                                    Spacer(),
+                                                    Text(
+                                                      'Historique des notifications',
+                                                      textAlign:
+                                                          TextAlign.center,
+                                                      style: TextStyle(
                                                           color:
                                                               Colors.redAccent,
-                                                          width: 1,
-                                                        ),
-                                                        borderRadius:
-                                                            BorderRadius
-                                                                .circular(6),
+                                                          letterSpacing: 2),
+                                                    ),
+                                                    Spacer()
+                                                  ],
+                                                )),
+                                          ),
+                                        ),
+                                        Expanded(
+                                            child: ListView.builder(
+                                          padding:
+                                              const EdgeInsets.only(top: 30),
+                                          itemCount: snapshot.data!.length,
+                                          itemBuilder: (context, index) {
+                                            List<CustomAppointment> listRDV =
+                                                snapshot.data!;
+                                            // Utilisez snapshot.data[index] pour accéder aux éléments de la liste
+
+                                            return Padding(
+                                                padding: const EdgeInsets.only(
+                                                  bottom: 40,
+                                                ),
+                                                child: Container(
+                                                    width: 410,
+                                                    height: 200,
+                                                    decoration: BoxDecoration(
+                                                      border: Border.all(
+                                                        color: Colors.redAccent,
+                                                        width: 1,
                                                       ),
-                                                      child: Card(
-                                                        elevation: 0,
-                                                        color: Colors.white,
-                                                        child: Column(
-                                                          children: [
-                                                            const SizedBox(
-                                                              height: 20,
-                                                            ),
-                                                            Row(
-                                                              mainAxisAlignment:
-                                                                  MainAxisAlignment
-                                                                      .spaceEvenly,
-                                                              children: [
-                                                                ClipRRect(
-                                                                  borderRadius:
-                                                                      BorderRadius
-                                                                          .circular(
-                                                                              6),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              6),
+                                                    ),
+                                                    child: Card(
+                                                      elevation: 0,
+                                                      color: Colors.white,
+                                                      child: Column(
+                                                        children: [
+                                                          const SizedBox(
+                                                            height: 20,
+                                                          ),
+                                                          Row(
+                                                            mainAxisAlignment:
+                                                                MainAxisAlignment
+                                                                    .spaceEvenly,
+                                                            children: [
+                                                              ClipRRect(
+                                                                borderRadius:
+                                                                    BorderRadius
+                                                                        .circular(
+                                                                            6),
+                                                                child:
+                                                                    Container(
+                                                                  width: 60,
+                                                                  height: 60,
+                                                                  decoration:
+                                                                      BoxDecoration(
+                                                                    borderRadius:
+                                                                        BorderRadius
+                                                                            .circular(6),
+                                                                  ),
                                                                   child:
-                                                                      Container(
-                                                                    width: 60,
-                                                                    height: 60,
-                                                                    decoration:
-                                                                        BoxDecoration(
-                                                                      borderRadius:
-                                                                          BorderRadius.circular(
-                                                                              6),
-                                                                    ),
-                                                                    child: ((listRDV.elementAt(index).medecin!.imageName !=
-                                                                                null) &&
-                                                                            (File(listRDV.elementAt(index).medecin!.imageName!)
-                                                                                .existsSync()))
-                                                                        ? Image.file(File(listRDV
-                                                                            .elementAt(
-                                                                                index)
-                                                                            .medecin!
-                                                                            .imageName!))
-                                                                        : Image
+                                                                      CachedNetworkImage(
+                                                                    imageUrl:
+                                                                        '$baseUrl${utilities!.ajouterPrefixe(listRDV.elementAt(index).medecin!.imageName!)}',
+                                                                    placeholder:
+                                                                        (context,
+                                                                                url) =>
+                                                                            const CircularProgressIndicator(
+                                                                      color: Colors
+                                                                          .redAccent,
+                                                                    ), // Affiche un indicateur de chargement en attendant l'image
+                                                                    errorWidget: (context,
+                                                                            url,
+                                                                            error) =>
+                                                                        Image
                                                                             .asset(
-                                                                            'assets/images/medecin.png',
-                                                                            fit:
-                                                                                BoxFit.fill,
-                                                                          ),
+                                                                      'assets/images/medecin.png',
+                                                                      fit: BoxFit
+                                                                          .cover,
+                                                                      width: 50,
+                                                                      height:
+                                                                          50,
+                                                                    ), // Affiche une icône d'erreur si le chargement échoue
                                                                   ),
                                                                 ),
-                                                                Column(
-                                                                  children: [
-                                                                    Text(
-                                                                      '${listRDV.elementAt(index).medecin!.lastName[0]}.${abbreviateName(listRDV.elementAt(index).medecin!.firstName)}',
-                                                                      style: const TextStyle(
-                                                                          color: Color.fromARGB(
-                                                                              1000,
-                                                                              60,
-                                                                              70,
-                                                                              120),
-                                                                          fontWeight:
-                                                                              FontWeight.w500),
-                                                                    ),
-                                                                    Text(
-                                                                      '${abreviateRaison(listRDV.elementAt(index).reason)}',
-                                                                      style: const TextStyle(
-                                                                          color: Color.fromARGB(
-                                                                              1000,
-                                                                              60,
-                                                                              70,
-                                                                              120),
-                                                                          fontWeight:
-                                                                              FontWeight.w300),
-                                                                    )
-                                                                  ],
-                                                                ),
-                                                                const SizedBox(
-                                                                  width: 10,
-                                                                ),
-                                                              ],
-                                                            ),
-                                                            const Opacity(
-                                                              opacity: 0.4,
-                                                              child: Divider(
-                                                                thickness: 1,
-                                                                indent: 20,
-                                                                endIndent: 20,
-                                                                color:
-                                                                    Colors.grey,
                                                               ),
+                                                              Column(
+                                                                children: [
+                                                                  Text(
+                                                                    '${listRDV.elementAt(index).medecin!.lastName[0]}.${abbreviateName(listRDV.elementAt(index).medecin!.firstName)}',
+                                                                    style: const TextStyle(
+                                                                        color: Color.fromARGB(
+                                                                            1000,
+                                                                            60,
+                                                                            70,
+                                                                            120),
+                                                                        fontWeight:
+                                                                            FontWeight.w500),
+                                                                  ),
+                                                                  Text(
+                                                                    '${abreviateRaison(listRDV.elementAt(index).reason)}',
+                                                                    style: const TextStyle(
+                                                                        color: Color.fromARGB(
+                                                                            1000,
+                                                                            60,
+                                                                            70,
+                                                                            120),
+                                                                        fontWeight:
+                                                                            FontWeight.w300),
+                                                                  )
+                                                                ],
+                                                              ),
+                                                              const SizedBox(
+                                                                width: 10,
+                                                              ),
+                                                            ],
+                                                          ),
+                                                          const Opacity(
+                                                            opacity: 0.4,
+                                                            child: Divider(
+                                                              thickness: 1,
+                                                              indent: 20,
+                                                              endIndent: 20,
+                                                              color:
+                                                                  Colors.grey,
                                                             ),
-                                                            Expanded(
-                                                                child: Text(
-                                                                    'Le Dr.${listRDV.elementAt(index).medecin!.lastName} ${abbreviateName(listRDV.elementAt(index).medecin!.firstName)} a un rendez-vous prévu avec un patient :',
-                                                                    style: TextStyle(
-                                                                        color: Colors
-                                                                            .black
-                                                                            .withOpacity(0.5)))),
-                                                            Row(
-                                                              mainAxisAlignment:
-                                                                  MainAxisAlignment
-                                                                      .center,
-                                                              children: [
-                                                                Image.asset(
-                                                                  'assets/images/date-limite.png',
-                                                                  width: 20,
-                                                                  height: 20,
-                                                                ),
-                                                                const Spacer(),
-                                                                Text(
-                                                                  '${formatTimeAppointment(listRDV.elementAt(index).startAt, listRDV.elementAt(index).timeStart, listRDV.elementAt(index).timeEnd)}',
-                                                                  textAlign:
-                                                                      TextAlign
-                                                                          .center,
-                                                                  style: const TextStyle(
-                                                                      color: Color.fromARGB(
-                                                                          1000,
-                                                                          60,
-                                                                          70,
-                                                                          120)),
-                                                                ),
-                                                                const Spacer(),
-                                                              ],
-                                                            ),
-                                                          ],
-                                                        ),
-                                                      )));
-                                            },
-                                          )),
-                                        ]))),
-                          );
-                        }
-                        // Construisez votre ListView avec les données obtenues
+                                                          ),
+                                                          Expanded(
+                                                              child: Text(
+                                                                  'Le Dr.${listRDV.elementAt(index).medecin!.lastName} ${abbreviateName(listRDV.elementAt(index).medecin!.firstName)} a un rendez-vous prévu avec un patient :',
+                                                                  style: TextStyle(
+                                                                      color: Colors
+                                                                          .black
+                                                                          .withOpacity(
+                                                                              0.5)))),
+                                                          Row(
+                                                            mainAxisAlignment:
+                                                                MainAxisAlignment
+                                                                    .center,
+                                                            children: [
+                                                              Image.asset(
+                                                                'assets/images/date-limite.png',
+                                                                width: 20,
+                                                                height: 20,
+                                                              ),
+                                                              const Spacer(),
+                                                              Text(
+                                                                '${formatTimeAppointment(listRDV.elementAt(index).startAt, listRDV.elementAt(index).timeStart, listRDV.elementAt(index).timeEnd)}',
+                                                                textAlign:
+                                                                    TextAlign
+                                                                        .center,
+                                                                style: const TextStyle(
+                                                                    color: Color
+                                                                        .fromARGB(
+                                                                            1000,
+                                                                            60,
+                                                                            70,
+                                                                            120)),
+                                                              ),
+                                                              const Spacer(),
+                                                            ],
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    )));
+                                          },
+                                        )),
+                                      ]))),
+                        );
                       }
-                    },
-                  ),
+                      // Construisez votre ListView avec les données obtenues
+                    }
+                  },
                 ),
-              ],
-            )),);
-  }
-
-  Widget loadingWidget(){
-    return Center(
-        child:Column(
-          children: [
-            Container(
-              width: 100,
-              height: 100,
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-
-                  LoadingAnimationWidget.hexagonDots(
-                      color: Colors.redAccent,
-                      size: 120),
-
-                  Image.asset('assets/images/logo2.png',width: 80,height: 80,fit: BoxFit.cover,)
-                ],
               ),
-            ),
-            Padding(padding: EdgeInsets.only(top: 30,left: 10,right: 10),child:   Text('Veuillez attendre pendant que les données sont récupérées.',textAlign: TextAlign.center,style: TextStyle(color: Colors.black.withOpacity(0.5),letterSpacing: 2),),)
-          ],
-        ));
+            ],
+          )),
+    );
   }
 
-
+  Widget loadingWidget() {
+    return Center(
+        child: Column(
+      children: [
+        Container(
+          width: 100,
+          height: 100,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              LoadingAnimationWidget.hexagonDots(
+                  color: Colors.redAccent, size: 120),
+              Image.asset(
+                'assets/images/logo2.png',
+                width: 80,
+                height: 80,
+                fit: BoxFit.cover,
+              )
+            ],
+          ),
+        ),
+        Padding(
+          padding: EdgeInsets.only(top: 30, left: 10, right: 10),
+          child: Text(
+            'Veuillez attendre pendant que les données sont récupérées.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+                color: Colors.black.withOpacity(0.5), letterSpacing: 2),
+          ),
+        )
+      ],
+    ));
+  }
 }

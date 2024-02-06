@@ -461,8 +461,7 @@ class _ConfirmAppointmentState extends State<ConfirmAppointment> {
     Medecin medecin = ModalRoute.of(context)?.settings.arguments as Medecin;
     return PopScope(
       canPop: false,
-        child: (!isLoading)
-            ? Scaffold(
+        child: (!isLoading)? Scaffold(
                 key: _scaffoldKey,
                 backgroundColor: const Color.fromARGB(1000, 238, 239, 244),
                 body: ListView(children: [

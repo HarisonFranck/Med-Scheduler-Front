@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'Login.dart';
 import 'Registration.dart';
+import 'dart:async';
 
 
 class BienvenuePage extends StatefulWidget {
@@ -8,7 +9,9 @@ class BienvenuePage extends StatefulWidget {
   _BienvenuePageState createState() => _BienvenuePageState();
 }
 
-class _BienvenuePageState extends State<BienvenuePage> {
+class _BienvenuePageState extends State<BienvenuePage>{
+
+
   @override
   Widget build(BuildContext context) {
     return PopScope(canPop: false,child: Scaffold(

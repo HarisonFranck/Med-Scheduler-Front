@@ -120,7 +120,7 @@ class _AdminDetailsState extends State<AdminDetails> {
   Future<void> _cropImage(File? file) async {
     CroppedFile? croppedFile = await ImageCropper().cropImage(
       sourcePath: file!.path,
-      aspectRatio: CropAspectRatio(ratioX: 1, ratioY: 1),
+      aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
       maxWidth: 500,
       maxHeight: 500,
       cropStyle: CropStyle.circle,
@@ -130,9 +130,9 @@ class _AdminDetailsState extends State<AdminDetails> {
       uiSettings: [
         AndroidUiSettings(
             showCropGrid: false,
-            backgroundColor: Color.fromARGB(1000, 238, 239, 244),
+            backgroundColor: const Color.fromARGB(1000, 238, 239, 244),
             toolbarTitle: 'Rogner votre profil',
-            toolbarColor: Color.fromARGB(230, 20, 20, 90),
+            toolbarColor: const Color.fromARGB(230, 20, 20, 90),
             toolbarWidgetColor: Colors.white,
             initAspectRatio: CropAspectRatioPreset.ratio3x2,
             lockAspectRatio: true),
@@ -574,7 +574,7 @@ class _AdminDetailsState extends State<AdminDetails> {
                                               imageUrl:
                                                   '$baseUrl${utilisateur.imageName}',
                                               placeholder: (context, url) =>
-                                                  CircularProgressIndicator(
+                                                  const CircularProgressIndicator(
                                                 color: Colors.redAccent,
                                               ), // Affiche un indicateur de chargement en attendant l'image
                                               errorWidget:

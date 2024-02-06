@@ -17,6 +17,9 @@ import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:med_scheduler_front/AuthProviderUser.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:med_scheduler_front/ConnectionError.dart';
 
 class AccueilAdmin extends StatefulWidget {
   //final Utilisateur user;
@@ -33,6 +36,8 @@ class _AccueilAdminState extends State<AccueilAdmin> {
   Utilities? utilities;
 
   Utilisateur? user;
+
+  bool isLoading = true;
 
   @override
   initState() {
@@ -110,15 +115,22 @@ class _AccueilAdminState extends State<AccueilAdmin> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+
+    setState(() {
+      dataLoaded = false;
+      isLoading = true;
+    });
     //authProviderUser = Provider.of<AuthProviderUser>(context,listen: false);
-    user = Provider.of<AuthProviderUser>(context).utilisateur;
+    user = Provider.of<AuthProviderUser>(context, listen: false).utilisateur;
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await getAllAsync();
       getAll();
       if (mounted) {
         setState(() {
+          getAllAsync();
           dataLoaded = true;
+          isLoading = false;
         });
       }
     });
@@ -168,7 +180,7 @@ class _AccueilAdminState extends State<AccueilAdmin> {
       canPop: false,
       child: Scaffold(
         backgroundColor: const Color.fromARGB(1000, 238, 239, 244),
-        body: (dataLoaded)
+        body: (dataLoaded && !isLoading)
             ? Column(
                 children: [
                   const SizedBox(
@@ -205,31 +217,29 @@ class _AccueilAdminState extends State<AccueilAdmin> {
                           )),
                       const Spacer(),
                       Padding(
-                        padding: const EdgeInsets.only(right: 15, top: 20),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(60),
-                          child: Container(
-                            width: 60,
-                            height: 60,
-                            child: CachedNetworkImage(
-                              imageUrl:
-                              '$baseUrl${utilities!.ajouterPrefixe(user!.imageName!)}',
-                              placeholder: (context, url) =>
-                                  CircularProgressIndicator(
-                                    color: Colors.redAccent,
-                                  ), // Affiche un indicateur de chargement en attendant l'image
-                              errorWidget:
-                                  (context, url, error) =>
-                                  Image.asset(
-                                    'assets/images/Medhome.png',
-                                    fit: BoxFit.cover,
-                                    width: 50,
-                                    height: 50,
-                                  ),// Affiche une icône d'erreur si le chargement échoue
+                          padding: const EdgeInsets.only(right: 15, top: 20),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(60),
+                            child: Container(
+                              width: 60,
+                              height: 60,
+                              child: CachedNetworkImage(
+                                imageUrl:
+                                    '$baseUrl${utilities!.ajouterPrefixe(user!.imageName!)}',
+                                placeholder: (context, url) =>
+                                    const CircularProgressIndicator(
+                                  color: Colors.redAccent,
+                                ), // Affiche un indicateur de chargement en attendant l'image
+                                errorWidget: (context, url, error) =>
+                                    Image.asset(
+                                  'assets/images/Medhome.png',
+                                  fit: BoxFit.cover,
+                                  width: 50,
+                                  height: 50,
+                                ), // Affiche une icône d'erreur si le chargement échoue
+                              ),
                             ),
-                          ),
-                        )
-                      )
+                          ))
                     ],
                   ),
                   Padding(
@@ -276,7 +286,7 @@ class _AccueilAdminState extends State<AccueilAdmin> {
                             if (specsSnapshot.connectionState ==
                                 ConnectionState.waiting) {
                               return Padding(
-                                  padding: EdgeInsets.only(top: 150),
+                                  padding: const EdgeInsets.only(top: 150),
                                   child: Center(
                                     child: ListView(
                                       children: [
@@ -454,7 +464,7 @@ class _AccueilAdminState extends State<AccueilAdmin> {
                             if (centersSnapshot.connectionState ==
                                 ConnectionState.waiting) {
                               return Padding(
-                                  padding: EdgeInsets.only(top: 150),
+                                  padding: const EdgeInsets.only(top: 150),
                                   child: Center(
                                     child: ListView(
                                       children: [
@@ -619,7 +629,7 @@ class _AccueilAdminState extends State<AccueilAdmin> {
                             if (medecinsSnapshot.connectionState ==
                                 ConnectionState.waiting) {
                               return Padding(
-                                  padding: EdgeInsets.only(top: 150),
+                                  padding: const EdgeInsets.only(top: 150),
                                   child: Center(
                                     child: ListView(
                                       children: [
@@ -731,19 +741,25 @@ class _AccueilAdminState extends State<AccueilAdmin> {
                                                               BorderRadius
                                                                   .circular(60),
                                                         ),
-                                                        child: ((medecin.imageName !=
-                                                                    null) &&
-                                                                (File(medecin
-                                                                        .imageName!)
-                                                                    .existsSync()))
-                                                            ? Image.file(File(
-                                                                medecin
-                                                                    .imageName!))
-                                                            : Image.asset(
-                                                                'assets/images/medecin.png',
-                                                                fit:
-                                                                    BoxFit.fill,
-                                                              ),
+                                                        child:
+                                                            CachedNetworkImage(
+                                                          imageUrl:
+                                                              '$baseUrl${utilities!.ajouterPrefixe(medecin.imageName!)}',
+                                                          placeholder: (context,
+                                                                  url) =>
+                                                              const CircularProgressIndicator(
+                                                            color: Colors
+                                                                .redAccent,
+                                                          ), // Affiche un indicateur de chargement en attendant l'image
+                                                          errorWidget: (context,
+                                                                  url, error) =>
+                                                              Image.asset(
+                                                            'assets/images/medecin.png',
+                                                            fit: BoxFit.cover,
+                                                            width: 50,
+                                                            height: 50,
+                                                          ), // Affiche une icône d'erreur si le chargement échoue
+                                                        ),
                                                       ),
                                                     ),
                                                     const SizedBox(
@@ -1247,6 +1263,10 @@ class _AccueilAdminState extends State<AccueilAdmin> {
                 adminRepository!.deleteCenter(centre.id);
                 Navigator.pop(context);
                 didChangeDependencies();
+                setState(() {
+                getAllAsync();
+                isLoading = false;
+                });
               },
             )
           ],
@@ -1555,6 +1575,10 @@ class _AccueilAdminState extends State<AccueilAdmin> {
                 didChangeDependencies();
                 Navigator.pop(context);
                 didChangeDependencies();
+                setState(() {
+                getAllAsync();
+                isLoading = false;
+                });
               },
             )
           ],
@@ -1607,10 +1631,17 @@ class _AccueilAdminState extends State<AccueilAdmin> {
                     fontWeight: FontWeight.w700),
               ),
               onPressed: () async {
+                setState(() {
+                  isLoading = true;
+                });
                 adminRepository!.deleteMedecin(medecin);
                 didChangeDependencies();
                 Navigator.pop(context);
                 didChangeDependencies();
+                setState(() {
+                  getAllAsync();
+                  isLoading = false;
+                });
               },
             )
           ],
@@ -1654,6 +1685,66 @@ class _AccueilAdminState extends State<AccueilAdmin> {
   List<Centre> listCenter = [];
 
   FocusNode _focusNodeCentre = FocusNode();
+
+  Future<void> addMedecin(Utilisateur medecin) async {
+    setState(() {
+      isLoading = true;
+    });
+
+    if (await utilities!.isConnectionAvailable()) {
+      authProvider = Provider.of<AuthProvider>(context, listen: false);
+      token = authProvider.token;
+
+      final url = Uri.parse("${baseUrl}api/users");
+      //final headers = {'Content-Type': 'application/json'};
+
+      final headers = {
+        'Content-Type': 'application/ld+json',
+        'Authorization': 'Bearer $token'
+      };
+
+      String jsonSpec = jsonEncode(medecin.toJson());
+      print('Request Body: $jsonSpec');
+      final response = await http.post(url, headers: headers, body: jsonSpec);
+      print(response.statusCode);
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> jsonResponse = json.decode(response.body);
+        utilities!.CreationUtilisateur();
+        setState(() {
+          getAllAsync();
+          isLoading = false;
+        });
+
+        if (jsonResponse.containsKey('error')) {
+          utilities!.error('Medecin déja existant');
+        }
+      } else {
+        if (response.statusCode == 201) {
+          utilities!.CreationUtilisateur();
+          setState(() {
+            getAllAsync();
+            isLoading = false;
+          });
+        } else {
+          setState(() {
+            isLoading = false;
+          });
+          print('REQU BODY: ${response.body}');
+          // Gestion des erreurs HTTP
+          utilities!
+              .error('Il y a une erreur.\n Veuillez ressayer ulterieurement.');
+        }
+      }
+    } else {
+      setState(() {
+        isLoading = false;
+      });
+
+      utilities!.handleConnectionError(
+          ConnectionError("Une erreur de connexion s'est produite!"));
+    }
+  }
 
   void AjouterMedecin(BuildContext context) {
     spec = null;
@@ -1810,6 +1901,9 @@ class _AccueilAdminState extends State<AccueilAdmin> {
                         const Spacer(),
                         GestureDetector(
                           onTap: () {
+                            setState(() {
+                              isLoading = true;
+                            });
                             FocusScope.of(context).unfocus();
 
                             if (_formKey.currentState!.validate()) {
@@ -1833,17 +1927,11 @@ class _AccueilAdminState extends State<AccueilAdmin> {
                                     category: null,
                                     createdAt: DateTime.now(),
                                     city: villeController.text.trim());
-                                adminRepository!.addMedecin(user);
+                                addMedecin(user);
                                 didChangeDependencies();
                                 Navigator.of(context).pop();
                                 didChangeDependencies();
                                 ReInitDataMedecin();
-                                if (mounted) {
-                                  //didChangeDependencies();
-                                  setState() {
-                                    spec = null;
-                                  }
-                                }
                               } else {
                                 // Gérez le cas où l'e-mail n'est pas valide
                                 emailInvalide();
@@ -2110,6 +2198,9 @@ class _AccueilAdminState extends State<AccueilAdmin> {
                                 didChangeDependencies();
                                 Navigator.of(context).pop();
                                 didChangeDependencies();
+                                setState(() {
+                                  getAllAsync();
+                                });
                               } else {
                                 // Gérez le cas où l'e-mail n'est pas valide
                                 emailInvalide();
