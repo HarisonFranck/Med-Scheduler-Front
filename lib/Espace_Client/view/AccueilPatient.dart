@@ -27,8 +27,6 @@ import 'package:med_scheduler_front/AuthProviderUser.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
 class AccueilPatient extends StatefulWidget {
-
-
   @override
   _AccueilPatientState createState() => _AccueilPatientState();
 }
@@ -64,19 +62,23 @@ class _AccueilPatientState extends State<AccueilPatient> {
 
   Future<List<Medecin>> loadMoreData() async {
     try {
-      List<Medecin> moreMedecins = await userRepository!.getAllMedecin(currentPage + 1,searchLastName.text,searchCenter.text,searchSpecialite.text,searchLocation.text);
+      List<Medecin> moreMedecins = await userRepository!.getAllMedecin(
+          currentPage + 1,
+          searchLastName.text,
+          searchCenter.text,
+          searchSpecialite.text,
+          searchLocation.text);
       if (moreMedecins.isNotEmpty) {
         currentPage++;
       }
       return moreMedecins;
     } catch (e) {
       // Gérez les erreurs de chargement de données supplémentaires ici
-     return []; // ou lancez une exception appropriée selon votre logique
+      return []; // ou lancez une exception appropriée selon votre logique
     }
   }
 
   Future<void> initializeCalendar() async {
-
     tz.initializeTimeZones();
     tz.setLocalLocation(tz.getLocation('Indian/Antananarivo'));
 
@@ -84,20 +86,17 @@ class _AccueilPatientState extends State<AccueilPatient> {
     var calendars = await deviceCalendarPlugin.retrieveCalendars();
 
     if (calendars.data!.isEmpty) {
-
       return;
     }
 
     var defaultCalendarId = calendars.data!.first.id;
 
     try {
-      List<CustomAppointment> appoints =
-          await getProcheRendezVous(await userRepository!.getAllAppointmentByPatient(user!));
+      List<CustomAppointment> appoints = await getProcheRendezVous(
+          await userRepository!.getAllAppointmentByPatient(user!));
 
       if (appoints.isNotEmpty) {
         appoints.forEach((element) async {
-
-
           TZDateTime startTZ = TZDateTime(
               tz.getLocation('Indian/Antananarivo'),
               element.startAt.year,
@@ -115,8 +114,6 @@ class _AccueilPatientState extends State<AccueilPatient> {
               element.timeEnd.minute,
               element.timeEnd.second);
 
-
-
           Event event = Event(
             defaultCalendarId,
             title: 'Prochain Rendez-vous: ${element.reason.toUpperCase()}',
@@ -132,7 +129,6 @@ class _AccueilPatientState extends State<AccueilPatient> {
               Reminder(minutes: 60)
             ],
           );
-
 
           // Utiliser RetrieveEventsParams
           var params = RetrieveEventsParams(
@@ -151,13 +147,10 @@ class _AccueilPatientState extends State<AccueilPatient> {
           if (!eventExists) {
             final result =
                 await deviceCalendarPlugin.createOrUpdateEvent(event);
-
           }
-
         });
       }
-    } catch (e, stackTrace) {
-    }
+    } catch (e, stackTrace) {}
   }
 
   Future<void> getAllAsync() async {
@@ -177,8 +170,7 @@ class _AccueilPatientState extends State<AccueilPatient> {
     utilities = Utilities(context: context);
     userRepository = UserRepository(context: context, utilities: utilities!);
 
-WidgetsFlutterBinding.ensureInitialized();
-
+    WidgetsFlutterBinding.ensureInitialized();
   }
 
   List<CustomAppointment> listAppointment = [];
@@ -202,7 +194,6 @@ WidgetsFlutterBinding.ensureInitialized();
           appointment.timeStart.hour,
           appointment.timeStart.minute,
           appointment.timeStart.second);
-
 
       if (startDate.isAfter(now) &&
           isInCurrentWeek(startDate, rendezVousList.elementAt(i).timeStart)) {
@@ -237,7 +228,7 @@ WidgetsFlutterBinding.ensureInitialized();
         DateTime(startAt.year, startAt.month, startAt.day, timeStart.hour);
 
     if ((formatedStartAt.isBefore(formatedEndOfWeek)) &&
-        (now.subtract(Duration(days: 1)).isBefore(TimeDtStart))) {
+        (now.subtract(const Duration(days: 1)).isBefore(TimeDtStart))) {
       isIt = true;
     }
 
@@ -273,10 +264,13 @@ WidgetsFlutterBinding.ensureInitialized();
 
     String nowFormatted = DateFormat('yyyy-MM-dd HH').format(now);
 
-
     // Ajouter les appointments filtrés à la liste résultante
     filteredAppointments.addAll(appointmentsInCurrentWeek.where((element) {
-      String dtAppointFormatted = DateFormat('yyyy-MM-dd HH').format(DateTime(element.startAt.year,element.startAt.month,element.startAt.day,element.timeStart.hour));
+      String dtAppointFormatted = DateFormat('yyyy-MM-dd HH').format(DateTime(
+          element.startAt.year,
+          element.startAt.month,
+          element.startAt.day,
+          element.timeStart.hour));
       DateTime dtNow = DateTime.parse(nowFormatted);
       DateTime dtAppoint = DateTime.parse(dtAppointFormatted);
       return dtAppoint.isAfter(dtNow);
@@ -284,8 +278,6 @@ WidgetsFlutterBinding.ensureInitialized();
 
     return filteredAppointments;
   }
-
-
 
   //Fonction pour stocker les categories trouvés
   void getAll() {
@@ -321,15 +313,14 @@ WidgetsFlutterBinding.ensureInitialized();
           id: user!.id,
           type: user!.userType,
           lastName: user!.lastName,
-          firstName:user!.firstName);
+          firstName: user!.firstName);
     });
     baseRepository = BaseRepository(context: context, utilities: utilities!);
     user = Provider.of<AuthProviderUser>(context).utilisateur;
     initializeCalendar();
-    if(mounted){
+    if (mounted) {
       getAll();
     }
-
   }
 
   String abbreviateName(String fullName) {
@@ -610,14 +601,20 @@ WidgetsFlutterBinding.ensureInitialized();
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(60),
                     ),
-                    child: ((appointment.medecin!.imageName != "") &&
-                            (File(appointment.medecin!.imageName!)
-                                .existsSync()))
-                        ? Image.file(File(appointment.medecin!.imageName!))
-                        : Image.asset(
-                            'assets/images/medecin.png',
-                            fit: BoxFit.fill,
-                          ),
+                    child: CachedNetworkImage(
+                      imageUrl:
+                          '$baseUrl${utilities!.ajouterPrefixe(appointment.medecin!.imageName!)}',
+                      placeholder: (context, url) =>
+                          const CircularProgressIndicator(
+                        color: Colors.redAccent,
+                      ), // Affiche un indicateur de chargement en attendant l'image
+                      errorWidget: (context, url, error) => Image.asset(
+                        'assets/images/medecin.png',
+                        fit: BoxFit.cover,
+                        width: 50,
+                        height: 50,
+                      ), // Affiche une icône d'erreur si le chargement échoue
+                    ),
                   ),
                 ),
                 Flexible(
@@ -679,20 +676,6 @@ WidgetsFlutterBinding.ensureInitialized();
               )
             ])
           ])));
-
-/*  List<Medecin> listPersonne = [];
-
-  final int _perPage = 10;
-  int _currentPage = 1;
-
-  List<Medecin> get _currentDoctors {
-    final startIndex = (_currentPage - 1) * _perPage;
-    final endIndex = startIndex + _perPage;
-    return listPersonne.sublist(
-      startIndex,
-      endIndex > listPersonne.length ? listPersonne.length : endIndex,
-    );
-  }*/
 
   bool isCenter = false;
   bool isSpecialite = false;
@@ -763,23 +746,21 @@ WidgetsFlutterBinding.ensureInitialized();
                                 height: 60,
                                 child: CachedNetworkImage(
                                   imageUrl:
-                                  '$baseUrl${utilities!.ajouterPrefixe(user!.imageName!)}',
+                                      '$baseUrl${utilities!.ajouterPrefixe(user!.imageName!)}',
                                   placeholder: (context, url) =>
-                                      CircularProgressIndicator(
-                                        color: Colors.redAccent,
-                                      ), // Affiche un indicateur de chargement en attendant l'image
-                                  errorWidget:
-                                      (context, url, error) =>
+                                      const CircularProgressIndicator(
+                                    color: Colors.redAccent,
+                                  ), // Affiche un indicateur de chargement en attendant l'image
+                                  errorWidget: (context, url, error) =>
                                       Image.asset(
-                                        'assets/images/Medhome.png',
-                                        fit: BoxFit.cover,
-                                        width: 50,
-                                        height: 50,
-                                      ),// Affiche une icône d'erreur si le chargement échoue
+                                    'assets/images/Medhome.png',
+                                    fit: BoxFit.cover,
+                                    width: 50,
+                                    height: 50,
+                                  ), // Affiche une icône d'erreur si le chargement échoue
                                 ),
                               ),
-                            )
-                        )
+                            ))
                       ],
                     ),
                     const SizedBox(
@@ -816,12 +797,22 @@ WidgetsFlutterBinding.ensureInitialized();
                           if (nom.trim().isEmpty) {
                             setState(() {
                               searchLastName.text = "";
-                              medecinsFuture = userRepository!.getAllMedecin(currentPage,searchLastName.text,searchCenter.text,searchSpecialite.text,searchLocation.text);
+                              medecinsFuture = userRepository!.getAllMedecin(
+                                  currentPage,
+                                  searchLastName.text,
+                                  searchCenter.text,
+                                  searchSpecialite.text,
+                                  searchLocation.text);
                             });
                           } else {
                             setState(() {
                               searchLastName.text = nom;
-                              medecinsFuture = userRepository!.getAllMedecin(currentPage,searchLastName.text,searchCenter.text,searchSpecialite.text,searchLocation.text);
+                              medecinsFuture = userRepository!.getAllMedecin(
+                                  currentPage,
+                                  searchLastName.text,
+                                  searchCenter.text,
+                                  searchSpecialite.text,
+                                  searchLocation.text);
                             });
                           }
                         },
@@ -877,7 +868,13 @@ WidgetsFlutterBinding.ensureInitialized();
                                 centre = null;
                                 searchCenter.text = "";
                                 setState(() {
-                                  medecinsFuture = userRepository!.getAllMedecin(currentPage,searchLastName.text,searchCenter.text,searchSpecialite.text,searchLocation.text);
+                                  medecinsFuture = userRepository!
+                                      .getAllMedecin(
+                                          currentPage,
+                                          searchLastName.text,
+                                          searchCenter.text,
+                                          searchSpecialite.text,
+                                          searchLocation.text);
                                 });
                               }
                             });
@@ -924,7 +921,13 @@ WidgetsFlutterBinding.ensureInitialized();
                                 speciality = null;
                                 searchSpecialite.text = "";
                                 setState(() {
-                                  medecinsFuture = userRepository!.getAllMedecin(currentPage,searchLastName.text,searchCenter.text,searchSpecialite.text,searchLocation.text);
+                                  medecinsFuture = userRepository!
+                                      .getAllMedecin(
+                                          currentPage,
+                                          searchLastName.text,
+                                          searchCenter.text,
+                                          searchSpecialite.text,
+                                          searchLocation.text);
                                 });
                               }
                             });
@@ -969,10 +972,15 @@ WidgetsFlutterBinding.ensureInitialized();
                               isLocation = !isLocation;
 
                               if (isLocation == false) {
-                                medecinsFuture = userRepository!.getAllMedecin(currentPage,searchLastName.text,searchCenter.text,searchSpecialite.text,searchLocation.text);
+                                medecinsFuture = userRepository!.getAllMedecin(
+                                    currentPage,
+                                    searchLastName.text,
+                                    searchCenter.text,
+                                    searchSpecialite.text,
+                                    searchLocation.text);
                               }
                             });
-                         },
+                          },
                           child: Column(
                             children: [
                               ClipRRect(
@@ -1021,12 +1029,16 @@ WidgetsFlutterBinding.ensureInitialized();
                           value: centre,
                           onChanged: (Centre? newval) {
                             setState(() {
-
                               searchSpecialite.text = "";
                               centre = newval!;
                               searchCenter.text = centre!.label;
 
-                              medecinsFuture = userRepository!.getAllMedecin(currentPage,searchLastName.text,searchCenter.text,searchSpecialite.text,searchLocation.text);
+                              medecinsFuture = userRepository!.getAllMedecin(
+                                  currentPage,
+                                  searchLastName.text,
+                                  searchCenter.text,
+                                  searchSpecialite.text,
+                                  searchLocation.text);
                             });
                           },
                           items: listCenter.map((e) {
@@ -1062,7 +1074,9 @@ WidgetsFlutterBinding.ensureInitialized();
                               hintStyle: const TextStyle(
                                   color: Colors.black,
                                   fontWeight: FontWeight.w300),
-                              hintText: (searchCenter.text!="")?'':'Liste des center',
+                              hintText: (searchCenter.text != "")
+                                  ? ''
+                                  : 'Liste des center',
                               border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(5.0))),
                         ),
@@ -1086,12 +1100,15 @@ WidgetsFlutterBinding.ensureInitialized();
                             onChanged: (Specialite? newval) {
                               //print('SPEC CHANGE: ${speciality!.label}');
                               setState(() {
-
                                 searchCenter.text = "";
                                 speciality = newval!;
                                 searchSpecialite.text = speciality!.label;
-                               medecinsFuture = userRepository!.getAllMedecin(currentPage,searchLastName.text,searchCenter.text,searchSpecialite.text,searchLocation.text);
-
+                                medecinsFuture = userRepository!.getAllMedecin(
+                                    currentPage,
+                                    searchLastName.text,
+                                    searchCenter.text,
+                                    searchSpecialite.text,
+                                    searchLocation.text);
                               });
                             },
                             items: listSpec.map((e) {
@@ -1127,7 +1144,9 @@ WidgetsFlutterBinding.ensureInitialized();
                                 hintStyle: const TextStyle(
                                     color: Colors.black,
                                     fontWeight: FontWeight.w300),
-                                hintText: (searchSpecialite.text!="")?'':'Liste des specialites',
+                                hintText: (searchSpecialite.text != "")
+                                    ? ''
+                                    : 'Liste des specialites',
                                 border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(5.0))),
                           ),
@@ -1141,14 +1160,34 @@ WidgetsFlutterBinding.ensureInitialized();
                               left: 30, right: 30, top: 20),
                           child: TextFormField(
                             onChanged: (nom) {
-                              setState(() {
-                                searchCenter.text = "";
-                                searchSpecialite.text = "";
-                                searchLocation.text =
-                                    (nom.isNotEmpty) ? nom : '';
-
-                                medecinsFuture = userRepository!.getAllMedecin(currentPage,searchLastName.text,searchCenter.text,searchSpecialite.text,searchLocation.text);
-                              });
+                              if (nom.trim().isEmpty) {
+                                setState(() {
+                                  searchCenter.text = "";
+                                  searchSpecialite.text = "";
+                                  searchLastName.text = "";
+                                  medecinsFuture = userRepository!
+                                      .getAllMedecin(
+                                          currentPage,
+                                          searchLastName.text,
+                                          searchCenter.text,
+                                          searchSpecialite.text,
+                                          searchLocation.text);
+                                });
+                              } else {
+                                setState(() {
+                                  searchCenter.text = "";
+                                  searchSpecialite.text = "";
+                                  searchLocation.text =
+                                      (nom.isNotEmpty) ? nom : '';
+                                  medecinsFuture = userRepository!
+                                      .getAllMedecin(
+                                          currentPage,
+                                          searchLastName.text,
+                                          searchCenter.text,
+                                          searchSpecialite.text,
+                                          searchLocation.text);
+                                });
+                              }
                             },
                             focusNode: _focusNodeSearchLoc,
                             controller: searchLocation,
@@ -1199,8 +1238,9 @@ WidgetsFlutterBinding.ensureInitialized();
                                   child: ListView(
                                 children: const [
                                   Center(
-                                    child:CircularProgressIndicator(color: Colors.redAccent,)
-                                  ),
+                                      child: CircularProgressIndicator(
+                                    color: Colors.redAccent,
+                                  )),
                                   SizedBox(
                                     height: 30,
                                   ),
@@ -1219,7 +1259,7 @@ WidgetsFlutterBinding.ensureInitialized();
                               List<Medecin> medecins = medecinsSnapshot.data!;
 
                               if (medecins.isEmpty) {
-                               return Padding(
+                                return Padding(
                                     padding: const EdgeInsets.only(
                                         right: 18,
                                         left: 18,
@@ -1270,7 +1310,7 @@ WidgetsFlutterBinding.ensureInitialized();
                                     if (scrollInfo is ScrollEndNotification &&
                                         scrollController.position.extentAfter ==
                                             0) {
-                                     // L'utilisateur a atteint la fin de la liste, chargez plus de données
+                                      // L'utilisateur a atteint la fin de la liste, chargez plus de données
                                       loadMoreData();
                                     }
                                     return false;
@@ -1322,19 +1362,27 @@ WidgetsFlutterBinding.ensureInitialized();
                                                                         .circular(
                                                                             60),
                                                               ),
-                                                              child: ((medecin.imageName !=
-                                                                          null) &&
-                                                                      (File(medecin
-                                                                              .imageName!)
-                                                                          .existsSync()))
-                                                                  ? Image.file(
-                                                                      File(medecin
-                                                                          .imageName!))
-                                                                  : Image.asset(
-                                                                      'assets/images/medecin.png',
-                                                                      fit: BoxFit
-                                                                          .fill,
-                                                                    ),
+                                                              child:
+                                                                  CachedNetworkImage(
+                                                                imageUrl:
+                                                                    '$baseUrl${utilities!.ajouterPrefixe(medecin.imageName!)}',
+                                                                placeholder: (context,
+                                                                        url) =>
+                                                                    const CircularProgressIndicator(
+                                                                  color: Colors
+                                                                      .redAccent,
+                                                                ), // Affiche un indicateur de chargement en attendant l'image
+                                                                errorWidget: (context,
+                                                                        url,
+                                                                        error) =>
+                                                                    Image.asset(
+                                                                  'assets/images/medecin.png',
+                                                                  fit: BoxFit
+                                                                      .cover,
+                                                                  width: 50,
+                                                                  height: 50,
+                                                                ), // Affiche une icône d'erreur si le chargement échoue
+                                                              ),
                                                             ),
                                                           ),
                                                           const SizedBox(
@@ -1356,7 +1404,7 @@ WidgetsFlutterBinding.ensureInitialized();
                                                                             .w500),
                                                               ),
                                                               Text(
-                                                                '${(medecin.speciality!=null)?medecin.speciality!.label:''}',
+                                                                '${(medecin.speciality != null) ? medecin.speciality!.label : ''}',
                                                                 style: const TextStyle(
                                                                     color: Color
                                                                         .fromARGB(
@@ -1508,7 +1556,10 @@ WidgetsFlutterBinding.ensureInitialized();
                                       } else if (isLoading) {
                                         // Affichez l'indicateur de chargement pendant le chargement des données
                                         return Center(
-                                            child: LoadingAnimationWidget.fourRotatingDots(color: Colors.redAccent, size: 120));
+                                            child: LoadingAnimationWidget
+                                                .fourRotatingDots(
+                                                    color: Colors.redAccent,
+                                                    size: 120));
                                       } else {
                                         return Container(); // ou tout autre widget pour l'espace réservé
                                       }
@@ -1523,7 +1574,7 @@ WidgetsFlutterBinding.ensureInitialized();
                   child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                  loadingWidget(),
+                    loadingWidget(),
                     const SizedBox(
                       height: 30,
                     ),
@@ -1536,22 +1587,24 @@ WidgetsFlutterBinding.ensureInitialized();
     );
   }
 
-  Widget loadingWidget(){
+  Widget loadingWidget() {
     return Center(
-        child:Container(
-          width: 100,
-          height: 100,
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-
-              LoadingAnimationWidget.hexagonDots(
-                  color: Colors.redAccent,
-                  size: 120),
-
-              Image.asset('assets/images/logo2.png',width: 80,height: 80,fit: BoxFit.cover,)
-            ],
-          ),
-        ));
+        child: Container(
+      width: 100,
+      height: 100,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          LoadingAnimationWidget.hexagonDots(
+              color: Colors.redAccent, size: 120),
+          Image.asset(
+            'assets/images/logo2.png',
+            width: 80,
+            height: 80,
+            fit: BoxFit.cover,
+          )
+        ],
+      ),
+    ));
   }
 }

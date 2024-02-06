@@ -6,10 +6,7 @@ import 'package:med_scheduler_front/CustomAppointment.dart';
 import 'package:med_scheduler_front/CustomAppointmentDataSource.dart';
 import 'package:med_scheduler_front/Medecin.dart';
 import 'package:med_scheduler_front/Patient.dart';
-import 'dart:convert';
 import 'package:med_scheduler_front/AuthProvider.dart';
-import 'package:provider/provider.dart';
-import 'package:http/http.dart' as http;
 import 'dart:io';
 import 'package:med_scheduler_front/UrlBase.dart';
 import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
@@ -20,9 +17,9 @@ import 'package:device_calendar/device_calendar.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:loading_animation_widget/loading_animation_widget.dart';
-import 'package:med_scheduler_front/main.dart';
 import 'package:med_scheduler_front/Repository/UserRepository.dart';
 import 'package:med_scheduler_front/Utilitie/Utilities.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class PriseDeRendezVous extends StatefulWidget {
   final Patient patient;
@@ -313,7 +310,8 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
       //await getAllAsync();
       listAppointment = await InitierAppointment(medecinCliked!);
       if (mounted) {
-        listUnavalaibleAppointment = await userRepository!.getAllUnavalaibleAppointment(medecinCliked!);
+        listUnavalaibleAppointment =
+            await userRepository!.getAllUnavalaibleAppointment(medecinCliked!);
         if (listAppointment.isEmpty) {
           setState(() {
             dataLoaded = true;
@@ -1009,15 +1007,21 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(60),
                                   ),
-                                  child: ((medecinCliked!.imageName != null) &&
-                                          (File(medecinCliked!.imageName!)
-                                              .existsSync()))
-                                      ? Image.file(
-                                          File(medecinCliked!.imageName!))
-                                      : Image.asset(
-                                          'assets/images/medecin.png',
-                                          fit: BoxFit.fill,
-                                        ),
+                                  child: CachedNetworkImage(
+                                    imageUrl:
+                                        '$baseUrl${utilities!.ajouterPrefixe(medecinCliked!.imageName!)}',
+                                    placeholder: (context, url) =>
+                                        const CircularProgressIndicator(
+                                      color: Colors.redAccent,
+                                    ), // Affiche un indicateur de chargement en attendant l'image
+                                    errorWidget: (context, url, error) =>
+                                        Image.asset(
+                                      'assets/images/medecin.png',
+                                      fit: BoxFit.cover,
+                                      width: 50,
+                                      height: 50,
+                                    ), // Affiche une icône d'erreur si le chargement échoue
+                                  ),
                                 ),
                               ),
                               Column(
@@ -1180,8 +1184,6 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
     );
   }
 
-
-
   Widget showNothing() {
     return Column(
       children: [
@@ -1214,8 +1216,6 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
       ],
     );
   }
-
-
 
   Widget loadingWidget() {
     return Center(

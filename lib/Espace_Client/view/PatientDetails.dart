@@ -597,11 +597,8 @@ class _PatientDetailsState extends State<PatientDetails> {
                                                     bool isGranted =
                                                         await _requestGalleryPermission();
                                                     if (isGranted) {
-                                                      String imageName =
-                                                          generateUniqueImageName()
-                                                              .trim();
-                                                      print(
-                                                          'IMAGE NAME: $imageName');
+
+
                                                       FilePickerResult? result =
                                                           await FilePicker
                                                               .platform
@@ -886,8 +883,6 @@ class _PatientDetailsState extends State<PatientDetails> {
                                       utilities!.ModificationError(
                                           'Veuillez inserer un numero valide');
                                     } else {
-
-                                      print('USER PHOTO: ${(user!.imageName!=null)?user!.imageName:'NULLL SARY'}');
 
                                       Utilisateur userInterm = Utilisateur(
                                           id: utilisateur.id,
