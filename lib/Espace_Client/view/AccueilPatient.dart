@@ -97,56 +97,58 @@ class _AccueilPatientState extends State<AccueilPatient> {
 
       if (appoints.isNotEmpty) {
         appoints.forEach((element) async {
-          TZDateTime startTZ = TZDateTime(
-              tz.getLocation('Indian/Antananarivo'),
-              element.startAt.year,
-              element.startAt.month,
-              element.startAt.day,
-              element.timeStart.hour,
-              element.timeStart.minute,
-              element.timeStart.second);
-          TZDateTime endTZ = TZDateTime(
-              tz.getLocation('Indian/Antananarivo'),
-              element.startAt.year,
-              element.startAt.month,
-              element.startAt.day,
-              element.timeEnd.hour,
-              element.timeEnd.minute,
-              element.timeEnd.second);
+          if (element.isDeleted == null || element.isDeleted != false) {
+            TZDateTime startTZ = TZDateTime(
+                tz.getLocation('Indian/Antananarivo'),
+                element.startAt.year,
+                element.startAt.month,
+                element.startAt.day,
+                element.timeStart.hour,
+                element.timeStart.minute,
+                element.timeStart.second);
+            TZDateTime endTZ = TZDateTime(
+                tz.getLocation('Indian/Antananarivo'),
+                element.startAt.year,
+                element.startAt.month,
+                element.startAt.day,
+                element.timeEnd.hour,
+                element.timeEnd.minute,
+                element.timeEnd.second);
 
-          Event event = Event(
-            defaultCalendarId,
-            title: 'Prochain Rendez-vous: ${element.reason.toUpperCase()}',
-            description: (element.medecin != null)
-                ? '${element.reason.toUpperCase()} avec le Dr ${element.medecin!.lastName} ${element.medecin!.firstName}.'
-                : element.reason,
-            start: startTZ,
-            end: endTZ,
-            status: EventStatus.Confirmed,
-            reminders: [
-              Reminder(minutes: 15),
-              Reminder(minutes: 30),
-              Reminder(minutes: 60)
-            ],
-          );
+            Event event = Event(
+              defaultCalendarId,
+              title: 'Prochain Rendez-vous: ${element.reason.toUpperCase()}',
+              description: (element.medecin != null)
+                  ? '${element.reason.toUpperCase()} avec le Dr ${element.medecin!.lastName} ${element.medecin!.firstName}.'
+                  : element.reason,
+              start: startTZ,
+              end: endTZ,
+              status: EventStatus.Confirmed,
+              reminders: [
+                Reminder(minutes: 15),
+                Reminder(minutes: 30),
+                Reminder(minutes: 60)
+              ],
+            );
 
-          // Utiliser RetrieveEventsParams
-          var params = RetrieveEventsParams(
-              startDate: startTZ.subtract(const Duration(minutes: 1)),
-              endDate: endTZ.add(const Duration(minutes: 1)));
-          var existingEvents = await deviceCalendarPlugin.retrieveEvents(
-              defaultCalendarId, params);
+            // Utiliser RetrieveEventsParams
+            var params = RetrieveEventsParams(
+                startDate: startTZ.subtract(const Duration(minutes: 1)),
+                endDate: endTZ.add(const Duration(minutes: 1)));
+            var existingEvents = await deviceCalendarPlugin.retrieveEvents(
+                defaultCalendarId, params);
 
-          var eventExists = existingEvents.data!.any((existingEvent) =>
-                  existingEvent.title == event.title &&
-                  existingEvent.description == event.description &&
-                  existingEvent.start == startTZ &&
-                  existingEvent.end == endTZ) ??
-              false;
+            var eventExists = existingEvents.data!.any((existingEvent) =>
+                    existingEvent.title == event.title &&
+                    existingEvent.description == event.description &&
+                    existingEvent.start == startTZ &&
+                    existingEvent.end == endTZ) ??
+                false;
 
-          if (!eventExists) {
-            final result =
-                await deviceCalendarPlugin.createOrUpdateEvent(event);
+            if (!eventExists) {
+              final result =
+                  await deviceCalendarPlugin.createOrUpdateEvent(event);
+            }
           }
         });
       }
@@ -623,6 +625,7 @@ class _AccueilPatientState extends State<AccueilPatient> {
                     children: [
                       Text(
                         '${appointment.medecin!.lastName[0]}.${abbreviateName(appointment.medecin!.firstName)}',
+                        overflow: TextOverflow.fade,
                         style: const TextStyle(
                             color: Colors.white, fontWeight: FontWeight.w500),
                       ),
@@ -791,7 +794,7 @@ class _AccueilPatientState extends State<AccueilPatient> {
                     ),
                     Padding(
                       padding: const EdgeInsets.only(
-                          left: 30, right: 30, bottom: 20, top: 20),
+                          left: 30, right: 30, bottom: 10, top: 10),
                       child: TextFormField(
                         onChanged: (nom) {
                           if (nom.trim().isEmpty) {
@@ -850,77 +853,130 @@ class _AccueilPatientState extends State<AccueilPatient> {
                         ),
                       ),
                     ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        GestureDetector(
-                          onTap: () {
-                            FocusScope.of(context).unfocus();
-                            setState(() {
-                              speciality = null;
-                              searchCenter.text = "";
-                              searchSpecialite.text = "";
-                              searchLocation.text = "";
-                              isLocation = false;
-                              isSpecialite = false;
-                              isCenter = !isCenter;
-                              if (isCenter == false) {
-                                centre = null;
-                                searchCenter.text = "";
-                                setState(() {
-                                  medecinsFuture = userRepository!
-                                      .getAllMedecin(
-                                          currentPage,
-                                          searchLastName.text,
-                                          searchCenter.text,
-                                          searchSpecialite.text,
-                                          searchLocation.text);
-                                });
-                              }
-                            });
-                          },
-                          child: Column(
-                            children: [
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(40),
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    color: const Color.fromARGB(
-                                        1000, 230, 230, 230),
-                                    border: isCenter
-                                        ? Border.all(color: Colors.black)
-                                        : null,
-                                  ),
-                                  width: 80,
-                                  height: 80,
-                                  child: const Icon(
-                                    Icons.home_work_rounded,
-                                    color: Color.fromARGB(1000, 60, 70, 120),
-                                  ),
-                                ),
-                              ),
-                              const Text(
-                                'Centre',
-                                textAlign: TextAlign.center,
-                              ),
-                            ],
-                          ),
-                        ),
-                        GestureDetector(
-                          onTap: () {
-                            FocusScope.of(context).unfocus();
-                            setState(() {
-                              centre = null;
-                              searchSpecialite.text = "";
-                              searchCenter.text = "";
-                              isCenter = false;
-                              isLocation = false;
-                              searchLocation.text = "";
-                              isSpecialite = !isSpecialite;
-                              if (isSpecialite == false) {
+                    Expanded(
+                        child: SingleChildScrollView(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          GestureDetector(
+                            onTap: () {
+                              FocusScope.of(context).unfocus();
+                              setState(() {
                                 speciality = null;
+                                searchCenter.text = "";
                                 searchSpecialite.text = "";
-                                setState(() {
+                                searchLocation.text = "";
+                                isLocation = false;
+                                isSpecialite = false;
+                                isCenter = !isCenter;
+                                if (isCenter == false) {
+                                  centre = null;
+                                  searchCenter.text = "";
+                                  setState(() {
+                                    medecinsFuture = userRepository!
+                                        .getAllMedecin(
+                                            currentPage,
+                                            searchLastName.text,
+                                            searchCenter.text,
+                                            searchSpecialite.text,
+                                            searchLocation.text);
+                                  });
+                                }
+                              });
+                            },
+                            child: Column(
+                              children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(40),
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: const Color.fromARGB(
+                                          1000, 230, 230, 230),
+                                      border: isCenter
+                                          ? Border.all(color: Colors.black)
+                                          : null,
+                                    ),
+                                    width: 80,
+                                    height: 80,
+                                    child: const Icon(
+                                      Icons.home_work_rounded,
+                                      color: Color.fromARGB(1000, 60, 70, 120),
+                                    ),
+                                  ),
+                                ),
+                                const Text(
+                                  'Centre',
+                                  textAlign: TextAlign.center,
+                                ),
+                              ],
+                            ),
+                          ),
+                          GestureDetector(
+                            onTap: () {
+                              FocusScope.of(context).unfocus();
+                              setState(() {
+                                centre = null;
+                                searchSpecialite.text = "";
+                                searchCenter.text = "";
+                                isCenter = false;
+                                isLocation = false;
+                                searchLocation.text = "";
+                                isSpecialite = !isSpecialite;
+                                if (isSpecialite == false) {
+                                  speciality = null;
+                                  searchSpecialite.text = "";
+                                  setState(() {
+                                    medecinsFuture = userRepository!
+                                        .getAllMedecin(
+                                            currentPage,
+                                            searchLastName.text,
+                                            searchCenter.text,
+                                            searchSpecialite.text,
+                                            searchLocation.text);
+                                  });
+                                }
+                              });
+                            },
+                            child: Column(
+                              children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(40),
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: const Color.fromARGB(
+                                          1000, 230, 230, 230),
+                                      border: isSpecialite
+                                          ? Border.all(color: Colors.black)
+                                          : null,
+                                    ),
+                                    width: 80,
+                                    height: 80,
+                                    child: const Icon(
+                                      FontAwesome.user_doctor,
+                                      color: Color.fromARGB(1000, 60, 70, 120),
+                                    ),
+                                  ),
+                                ),
+                                const Text(
+                                  'Specialite',
+                                  textAlign: TextAlign.center,
+                                ),
+                              ],
+                            ),
+                          ),
+                          GestureDetector(
+                            onTap: () {
+                              FocusScope.of(context).unfocus();
+                              setState(() {
+                                centre = null;
+                                speciality = null;
+                                searchCenter.text = "";
+                                searchSpecialite.text = "";
+                                isCenter = false;
+                                isSpecialite = false;
+                                isLocation = !isLocation;
+
+                                if (isLocation == false) {
                                   medecinsFuture = userRepository!
                                       .getAllMedecin(
                                           currentPage,
@@ -928,90 +984,41 @@ class _AccueilPatientState extends State<AccueilPatient> {
                                           searchCenter.text,
                                           searchSpecialite.text,
                                           searchLocation.text);
-                                });
-                              }
-                            });
-                          },
-                          child: Column(
-                            children: [
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(40),
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    color: const Color.fromARGB(
-                                        1000, 230, 230, 230),
-                                    border: isSpecialite
-                                        ? Border.all(color: Colors.black)
-                                        : null,
-                                  ),
-                                  width: 80,
-                                  height: 80,
-                                  child: const Icon(
-                                    FontAwesome.user_doctor,
-                                    color: Color.fromARGB(1000, 60, 70, 120),
-                                  ),
-                                ),
-                              ),
-                              const Text(
-                                'Specialite',
-                                textAlign: TextAlign.center,
-                              ),
-                            ],
-                          ),
-                        ),
-                        GestureDetector(
-                          onTap: () {
-                            FocusScope.of(context).unfocus();
-                            setState(() {
-                              centre = null;
-                              speciality = null;
-                              searchCenter.text = "";
-                              searchSpecialite.text = "";
-                              isCenter = false;
-                              isSpecialite = false;
-                              isLocation = !isLocation;
-
-                              if (isLocation == false) {
-                                medecinsFuture = userRepository!.getAllMedecin(
-                                    currentPage,
-                                    searchLastName.text,
-                                    searchCenter.text,
-                                    searchSpecialite.text,
-                                    searchLocation.text);
-                              }
-                            });
-                          },
-                          child: Column(
-                            children: [
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(40),
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    color: const Color.fromARGB(
-                                        1000, 230, 230, 230),
-                                    border: isLocation
-                                        ? Border.all(
-                                            color: Colors.black,
-                                          )
-                                        : null,
-                                  ),
-                                  width: 80,
-                                  height: 80,
-                                  child: const Icon(
-                                    FontAwesome.location_dot,
-                                    color: Color.fromARGB(1000, 60, 70, 120),
+                                }
+                              });
+                            },
+                            child: Column(
+                              children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(40),
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: const Color.fromARGB(
+                                          1000, 230, 230, 230),
+                                      border: isLocation
+                                          ? Border.all(
+                                              color: Colors.black,
+                                            )
+                                          : null,
+                                    ),
+                                    width: 80,
+                                    height: 80,
+                                    child: const Icon(
+                                      FontAwesome.location_dot,
+                                      color: Color.fromARGB(1000, 60, 70, 120),
+                                    ),
                                   ),
                                 ),
-                              ),
-                              const Text(
-                                'Localisation',
-                                textAlign: TextAlign.center,
-                              ),
-                            ],
+                                const Text(
+                                  'Localisation',
+                                  textAlign: TextAlign.center,
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
+                        ],
+                      ),
+                    )),
                     if (isCenter) ...[
                       Expanded(
                           child: Padding(
@@ -1392,6 +1399,9 @@ class _AccueilPatientState extends State<AccueilPatient> {
                                                             children: [
                                                               Text(
                                                                 '${medecin.lastName[0]}.${abbreviateName(medecin.firstName)}',
+                                                                overflow:
+                                                                    TextOverflow
+                                                                        .fade,
                                                                 style: const TextStyle(
                                                                     color: Color
                                                                         .fromARGB(

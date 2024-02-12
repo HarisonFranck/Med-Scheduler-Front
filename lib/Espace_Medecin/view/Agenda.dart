@@ -21,6 +21,7 @@ import 'package:med_scheduler_front/Repository/BaseRepository.dart';
 import 'package:med_scheduler_front/Utilisateur.dart';
 import 'package:med_scheduler_front/AuthProviderUser.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 class Agenda extends StatefulWidget {
   @override
@@ -57,59 +58,61 @@ class AgendaState extends State<Agenda> {
 
       if (appoints.isNotEmpty) {
         appoints.forEach((element) async {
-          TZDateTime startTZ = TZDateTime(
-              tz.getLocation('Indian/Antananarivo'),
-              element.startAt.year,
-              element.startAt.month,
-              element.startAt.day,
-              element.timeStart.hour,
-              element.timeStart.minute,
-              element.timeStart.second);
-          TZDateTime endTZ = TZDateTime(
-              tz.getLocation('Indian/Antananarivo'),
-              element.startAt.year,
-              element.startAt.month,
-              element.startAt.day,
-              element.timeEnd.hour,
-              element.timeEnd.minute,
-              element.timeEnd.second);
+          if (element.isDeleted == null || element.isDeleted == false) {
+            TZDateTime startTZ = TZDateTime(
+                tz.getLocation('Indian/Antananarivo'),
+                element.startAt.year,
+                element.startAt.month,
+                element.startAt.day,
+                element.timeStart.hour,
+                element.timeStart.minute,
+                element.timeStart.second);
+            TZDateTime endTZ = TZDateTime(
+                tz.getLocation('Indian/Antananarivo'),
+                element.startAt.year,
+                element.startAt.month,
+                element.startAt.day,
+                element.timeEnd.hour,
+                element.timeEnd.minute,
+                element.timeEnd.second);
 
-          Event event = Event(
-            defaultCalendarId,
-            title: 'Prochain Rendez-vous: ${element.reason.toUpperCase()}',
-            description: (element.medecin != null)
-                ? '${element.reason.toUpperCase()} avec le patient ${element.patient!.lastName} ${element.patient!.firstName}.'
-                : element.reason,
-            start: startTZ,
-            end: endTZ,
-            status: EventStatus.Confirmed,
-            reminders: [
-              Reminder(minutes: 15),
-              Reminder(minutes: 30),
-              Reminder(minutes: 60)
-            ],
-          );
+            Event event = Event(
+              defaultCalendarId,
+              title: 'Prochain Rendez-vous: ${element.reason.toUpperCase()}',
+              description: (element.medecin != null)
+                  ? '${element.reason.toUpperCase()} avec le patient ${element.patient!.lastName} ${element.patient!.firstName}.'
+                  : element.reason,
+              start: startTZ,
+              end: endTZ,
+              status: EventStatus.Confirmed,
+              reminders: [
+                Reminder(minutes: 15),
+                Reminder(minutes: 30),
+                Reminder(minutes: 60)
+              ],
+            );
 
-          // Utiliser RetrieveEventsParams
-          var params = RetrieveEventsParams(
-              startDate: startTZ.subtract(const Duration(minutes: 1)),
-              endDate: endTZ.add(const Duration(minutes: 1)));
-          var existingEvents = await deviceCalendarPlugin.retrieveEvents(
-              defaultCalendarId, params);
+            // Utiliser RetrieveEventsParams
+            var params = RetrieveEventsParams(
+                startDate: startTZ.subtract(const Duration(minutes: 1)),
+                endDate: endTZ.add(const Duration(minutes: 1)));
+            var existingEvents = await deviceCalendarPlugin.retrieveEvents(
+                defaultCalendarId, params);
 
-          var eventExists = existingEvents.data!.any((existingEvent) =>
-                  existingEvent.title == event.title &&
-                  existingEvent.description == event.description &&
-                  existingEvent.start == startTZ &&
-                  existingEvent.end == endTZ) ??
-              false;
+            var eventExists = existingEvents.data!.any((existingEvent) =>
+                    existingEvent.title == event.title &&
+                    existingEvent.description == event.description &&
+                    existingEvent.start == startTZ &&
+                    existingEvent.end == endTZ) ??
+                false;
 
-          if (!eventExists) {
-            final result =
-                await deviceCalendarPlugin.createOrUpdateEvent(event);
+            if (!eventExists) {
+              final result =
+                  await deviceCalendarPlugin.createOrUpdateEvent(event);
+            }
+
+            print('-- FINISHED --');
           }
-
-          print('-- FINISHED --');
         });
       }
     } catch (e, stackTrace) {
@@ -180,6 +183,7 @@ class AgendaState extends State<Agenda> {
     medecinRepository =
         MedecinRepository(context: context, utilities: utilities!);
     baseRepository = BaseRepository(context: context, utilities: utilities!);
+
   }
 
   List<CustomAppointment> listAppointment = [];
@@ -242,8 +246,12 @@ class AgendaState extends State<Agenda> {
     token = authProvider.token;
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
+      FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+        print('FCM Message received: ${message.notification!.title}');
+        // Traitez la notification pour mettre à jour l'agenda du médecin
+        // Par exemple, vous pouvez rafraîchir l'interface utilisateur pour afficher le nouveau rendez-vous
+      });
       //await getAllAsync();
-
       listAppointment =
           await medecinRepository!.getAllAppointmentMedecin(widgetMedecin!);
       listUnavalaibleAppointment =
@@ -253,6 +261,7 @@ class AgendaState extends State<Agenda> {
           dataLoaded = true;
         });
       }
+      initializeCalendar();
       setState(() {
         dataLoaded = true;
       });
@@ -456,7 +465,7 @@ class AgendaState extends State<Agenda> {
 
   DateTime parseTimeSlot(DateTime startAt, String timeSlot) {
     int startHour = int.parse(timeSlot.substring(0, 2));
-    print('START HOUR PARSED: $startHour');
+
     return DateTime(startAt.year, startAt.month, startAt.day, startHour, 0);
   }
 
@@ -574,7 +583,8 @@ class AgendaState extends State<Agenda> {
                         width: 60,
                         height: 60,
                         child: CachedNetworkImage(
-                          imageUrl: '$baseUrl${utilities!.ajouterPrefixe(user!.imageName!)}',
+                          imageUrl:
+                              '$baseUrl${utilities!.ajouterPrefixe(user!.imageName!)}',
                           placeholder: (context, url) =>
                               CircularProgressIndicator(
                             color: Colors.redAccent,
@@ -1374,35 +1384,34 @@ class AgendaState extends State<Agenda> {
                           padding:
                               EdgeInsets.only(top: 20, left: 20, bottom: 50),
                           child: ClipRRect(
-                            borderRadius: BorderRadius.circular(50),
+                            borderRadius: BorderRadius.circular(60),
                             child: Container(
-                                width: 100,
-                                height: 120,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(60),
-                                ),
-                                child:  CachedNetworkImage(
-                                    imageUrl:
-                                    '$baseUrl${utilities!.ajouterPrefixe(appointment.medecin!.imageName!)}',
-                              placeholder: (context, url) =>
-                              const CircularProgressIndicator(
-                                color: Colors.redAccent,
-                              ), // Affiche un indicateur de chargement en attendant l'image
-                              errorWidget: (context, url, error) =>
-                                  Image.asset(
-                                    'assets/images/medecin.png',
-                                    fit: BoxFit.cover,
-                                    width: 50,
-                                    height: 50,
-                                  ), // Affiche une icône d'erreur si le chargement échoue
-                            ),),
+                              width: 120,
+                              height: 120,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(60),
+                              ),
+                              child: CachedNetworkImage(
+                                  imageUrl:
+                                      '$baseUrl${utilities!.ajouterPrefixe(appointment.patient!.imageName!)}',
+                                  placeholder: (context, url) =>
+                                      const CircularProgressIndicator(
+                                        color: Colors.redAccent,
+                                      ), // Affiche un indicateur de chargement en attendant l'image
+                                  errorWidget: (context, url, error) => Icon(
+                                        Icons.account_circle,
+                                        size: 120,
+                                        color: Colors.black.withOpacity(0.6),
+                                      ) // Affiche une icône d'erreur si le chargement échoue
+                                  ),
+                            ),
                           ),
                         ),
                         Expanded(
                           child: Column(
                             children: [
                               Text(
-                                'Dr ${abbreviateName(appointment.medecin!.lastName)} \n ${abbreviateName(appointment.medecin!.firstName)}',
+                                '${abbreviateName(appointment.patient!.lastName)} \n ${abbreviateName(appointment.patient!.firstName)}',
                                 style: TextStyle(fontSize: 20),
                                 textAlign: TextAlign.start,
                                 maxLines:
@@ -1531,23 +1540,28 @@ class AgendaState extends State<Agenda> {
                       indent: 10,
                       endIndent: 10,
                     ),
-                    Padding(
-                      padding: EdgeInsets.only(
-                        top: 20,
-                        left: 200,
-                      ),
-                      child: TextButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
-                        child: Text(
-                          'Fermer',
-                          style: TextStyle(
-                            letterSpacing: 2,
-                            color: Color.fromARGB(230, 20, 20, 90),
+                    Row(
+                      children: [
+                        const Spacer(),
+                        Padding(
+                          padding: const EdgeInsets.only(
+                            top: 20,
+                            right: 10,
                           ),
-                        ),
-                      ),
+                          child: TextButton(
+                            onPressed: () {
+                              Navigator.pop(context);
+                            },
+                            child: const Text(
+                              'Fermer',
+                              style: TextStyle(
+                                letterSpacing: 2,
+                                color: Color.fromARGB(230, 20, 20, 90),
+                              ),
+                            ),
+                          ),
+                        )
+                      ],
                     )
                   ],
                 ),

@@ -20,6 +20,7 @@ import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:med_scheduler_front/Repository/UserRepository.dart';
 import 'package:med_scheduler_front/Utilitie/Utilities.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'MedecinDetails.dart';
 
 class PriseDeRendezVous extends StatefulWidget {
   final Patient patient;
@@ -306,6 +307,7 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
     super.didChangeDependencies();
     calculateBlackoutDates();
     medecinCliked = ModalRoute.of(context)?.settings.arguments as Medecin;
+    initializeCalendar();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       //await getAllAsync();
       listAppointment = await InitierAppointment(medecinCliked!);
@@ -331,7 +333,7 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
     super.initState();
     utilities = Utilities(context: context);
     userRepository = UserRepository(context: context, utilities: utilities!);
-    initializeCalendar();
+
   }
 
   Medecin? medecin;
@@ -921,6 +923,24 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
     }
   }
 
+
+  String desc = '';
+
+  String showDesc(String desc){
+    List<String> listDesc = desc.split(" ");
+
+    if(listDesc.length>3){
+      return '${listDesc[0]} ${listDesc[1]} ${listDesc[2]}...';
+    }else if(listDesc.length==1){
+      return listDesc.first;
+    }else if(listDesc.length==0){
+      return "";
+    }else{
+      return listDesc[0];
+    }
+
+  }
+
   bool dateIsAllDisabled(DateTime date) {
     return (getAvailableAppointments(date, listAppointment, medecinCliked!,
             widget.patient, listUnavalaibleAppointment)!
@@ -985,83 +1005,90 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
                 padding: const EdgeInsets.only(right: 18, left: 18),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(23),
-                  child: Container(
-                    height: 100,
-                    child: Card(
-                      elevation: 0.5,
-                      color: Colors.white,
-                      child: Column(
-                        children: [
-                          const Spacer(),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  child: GestureDetector(
+                    onTap: (){
+                      print('${medecinCliked!.lastName}');
+                      Navigator.push(context, MaterialPageRoute(builder: (context)=>MedecinDetails(user: medecinCliked!)));
+                    },
+                    child:  Container(
+                      height: 100,
+                      child: Card(
+                        elevation: 0.5,
+                        color: Colors.white,
+                        child: Column(
                             children: [
-                              const SizedBox(
-                                width: 20,
-                              ),
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(50),
-                                child: Container(
-                                  width: 60,
-                                  height: 60,
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(60),
-                                  ),
-                                  child: CachedNetworkImage(
-                                    imageUrl:
-                                        '$baseUrl${utilities!.ajouterPrefixe(medecinCliked!.imageName!)}',
-                                    placeholder: (context, url) =>
-                                        const CircularProgressIndicator(
-                                      color: Colors.redAccent,
-                                    ), // Affiche un indicateur de chargement en attendant l'image
-                                    errorWidget: (context, url, error) =>
-                                        Image.asset(
-                                      'assets/images/medecin.png',
-                                      fit: BoxFit.cover,
-                                      width: 50,
-                                      height: 50,
-                                    ), // Affiche une icône d'erreur si le chargement échoue
-                                  ),
-                                ),
-                              ),
-                              Column(
-                                children: [
-                                  Text(
-                                    ' Dr ${abbreviateName(medecinCliked!.lastName)}.${abbreviateName(medecinCliked!.firstName)}',
-                                    style: const TextStyle(
-                                        color:
-                                            Color.fromARGB(1000, 60, 70, 120),
-                                        fontWeight: FontWeight.w500,
-                                        fontSize: 16,
-                                        letterSpacing: 2),
-                                  ),
-                                  Text(
-                                    '${medecinCliked!.speciality!.label}',
-                                    style: const TextStyle(
-                                        color:
-                                            Color.fromARGB(1000, 60, 70, 120),
-                                        fontWeight: FontWeight.w300,
-                                        letterSpacing: 2,
-                                        fontSize: 16),
-                                  )
-                                ],
-                              ),
-                              const Spacer()
-                            ],
-                          ),
-                          const Opacity(
-                            opacity: 0.4,
-                            child: Divider(
-                              thickness: 1,
-                              indent: 20,
-                              endIndent: 20,
-                              color: Colors.grey,
+                            const Spacer(),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                          const SizedBox(
+                          width: 20,
+                        ),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(50),
+                          child: Container(
+                            width: 60,
+                            height: 60,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(60),
                             ),
+                            child: CachedNetworkImage(
+                                imageUrl:
+                                '$baseUrl${utilities!.ajouterPrefixe(medecinCliked!.imageName!)}',
+                            placeholder: (context, url) =>
+                            const CircularProgressIndicator(
+                              color: Colors.redAccent,
+                            ), // Affiche un indicateur de chargement en attendant l'image
+                            errorWidget: (context, url, error) =>
+                                Image.asset(
+                                  'assets/images/medecin.png',
+                                  fit: BoxFit.cover,
+                                  width: 50,
+                                  height: 50,
+                                ), // Affiche une icône d'erreur si le chargement échoue
                           ),
+                        ),
+                      ),
+                      Column(
+                        children: [
+                          Text(
+                            ' Dr ${abbreviateName(medecinCliked!.lastName)}.${abbreviateName(medecinCliked!.firstName)}',
+                            overflow: TextOverflow.fade,
+                            style: const TextStyle(
+                                color:
+                                Color.fromARGB(1000, 60, 70, 120),
+                                fontWeight: FontWeight.w500,
+                                fontSize: 16,
+                                letterSpacing: 2),
+                          ),
+                          Text(
+                            '${medecinCliked!.speciality!.label}',
+                            style: const TextStyle(
+                                color:
+                                Color.fromARGB(1000, 60, 70, 120),
+                                fontWeight: FontWeight.w300,
+                                letterSpacing: 2,
+                                fontSize: 16),
+                          )
                         ],
                       ),
+                      const Spacer()
+                      ],
                     ),
+                    const Opacity(
+                      opacity: 0.4,
+                      child: Divider(
+                        thickness: 1,
+                        indent: 20,
+                        endIndent: 20,
+                        color: Colors.grey,
+                      ),
+                    ),
+                    ],
                   ),
+                ),
+            ),
+                  )
                 )),
             Padding(
                 padding: const EdgeInsets.only(
@@ -1572,28 +1599,29 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
                           padding: const EdgeInsets.only(
                               top: 20, left: 20, bottom: 50),
                           child: ClipRRect(
-                            borderRadius: BorderRadius.circular(50),
+                            borderRadius: BorderRadius.circular(60),
                             child: Container(
-                                width: 100,
-                                height: 120,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(60),
-                                ),
-                                child: CachedNetworkImage(
-                                    imageUrl:
+                              width: 120,
+                              height: 120,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(60),
+                              ),
+                              child: CachedNetworkImage(
+                                imageUrl:
                                     '$baseUrl${utilities!.ajouterPrefixe(appointment.medecin!.imageName!)}',
-                              placeholder: (context, url) =>
-                              const CircularProgressIndicator(
-                                color: Colors.redAccent,
-                              ), // Affiche un indicateur de chargement en attendant l'image
-                              errorWidget: (context, url, error) =>
-                                  Image.asset(
-                                    'assets/images/medecin.png',
-                                    fit: BoxFit.cover,
-                                    width: 50,
-                                    height: 50,
-                                  ), // Affiche une icône d'erreur si le chargement échoue
-                            ),),
+                                placeholder: (context, url) =>
+                                    const CircularProgressIndicator(
+                                  color: Colors.redAccent,
+                                ), // Affiche un indicateur de chargement en attendant l'image
+                                errorWidget: (context, url, error) =>
+                                    Image.asset(
+                                  'assets/images/medecin.png',
+                                  fit: BoxFit.cover,
+                                  width: 50,
+                                  height: 50,
+                                ), // Affiche une icône d'erreur si le chargement échoue
+                              ),
+                            ),
                           ),
                         ),
                         Expanded(
@@ -1744,23 +1772,28 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
                       indent: 10,
                       endIndent: 10,
                     ),
-                    Padding(
-                      padding: const EdgeInsets.only(
-                        top: 20,
-                        left: 200,
-                      ),
-                      child: TextButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
-                        child: const Text(
-                          'Fermer',
-                          style: TextStyle(
-                            letterSpacing: 2,
-                            color: Color.fromARGB(230, 20, 20, 90),
+                    Row(
+                      children: [
+                        const Spacer(),
+                        Padding(
+                          padding: const EdgeInsets.only(
+                            top: 20,
+                            right: 10,
                           ),
-                        ),
-                      ),
+                          child: TextButton(
+                            onPressed: () {
+                              Navigator.pop(context);
+                            },
+                            child: const Text(
+                              'Fermer',
+                              style: TextStyle(
+                                letterSpacing: 2,
+                                color: Color.fromARGB(230, 20, 20, 90),
+                              ),
+                            ),
+                          ),
+                        )
+                      ],
                     )
                   ],
                 ),

@@ -18,7 +18,6 @@ import 'package:med_scheduler_front/AuthProviderUser.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
 class Agenda extends StatefulWidget {
-
   AgendaState createState() => AgendaState();
 }
 
@@ -434,20 +433,20 @@ class AgendaState extends State<Agenda> {
                                     borderRadius: BorderRadius.circular(60),
                                   ),
                                   child: CachedNetworkImage(
-                                      imageUrl:
-                                      '$baseUrl${utilities!.ajouterPrefixe(medecinClicked!.imageName!)}',
-                                  placeholder: (context, url) =>
-                                  const CircularProgressIndicator(
-                                    color: Colors.redAccent,
-                                  ), // Affiche un indicateur de chargement en attendant l'image
-                                  errorWidget: (context, url, error) =>
-                                      Image.asset(
-                                        'assets/images/medecin.png',
-                                        fit: BoxFit.cover,
-                                        width: 50,
-                                        height: 50,
-                                      ), // Affiche une icône d'erreur si le chargement échoue
-                                ),
+                                    imageUrl:
+                                        '$baseUrl${utilities!.ajouterPrefixe(medecinClicked!.imageName!)}',
+                                    placeholder: (context, url) =>
+                                        const CircularProgressIndicator(
+                                      color: Colors.redAccent,
+                                    ), // Affiche un indicateur de chargement en attendant l'image
+                                    errorWidget: (context, url, error) =>
+                                        Image.asset(
+                                      'assets/images/medecin.png',
+                                      fit: BoxFit.cover,
+                                      width: 50,
+                                      height: 50,
+                                    ), // Affiche une icône d'erreur si le chargement échoue
+                                  ),
                                 ),
                               ),
                               Column(
@@ -832,7 +831,6 @@ class AgendaState extends State<Agenda> {
   }
 
   Widget showAppointment(CustomAppointment appoint, DateTime clickedDt) {
-
     return Column(
       children: [
         GestureDetector(
@@ -1266,36 +1264,34 @@ class AgendaState extends State<Agenda> {
                           padding: const EdgeInsets.only(
                               top: 20, left: 20, bottom: 50),
                           child: ClipRRect(
-                            borderRadius: BorderRadius.circular(50),
+                            borderRadius: BorderRadius.circular(60),
                             child: Container(
-                                width: 100,
-                                height: 120,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(60),
-                                ),
-                                child: CachedNetworkImage(
-                                    imageUrl:
-                                    '$baseUrl${utilities!.ajouterPrefixe(medecinClicked!.imageName!)}',
-                              placeholder: (context, url) =>
-                              const CircularProgressIndicator(
-                                color: Colors.redAccent,
-                              ), // Affiche un indicateur de chargement en attendant l'image
-                              errorWidget: (context, url, error) =>
-                                  Image.asset(
-                                    'assets/images/medecin.png',
-                                    fit: BoxFit.cover,
-                                    width: 50,
-                                    height: 50,
-                                  ), // Affiche une icône d'erreur si le chargement échoue
-                            ),),
-
+                              width: 120,
+                              height: 120,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(60),
+                              ),
+                              child: CachedNetworkImage(
+                                  imageUrl:
+                                      '$baseUrl${utilities!.ajouterPrefixe(appointment.patient!.imageName!)}',
+                                  placeholder: (context, url) =>
+                                      const CircularProgressIndicator(
+                                        color: Colors.redAccent,
+                                      ), // Affiche un indicateur de chargement en attendant l'image
+                                  errorWidget: (context, url, error) => Icon(
+                                        Icons.account_circle,
+                                        size: 120,
+                                        color: Colors.black.withOpacity(0.6),
+                                      ) // Affiche une icône d'erreur si le chargement échoue
+                                  ),
+                            ),
                           ),
                         ),
                         Expanded(
                           child: Column(
                             children: [
                               Text(
-                                'Dr ${abbreviateName(appointment.medecin!.lastName)} \n ${abbreviateName(appointment.medecin!.firstName)}',
+                                '${abbreviateName(appointment.patient!.lastName)} \n ${abbreviateName(appointment.patient!.firstName)}',
                                 style: const TextStyle(fontSize: 20),
                                 textAlign: TextAlign.start,
                                 maxLines:
@@ -1424,23 +1420,28 @@ class AgendaState extends State<Agenda> {
                       indent: 10,
                       endIndent: 10,
                     ),
-                    Padding(
-                      padding: const EdgeInsets.only(
-                        top: 20,
-                        left: 200,
-                      ),
-                      child: TextButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
-                        child: const Text(
-                          'Fermer',
-                          style: TextStyle(
-                            letterSpacing: 2,
-                            color: Color.fromARGB(230, 20, 20, 90),
+                    Row(
+                      children: [
+                        const Spacer(),
+                        Padding(
+                          padding: const EdgeInsets.only(
+                            top: 20,
+                            right: 10,
                           ),
-                        ),
-                      ),
+                          child: TextButton(
+                            onPressed: () {
+                              Navigator.pop(context);
+                            },
+                            child: const Text(
+                              'Fermer',
+                              style: TextStyle(
+                                letterSpacing: 2,
+                                color: Color.fromARGB(230, 20, 20, 90),
+                              ),
+                            ),
+                          ),
+                        )
+                      ],
                     )
                   ],
                 ),

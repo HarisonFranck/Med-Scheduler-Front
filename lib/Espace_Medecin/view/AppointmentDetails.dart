@@ -231,7 +231,7 @@ class _AppointmentDetailsState extends State<AppointmentDetails> {
           ),
           Padding(
               padding: const EdgeInsets.only(
-                  top: 30, right: 15, left: 15, bottom: 20),
+                  top: 20, right: 15, left: 15, bottom: 20),
               child: Card(
                 elevation: 0,
                 color: Colors.white,
@@ -252,7 +252,7 @@ class _AppointmentDetailsState extends State<AppointmentDetails> {
                               ),
                               child: CachedNetworkImage(
                                 imageUrl:
-                                    '$baseUrl${utilities!.ajouterPrefixe(appointment.medecin!.imageName!)}',
+                                    '$baseUrl${utilities!.ajouterPrefixe(appointment.patient!.imageName!)}',
                                 placeholder: (context, url) =>
                                     const CircularProgressIndicator(
                                   color: Colors.redAccent,

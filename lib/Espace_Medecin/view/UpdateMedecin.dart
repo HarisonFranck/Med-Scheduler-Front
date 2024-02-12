@@ -195,7 +195,7 @@ class _UpdateMedecinState extends State<UpdateMedecin> {
         AndroidUiSettings(
             showCropGrid: false,
             backgroundColor: Color.fromARGB(1000, 238, 239, 244),
-            toolbarTitle: 'Rogner votre profil',
+            toolbarTitle: 'Recadrez votre profil',
             toolbarColor: Color.fromARGB(230, 20, 20, 90),
             toolbarWidgetColor: Colors.white,
             initAspectRatio: CropAspectRatioPreset.ratio3x2,
@@ -744,7 +744,7 @@ class _UpdateMedecinState extends State<UpdateMedecin> {
                                   padding: const EdgeInsets.only(left: 45),
                                   child: Container(
                                     width:
-                                        MediaQuery.of(context).size.width / 1.8,
+                                        MediaQuery.of(context).size.width / 2.1,
                                     child: TextField(
                                       decoration: const InputDecoration(
                                         focusedBorder: UnderlineInputBorder(
@@ -771,7 +771,7 @@ class _UpdateMedecinState extends State<UpdateMedecin> {
                                   padding: const EdgeInsets.only(left: 26),
                                   child: Container(
                                     width:
-                                        MediaQuery.of(context).size.width / 1.8,
+                                        MediaQuery.of(context).size.width /2.1,
                                     child: TextField(
                                       decoration: const InputDecoration(
                                         focusedBorder: UnderlineInputBorder(
@@ -798,7 +798,7 @@ class _UpdateMedecinState extends State<UpdateMedecin> {
                                   padding: const EdgeInsets.only(left: 40),
                                   child: Container(
                                     width: MediaQuery.of(context).size.width /
-                                        1.89,
+                                        2.1,
                                     child: TextField(
                                       decoration: const InputDecoration(
                                         focusedBorder: UnderlineInputBorder(
@@ -902,7 +902,7 @@ class _UpdateMedecinState extends State<UpdateMedecin> {
                                   padding: const EdgeInsets.only(left: 7),
                                   child: Container(
                                     width: MediaQuery.of(context).size.width /
-                                        1.89,
+                                        2.1,
                                     child: TextField(
                                       maxLength: 10,
                                       keyboardType: TextInputType.number,
@@ -1000,14 +1000,14 @@ class _UpdateMedecinState extends State<UpdateMedecin> {
                               Row(
                                 children: [
                                   const Padding(
-                                    padding: EdgeInsets.only(left: 27),
+                                    padding: EdgeInsets.only(left: 5),
                                     child: Text('Centre:'),
                                   ),
                                   Padding(
-                                    padding: const EdgeInsets.only(left: 10),
+                                    padding: const EdgeInsets.only(left: 34),
                                     child: Container(
                                       width: MediaQuery.of(context).size.width /
-                                          1.89,
+                                          2.1,
                                       child: TextField(
                                         maxLength: 10,
                                         keyboardType: TextInputType.name,
