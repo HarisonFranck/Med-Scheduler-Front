@@ -533,11 +533,11 @@ class _MedecinDetailsState extends State<MedecinDetails> {
                             Row(
                               children: [
                                 const Padding(
-                                  padding: EdgeInsets.only(left: 27),
-                                  child: Text('Centre:'),
+                                  padding: EdgeInsets.only(left: 5),
+                                  child: Text('Centre:',textAlign: TextAlign.start,),
                                 ),
                                 Padding(
-                                  padding: const EdgeInsets.only(left: 10),
+                                  padding: const EdgeInsets.only(left: 27),
                                   child: Container(
                                     width: MediaQuery.of(context).size.width /
                                         1.82,

@@ -42,19 +42,18 @@ class AdminRepository{
 
       final url = Uri.parse("${baseUrl}api/users/${utilities.extractLastNumber(id)}");
 
-      print('URL USER: $url');
+
 
       final headers = {'Authorization': 'Bearer $token'};
 
       final response = await http.get(url, headers: headers);
-      print(' --- ST CODE: ${response.statusCode}');
+
 
       if (response.statusCode == 200) {
         final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
 
         Utilisateur user = Utilisateur.fromJson(jsonData);
 
-        print('UTILISATEUR: ${user.lastName}');
 
         return user;
       } else {
@@ -92,7 +91,7 @@ class AdminRepository{
       Uri.parse("${baseUrl}api/centers/${utilities.extractLastNumber(idCenter)}");
       //final headers = {'Content-Type': 'application/merge-patch+json'};
 
-      print('URL DELETE: $url');
+
 
       final headers = {
         'Content-Type': 'application/merge-patch+json',
@@ -100,12 +99,12 @@ class AdminRepository{
       };
 
       final response = await http.delete(url, headers: headers);
-      print(response.statusCode);
-      print('RESP: ${response.body}');
+
+
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonResponse = json.decode(response.body);
-        print('ERRRR: $jsonResponse');
+
 
         if (jsonResponse.containsKey('error')) {
           utilities.error('Specialite déja existant');
@@ -147,13 +146,13 @@ class AdminRepository{
       };
 
       String jsonSpec = jsonEncode(centre.toJson());
-      print('Request Body: $jsonSpec');
+
       final response = await http.post(url, headers: headers, body: jsonSpec);
       print(response.statusCode);
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonResponse = json.decode(response.body);
-        print('ERRRR: $jsonResponse');
+
 
         if (jsonResponse.containsKey('error')) {
           utilities.error('Centre déja existant');
@@ -183,7 +182,6 @@ class AdminRepository{
 
       authProvider = Provider.of<AuthProvider>(context, listen: false);
       token = authProvider.token;
-      print('CENTER ID: ${centre.id}');
 
       final url =
       Uri.parse("${baseUrl}api/centers/${utilities.extractLastNumber(centre.id)}");
@@ -238,20 +236,16 @@ class AdminRepository{
       Uri.parse("${baseUrl}api/specialities/${utilities.extractLastNumber(idSpec)}");
       //final headers = {'Content-Type': 'application/merge-patch+json'};
 
-      print('URL DELETE: $url');
-
       final headers = {
         'Content-Type': 'application/merge-patch+json',
         'Authorization': 'Bearer $token'
       };
 
       final response = await http.delete(url, headers: headers);
-      print(response.statusCode);
-      print('RESP: ${response.body}');
+
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonResponse = json.decode(response.body);
-        print('ERRRR: $jsonResponse');
 
         if (jsonResponse.containsKey('error')) {
           utilities.error('Specialite déja existant');
@@ -396,13 +390,12 @@ class AdminRepository{
       String jsonSpec = jsonEncode(medecin.toJson());
 
 
-      print('Request Body: $jsonSpec');
       final response = await http.patch(url, headers: headers, body: jsonSpec);
-      print(response.statusCode);
+
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonResponse = json.decode(response.body);
-        print('ERRRR: $jsonResponse');
+
 
         if (jsonResponse.containsKey('error')) {
           utilities.error('Specialite déja existant');
@@ -457,7 +450,7 @@ class AdminRepository{
 
 
       String jsonSpec = jsonEncode(medecin.toJson());
-      print('Request Body: $jsonSpec');
+
       final response = await http.post(url, headers: headers, body: jsonSpec);
       print(response.statusCode);
 
@@ -472,7 +465,7 @@ class AdminRepository{
         if (response.statusCode == 201) {
           utilities.CreationUtilisateur();
         } else {
-          print('REQU BODY: ${response.body}');
+
           // Gestion des erreurs HTTP
           utilities.error('Il y a une erreur.\n Veuillez ressayer ulterieurement.');
         }

@@ -1233,7 +1233,7 @@ class _AccueilAdminState extends State<AccueilAdmin> {
             textAlign: TextAlign.center,
           ),
           content: Text(
-            'Voulez-vous vraiment supprimer cette Centre: ${centre.label} ?',
+            'Confirmez-vous la suppression du Centre ${centre.label} ?',
             textScaleFactor: 1.5,
             style: TextStyle(color: Colors.black.withOpacity(0.8)),
             textAlign: TextAlign.center,
@@ -1544,7 +1544,7 @@ class _AccueilAdminState extends State<AccueilAdmin> {
             textAlign: TextAlign.center,
           ),
           content: Text(
-            'Voulez-vous vraiment supprimer cette specialité: ${specialite.label} ?',
+            'Êtes-vous certain de vouloir supprimer la spécialité de ${specialite.label} ?',
             textScaleFactor: 1.5,
             style: TextStyle(color: Colors.black.withOpacity(0.8)),
             textAlign: TextAlign.center,
@@ -1604,7 +1604,7 @@ class _AccueilAdminState extends State<AccueilAdmin> {
             textAlign: TextAlign.center,
           ),
           content: Text(
-            'Voulez-vous vraiment supprimer le medecin: Dr ${medecin.lastName} ?',
+            'Êtes-vous sûr de vouloir supprimer le médecin Dr.${medecin.lastName} ?',
             textScaleFactor: 1.5,
             style: TextStyle(color: Colors.black.withOpacity(0.8)),
             textAlign: TextAlign.center,

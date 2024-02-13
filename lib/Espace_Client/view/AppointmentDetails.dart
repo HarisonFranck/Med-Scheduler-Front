@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:med_scheduler_front/CustomAppointment.dart';
 import 'Dart:io';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:med_scheduler_front/UrlBase.dart';
+import 'package:med_scheduler_front/Utilitie/Utilities.dart';
 
 class AppointmentDetails extends StatefulWidget {
   @override
@@ -8,6 +11,20 @@ class AppointmentDetails extends StatefulWidget {
 }
 
 class _AppointmentDetailsState extends State<AppointmentDetails> {
+
+  Utilities? utilities;
+
+  String baseUrl = UrlBase().baseUrl;
+
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    utilities = Utilities(context: context);
+
+  }
+
   String abbreviateName(String fullName) {
     List<String> nameParts = fullName.split(' ');
 
@@ -169,6 +186,7 @@ class _AppointmentDetailsState extends State<AppointmentDetails> {
   Widget build(BuildContext context) {
     CustomAppointment appointment =
         ModalRoute.of(context)?.settings.arguments as CustomAppointment;
+
     return Scaffold(
       backgroundColor: const Color.fromARGB(1000, 238, 239, 244),
       body: ListView(
@@ -214,7 +232,7 @@ class _AppointmentDetailsState extends State<AppointmentDetails> {
           ),
           Padding(
               padding: const EdgeInsets.only(
-                  top: 30, right: 15, left: 15, bottom: 20),
+                  top: 20, right: 15, left: 15, bottom: 20),
               child: Card(
                 elevation: 0,
                 color: Colors.white,
@@ -226,22 +244,29 @@ class _AppointmentDetailsState extends State<AppointmentDetails> {
                           padding: const EdgeInsets.only(
                               top: 20, left: 30, bottom: 50),
                           child: ClipRRect(
-                            borderRadius: BorderRadius.circular(50),
+                            borderRadius: BorderRadius.circular(60),
                             child: Container(
-                                width: 100,
-                                height: 120,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(60),
-                                ),
-                                child: ((appointment.medecin!.imageName !=
-                                            null) &&
-                                        (File(appointment.medecin!.imageName!)
-                                            .existsSync()))
-                                    ? Image.file(
-                                        File(appointment.medecin!.imageName!),
-                                        fit: BoxFit.fill,
-                                      )
-                                    : Image.asset('assets/images/medecin.png')),
+                              width: 120,
+                              height: 120,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(60),
+                              ),
+                              child: CachedNetworkImage(
+                                imageUrl:
+                                    '$baseUrl${utilities!.ajouterPrefixe(appointment.medecin!.imageName!)}',
+                                placeholder: (context, url) =>
+                                    const CircularProgressIndicator(
+                                  color: Colors.redAccent,
+                                ), // Affiche un indicateur de chargement en attendant l'image
+                                errorWidget: (context, url, error) =>
+                                    Image.asset(
+                                  'assets/images/medecin.png',
+                                  fit: BoxFit.cover,
+                                  width: 50,
+                                  height: 50,
+                                ), // Affiche une icône d'erreur si le chargement échoue
+                              ),
+                            ),
                           ),
                         ),
                         const SizedBox(
@@ -252,7 +277,9 @@ class _AppointmentDetailsState extends State<AppointmentDetails> {
                             Text(
                               textAlign: TextAlign.start,
                               'Dr.${abbreviateName(appointment.medecin!.lastName)} \n ${abbreviateFirstName(appointment.medecin!.firstName)}',
-                              style: TextStyle(fontSize: 20,color: Colors.black.withOpacity(0.7)),
+                              style: TextStyle(
+                                  fontSize: 20,
+                                  color: Colors.black.withOpacity(0.7)),
                             ),
                             if (appointment.medecin!.speciality != null) ...[
                               Padding(
@@ -260,7 +287,9 @@ class _AppointmentDetailsState extends State<AppointmentDetails> {
                                 child: Text(
                                   textAlign: TextAlign.start,
                                   '${appointment.medecin!.speciality!.label}',
-                                  style: TextStyle(fontSize: 20,color: Colors.black.withOpacity(0.6)),
+                                  style: TextStyle(
+                                      fontSize: 20,
+                                      color: Colors.black.withOpacity(0.6)),
                                 ),
                               )
                             ]

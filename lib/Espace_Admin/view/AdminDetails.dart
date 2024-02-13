@@ -131,7 +131,7 @@ class _AdminDetailsState extends State<AdminDetails> {
         AndroidUiSettings(
             showCropGrid: false,
             backgroundColor: const Color.fromARGB(1000, 238, 239, 244),
-            toolbarTitle: 'Rogner votre profil',
+            toolbarTitle: 'Recadrez votre profil',
             toolbarColor: const Color.fromARGB(230, 20, 20, 90),
             toolbarWidgetColor: Colors.white,
             initAspectRatio: CropAspectRatioPreset.ratio3x2,
@@ -676,7 +676,7 @@ class _AdminDetailsState extends State<AdminDetails> {
                                   padding: const EdgeInsets.only(left: 45),
                                   child: Container(
                                     width:
-                                        MediaQuery.of(context).size.width / 1.8,
+                                        MediaQuery.of(context).size.width / 2.1,
                                     child: TextField(
                                       decoration: const InputDecoration(
                                         focusedBorder: UnderlineInputBorder(
@@ -703,7 +703,7 @@ class _AdminDetailsState extends State<AdminDetails> {
                                   padding: const EdgeInsets.only(left: 26),
                                   child: Container(
                                     width:
-                                        MediaQuery.of(context).size.width / 1.8,
+                                        MediaQuery.of(context).size.width / 2.1,
                                     child: TextField(
                                       decoration: const InputDecoration(
                                         focusedBorder: UnderlineInputBorder(
@@ -730,7 +730,7 @@ class _AdminDetailsState extends State<AdminDetails> {
                                   padding: const EdgeInsets.only(left: 40),
                                   child: Container(
                                     width: MediaQuery.of(context).size.width /
-                                        1.89,
+                                        2.1,
                                     child: TextField(
                                       decoration: const InputDecoration(
                                         focusedBorder: UnderlineInputBorder(
@@ -834,7 +834,7 @@ class _AdminDetailsState extends State<AdminDetails> {
                                   padding: const EdgeInsets.only(left: 7),
                                   child: Container(
                                     width: MediaQuery.of(context).size.width /
-                                        1.89,
+                                        2.1,
                                     child: TextField(
                                       maxLength: 10,
                                       keyboardType: TextInputType.number,
