@@ -1108,12 +1108,13 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
                                     height:
                                         MediaQuery.of(context).size.height / 2,
                                     child: SfCalendar(
+                                      minDate: DateTime.now(),
                                       dataSource: CustomAppointmentDataSource(
                                           listAppointment),
                                       blackoutDatesTextStyle: TextStyle(
                                           color: Colors.grey.withOpacity(0.3)),
                                       view: CalendarView.month,
-                                      todayHighlightColor: Colors.redAccent,
+                                      todayHighlightColor: (DateTime.now().hour>15)?Colors.transparent:Colors.redAccent,
                                       onTap: (CalendarTapDetails details) {
                                         bool dt = blackoutDates.any((element) =>
                                             element == details.date);
@@ -1131,15 +1132,14 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
                                         bool isBlackoutDate = isInBlackOutDay(
                                             blackoutDates, details.date!);
 
-                                        print('IS BLACK OUT: $isBlackoutDate');
 
                                         setState(() {
                                           dtCliquer = details.date!;
                                         });
                                         if (isBlackoutDate) {
-                                          print('SETTTTTEEERERE');
+
                                           setState(() {
-                                            print('STEEEE');
+
                                             isAppointment = false;
                                             istoAddAppointment = false;
                                           });
@@ -1164,7 +1164,7 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
                                               theAppoint = appoint;
                                             });
                                           } else if (list.length > 1) {
-                                            print('TENA MIHOATRA AHN');
+
                                           } else {
                                             String dtClick =
                                                 DateFormat('yyyy-MM-dd')

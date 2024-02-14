@@ -38,6 +38,7 @@ class _MedecinDetailsState extends State<MedecinDetails> {
   @override
   void initState() {
     super.initState();
+    utilities = Utilities(context: context);
     print('INIT ZAO');
     utilisateur = widget.user;
 
@@ -45,7 +46,7 @@ class _MedecinDetailsState extends State<MedecinDetails> {
         (utilisateur.imageName != null) ? File(utilisateur.imageName!) : null;
     nomController.text = utilisateur.firstName;
     prenomController.text = utilisateur.lastName;
-    phoneController.text = utilisateur.phone;
+    phoneController.text = utilities!.formatPhoneNumber(utilisateur.phone);
     emailController.text = utilisateur.email;
     villeController.text = utilisateur.city;
     specController.text =
