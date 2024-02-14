@@ -13,6 +13,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:med_scheduler_front/main.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class ConfirmAppointment extends StatefulWidget {
   final CustomAppointment appointment;
@@ -53,15 +54,29 @@ class _ConfirmAppointmentState extends State<ConfirmAppointment> {
       String jsonUser = jsonEncode(appointment.toJson());
       print('Request Body: $jsonUser');
       final response = await http.post(url, headers: headers, body: jsonUser);
-      print(response.statusCode);
+      print('ADD APPOINT ERROR CODE: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonResponse = json.decode(response.body);
         print('ERRRR: $jsonResponse');
 
+        CustomAppointment newUnavailableAppointment = CustomAppointment(
+            id: '',
+            type: '',
+            appType: 'Pris',
+            medecin: appointment.medecin,
+            patient: widget.appointment.patient,
+            startAt: widget.appointment.startAt,
+            timeStart: widget.appointment.timeStart,
+            timeEnd: widget.appointment.timeEnd,
+            reason: raison.text,
+            createdAt: DateTime.now());
+
+        addAppointmentUnavailable(
+            newUnavailableAppointment, widget.appointment);
+
         if (jsonResponse.containsKey('error')) {
-          utilities!.error('Rendez-vous déja existant');
-        } else {
+          utilities!.appointmentAlreadyExist();
           Navigator.pushReplacement(
               context,
               MaterialPageRoute(
@@ -70,16 +85,27 @@ class _ConfirmAppointmentState extends State<ConfirmAppointment> {
                   settings: RouteSettings(arguments: appointment.medecin)));
         }
       } else {
-        if (response.statusCode == 201) {
-          setState(() {
-            isLoading = false;
-          });
+        if (response.statusCode == 422) {
+          utilities!.appointmentAlreadyExist();
           Navigator.pushReplacement(
               context,
               MaterialPageRoute(
                   builder: (context) =>
                       PriseDeRendezVous(patient: widgetAppointment.patient!),
                   settings: RouteSettings(arguments: appointment.medecin)));
+        }
+        if (response.statusCode == 201) {
+          setState(() {
+            isLoading = false;
+          });
+
+          print('CODE 201');
+          /*Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                  builder: (context) =>
+                      PriseDeRendezVous(patient: widgetAppointment.patient!),
+                  settings: RouteSettings(arguments: appointment.medecin))); */
         } else {
           setState(() {
             isLoading = false;
@@ -94,8 +120,7 @@ class _ConfirmAppointmentState extends State<ConfirmAppointment> {
             setState(() {
               isLoading = false;
             });
-            utilities!.error(
-                'Il y a une erreur APPOINTMENT. HTTP Status Code: ${response.statusCode}');
+
           }
 
           // Gestion des erreurs HTTP
@@ -141,6 +166,15 @@ class _ConfirmAppointmentState extends State<ConfirmAppointment> {
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonResponse = json.decode(response.body);
         print('ERRRR: $jsonResponse');
+        setState(() {
+          isLoading = false;
+        });
+        Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+                builder: (context) =>
+                    PriseDeRendezVous(patient: widgetAppointment.patient!),
+                settings: RouteSettings(arguments: appointment.medecin)));
 
         if (jsonResponse.containsKey('error')) {
           setState(() {
@@ -181,10 +215,6 @@ class _ConfirmAppointmentState extends State<ConfirmAppointment> {
               MaterialPageRoute(builder: (context) => const MyApp()),
             );
           }
-
-          // Gestion des erreurs HTTP
-          utilities!.error(
-              'Il y a une erreur APPOINTMENT. HTTP Status Code: ${response.statusCode}');
         }
       }
     } catch (e, stackTrace) {
@@ -460,8 +490,9 @@ class _ConfirmAppointmentState extends State<ConfirmAppointment> {
   Widget build(BuildContext context) {
     Medecin medecin = ModalRoute.of(context)?.settings.arguments as Medecin;
     return PopScope(
-      canPop: false,
-        child: (!isLoading)? Scaffold(
+        canPop: false,
+        child: (!isLoading)
+            ? Scaffold(
                 key: _scaffoldKey,
                 backgroundColor: const Color.fromARGB(1000, 238, 239, 244),
                 body: ListView(children: [
@@ -523,21 +554,28 @@ class _ConfirmAppointmentState extends State<ConfirmAppointment> {
                                     child: ClipRRect(
                                       borderRadius: BorderRadius.circular(60),
                                       child: Container(
-                                          width: 120,
-                                          height: 120,
-                                          decoration: BoxDecoration(
-                                            borderRadius:
-                                                BorderRadius.circular(60),
-                                          ),
-                                          child: (medecin.imageName != null &&
-                                                  File(medecin.imageName!)
-                                                      .existsSync())
-                                              ? Image.file(
-                                                  File(medecin.imageName!),
-                                                  fit: BoxFit.fill,
-                                                )
-                                              : Image.asset(
-                                                  'assets/images/medecin.png')),
+                                        width: 120,
+                                        height: 120,
+                                        decoration: BoxDecoration(
+                                          borderRadius:
+                                              BorderRadius.circular(60),
+                                        ),
+                                        child: CachedNetworkImage(
+                                          imageUrl:
+                                              '$baseUrl${utilities!.ajouterPrefixe(medecin.imageName!)}',
+                                          placeholder: (context, url) =>
+                                              const CircularProgressIndicator(
+                                            color: Colors.redAccent,
+                                          ), // Affiche un indicateur de chargement en attendant l'image
+                                          errorWidget: (context, url, error) =>
+                                              Image.asset(
+                                            'assets/images/medecin.png',
+                                            fit: BoxFit.cover,
+                                            width: 50,
+                                            height: 50,
+                                          ), // Affiche une icône d'erreur si le chargement échoue
+                                        ),
+                                      ),
                                     ),
                                   ),
                                   const Spacer(),
@@ -781,11 +819,9 @@ class _ConfirmAppointmentState extends State<ConfirmAppointment> {
 
                                           addAppointment(newAppointment,
                                               widget.appointment);
-                                          addAppointmentUnavailable(
-                                              newUnavailableAppointment,
-                                              widget.appointment);
+                                          //addAppointmentUnavailable(newUnavailableAppointment, widget.appointment);
 
-                                          print('--- APPOINTMENT CREATED ---');
+                                          //print('--- APPOINTMENT CREATED ---');
                                         }
                                       },
                                       child: const Text(
@@ -1116,29 +1152,9 @@ class _ConfirmAppointmentState extends State<ConfirmAppointment> {
                                                   widget.appointment.timeEnd,
                                               reason: raison.text,
                                               createdAt: DateTime.now());
-                                      CustomAppointment
-                                          newUnavailableAppointment =
-                                          CustomAppointment(
-                                              id: '',
-                                              type: '',
-                                              appType: 'Pris',
-                                              medecin: medecin,
-                                              patient:
-                                                  widget.appointment.patient,
-                                              startAt:
-                                                  widget.appointment.startAt,
-                                              timeStart:
-                                                  widget.appointment.timeStart,
-                                              timeEnd:
-                                                  widget.appointment.timeEnd,
-                                              reason: raison.text,
-                                              createdAt: DateTime.now());
-
                                       addAppointment(
                                           newAppointment, widget.appointment);
-                                      addAppointmentUnavailable(
-                                          newUnavailableAppointment,
-                                          widget.appointment);
+                                      //addAppointmentUnavailable(newUnavailableAppointment, widget.appointment);
 
                                       print('--- APPOINTMENT CREATED ---');
                                     }

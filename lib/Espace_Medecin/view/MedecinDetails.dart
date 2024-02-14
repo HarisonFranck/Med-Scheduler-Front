@@ -265,7 +265,7 @@ class _MedecinDetailsState extends State<MedecinDetails> {
               : null;
           nomController.text = utilisateur.firstName;
           prenomController.text = utilisateur.lastName;
-          phoneController.text = utilisateur.phone;
+          phoneController.text = utilities!.formatPhoneNumber(utilisateur.phone);
           emailController.text = utilisateur.email;
           centreController.text =
               (utilisateur.center != null) ? utilisateur.center!.label : '';

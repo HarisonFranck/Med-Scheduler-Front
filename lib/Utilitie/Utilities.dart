@@ -34,7 +34,7 @@ class Utilities {
       animType: AnimType.rightSlide,
       titleTextStyle: const TextStyle(letterSpacing: 2,color: Colors.white),
       descTextStyle: TextStyle(letterSpacing: 2,color: Colors.white.withOpacity(0.8),fontSize: 16),
-      title: 'Taille de l\'image trop grande',
+      title: '$description',
       desc: '$description',
       btnCancelOnPress: () {},
       btnOkOnPress: () {},
@@ -483,7 +483,7 @@ class Utilities {
       if (error is ConnectionError) {
           ErrorConnexion();
       } else {
-        print("Une erreur s'est produite: $error");
+        print("Une erreur s'est produite\n Verifier votre connexion internet!");
       }
       connectionErrorHandled = true;
     }
@@ -492,6 +492,44 @@ class Utilities {
   Future<bool> isConnectionAvailable() async {
     var connectivityResult = await Connectivity().checkConnectivity();
     return connectivityResult != ConnectivityResult.none;
+  }
+
+
+
+  void appointmentAlreadyExist() {
+    SnackBar snackBar = SnackBar(
+      /// need to set following properties for best effect of awesome_snackbar_content
+      elevation: 0,
+      behavior: SnackBarBehavior.floating,
+      backgroundColor: Colors.transparent,
+      content: AwesomeSnackbarContent(
+        color: Colors.redAccent,
+        title: 'Invalide!',
+        message: 'Cette plage horaire est déjà réservée.',
+
+        /// change contentType to ContentType.success, ContentType.warning or ContentType.help for variants
+        contentType: ContentType.warning,
+      ),
+    );
+
+    ScaffoldMessenger.of(context).showSnackBar(snackBar);
+  }
+
+  String formatPhoneNumber(String phoneNumber) {
+    if (phoneNumber.length != 10) {
+      // Vérifie si la longueur du numéro de téléphone est valide
+      return 'Numéro de téléphone invalide';
+    }
+
+    String formattedPhoneNumber = phoneNumber.substring(0, 3) +
+        ' ' +
+        phoneNumber.substring(3, 5) +
+        ' ' +
+        phoneNumber.substring(5, 8) +
+        ' ' +
+        phoneNumber.substring(8);
+
+    return formattedPhoneNumber;
   }
 
 

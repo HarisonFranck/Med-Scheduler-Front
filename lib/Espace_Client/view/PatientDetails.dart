@@ -424,7 +424,7 @@ class _PatientDetailsState extends State<PatientDetails> {
               : null;
           nomController.text = utilisateur.firstName;
           prenomController.text = utilisateur.lastName;
-          phoneController.text = utilisateur.phone;
+          phoneController.text = utilities!.formatPhoneNumber(utilisateur.phone);
           emailController.text = utilisateur.email;
           categorieController.text = (utilisateur.category != null)
               ? categorieSet(utilisateur.category!)
