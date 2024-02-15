@@ -307,7 +307,7 @@ class SearchMedecinState extends State<SearchMedecin> {
                                                     Column(
                                                       children: [
                                                         Text(
-                                                          '${medecin.lastName[0]}.${abbreviateName(medecin.firstName)}',
+                                                          'Dr ${medecin.lastName[0]}.${abbreviateName(medecin.firstName)}',
                                                           style: const TextStyle(
                                                               color: Color
                                                                   .fromARGB(

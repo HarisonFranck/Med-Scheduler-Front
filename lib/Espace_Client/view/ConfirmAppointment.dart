@@ -72,6 +72,14 @@ class _ConfirmAppointmentState extends State<ConfirmAppointment> {
             reason: raison.text,
             createdAt: DateTime.now());
 
+        print('-- DOC TOKEN :${appointment.medecin!.token}');
+
+        if(appointment.medecin!.token!=null&&appointment.medecin!.token!=""){
+          print('--- SEND NOTIF TO MED ---');
+          userRepository!.sendPushMessage(recipientToken: appointment.medecin!.token!);
+        }else{
+          print('---- TOKEN NULL ----');
+    }
         addAppointmentUnavailable(
             newUnavailableAppointment, widget.appointment);
 
@@ -99,13 +107,6 @@ class _ConfirmAppointmentState extends State<ConfirmAppointment> {
             isLoading = false;
           });
 
-          print('CODE 201');
-          /*Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                  builder: (context) =>
-                      PriseDeRendezVous(patient: widgetAppointment.patient!),
-                  settings: RouteSettings(arguments: appointment.medecin))); */
         } else {
           setState(() {
             isLoading = false;
@@ -772,17 +773,6 @@ class _ConfirmAppointmentState extends State<ConfirmAppointment> {
 
                                         if (raison.text.isEmpty) {
                                         } else {
-                                          TimeOfDay timeOfDayStart =
-                                              TimeOfDay.fromDateTime(
-                                                  widget.appointment.timeStart);
-                                          TimeOfDay timeOfDayEnd =
-                                              TimeOfDay.fromDateTime(
-                                                  widget.appointment.timeEnd);
-
-                                          print(
-                                              ' timeOfDayStart: $timeOfDayStart ');
-                                          print(
-                                              ' timeOfDayEnd: $timeOfDayEnd ');
 
                                           CustomAppointment newAppointment =
                                               CustomAppointment(
@@ -799,23 +789,7 @@ class _ConfirmAppointmentState extends State<ConfirmAppointment> {
                                                       .appointment.timeEnd,
                                                   reason: raison.text,
                                                   createdAt: DateTime.now());
-                                          CustomAppointment
-                                              newUnavailableAppointment =
-                                              CustomAppointment(
-                                                  id: '',
-                                                  type: '',
-                                                  appType: 'Pris',
-                                                  medecin: medecin,
-                                                  patient: widget
-                                                      .appointment.patient,
-                                                  startAt: widget
-                                                      .appointment.startAt,
-                                                  timeStart: widget
-                                                      .appointment.timeStart,
-                                                  timeEnd: widget
-                                                      .appointment.timeEnd,
-                                                  reason: raison.text,
-                                                  createdAt: DateTime.now());
+
 
                                           addAppointment(newAppointment,
                                               widget.appointment);

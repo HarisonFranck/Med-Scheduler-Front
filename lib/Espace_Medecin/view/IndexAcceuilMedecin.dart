@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:med_scheduler_front/Medecin.dart';
-//import 'Agenda.dart';
 import 'Agenda.dart';
 import 'MedecinDetails.dart';
 import 'package:icons_plus/icons_plus.dart';
@@ -57,7 +56,6 @@ class _IndexAcceuilMedecinState extends State<IndexAcceuilMedecin> {
     Map<String, dynamic> payload = Jwt.parseJwt(token);
 
     idUser = payload['id'];
-    print('ID USER INDEXED: $idUser');
 
     user = baseRepository!.getUser(idUser);
     userGetted();
@@ -70,13 +68,14 @@ class _IndexAcceuilMedecinState extends State<IndexAcceuilMedecin> {
       utilisateur = await user;
 
       authProviderUser.setUser(utilisateur!);
-      print('USER OO: ${utilisateur!.lastName}');
+
     }
     // Maintenant que l'utilisateur est récupéré, initialisez les pages
     initPages();
   }
 
   void initPages() {
+
     if (utilisateur != null) {
       _pages = [
         {
@@ -115,13 +114,11 @@ class _IndexAcceuilMedecinState extends State<IndexAcceuilMedecin> {
       _selectedPageIndex = index;
     });
 
-    print('WIDGET: ${_pages![_selectedPageIndex]['page']}');
-  }
+}
 
   @override
   Widget build(BuildContext context) {
-    bool isLandscape =
-        MediaQuery.of(context).orientation == Orientation.landscape;
+
     return PopScope(
       canPop: false,
       child: Scaffold(

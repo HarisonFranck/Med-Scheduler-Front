@@ -417,27 +417,27 @@ class _ListAppointmentState extends State<ListAppointment> {
                                                   BorderRadius.circular(60),
                                             ),
                                             child: CachedNetworkImage(
-                                              imageUrl:
-                                                  '$baseUrl${utilities!.ajouterPrefixe(listRDV.elementAt(index).medecin!.imageName!)}',
-                                              placeholder: (context, url) =>
-                                                  const CircularProgressIndicator(
-                                                color: Colors.redAccent,
-                                              ), // Affiche un indicateur de chargement en attendant l'image
-                                              errorWidget:
-                                                  (context, url, error) =>
-                                                      Image.asset(
-                                                'assets/images/medecin.png',
-                                                fit: BoxFit.cover,
-                                                width: 50,
-                                                height: 50,
-                                              ), // Affiche une icône d'erreur si le chargement échoue
-                                            ),
+                                                imageUrl:
+                                                    '$baseUrl${utilities!.ajouterPrefixe(listRDV.elementAt(index).patient!.imageName!)}',
+                                                placeholder: (context, url) =>
+                                                    const CircularProgressIndicator(
+                                                      color: Colors.redAccent,
+                                                    ), // Affiche un indicateur de chargement en attendant l'image
+                                                errorWidget: (context, url,
+                                                        error) =>
+                                                    Icon(
+                                                      Icons.account_circle,
+                                                      size: 50,
+                                                      color: Colors.black
+                                                          .withOpacity(0.6),
+                                                    ) // Affiche une icône d'erreur si le chargement échoue
+                                                ),
                                           ),
                                         ),
                                         Column(
                                           children: [
                                             Text(
-                                              '${listRDV.elementAt(index).medecin!.lastName[0]}.${abbreviateName(listRDV.elementAt(index).medecin!.firstName)}',
+                                              '${listRDV.elementAt(index).patient!.lastName[0]}.${abbreviateName(listRDV.elementAt(index).patient!.firstName)}',
                                               style: const TextStyle(
                                                   color: Color.fromARGB(
                                                       1000, 60, 70, 120),
@@ -623,27 +623,27 @@ class _ListAppointmentState extends State<ListAppointment> {
                                                   BorderRadius.circular(60),
                                             ),
                                             child: CachedNetworkImage(
-                                              imageUrl:
-                                                  '$baseUrl${utilities!.ajouterPrefixe(listNextRdv.elementAt(index).medecin!.imageName!)}',
-                                              placeholder: (context, url) =>
-                                                  const CircularProgressIndicator(
-                                                color: Colors.redAccent,
-                                              ), // Affiche un indicateur de chargement en attendant l'image
-                                              errorWidget:
-                                                  (context, url, error) =>
-                                                      Image.asset(
-                                                'assets/images/medecin.png',
-                                                fit: BoxFit.cover,
-                                                width: 50,
-                                                height: 50,
-                                              ), // Affiche une icône d'erreur si le chargement échoue
-                                            ),
+                                                imageUrl:
+                                                    '$baseUrl${utilities!.ajouterPrefixe(listNextRdv.elementAt(index).patient!.imageName!)}',
+                                                placeholder: (context, url) =>
+                                                    const CircularProgressIndicator(
+                                                      color: Colors.redAccent,
+                                                    ), // Affiche un indicateur de chargement en attendant l'image
+                                                errorWidget: (context, url,
+                                                        error) =>
+                                                    Icon(
+                                                      Icons.account_circle,
+                                                      size: 120,
+                                                      color: Colors.black
+                                                          .withOpacity(0.6),
+                                                    ) // Affiche une icône d'erreur si le chargement échoue
+                                                ),
                                           ),
                                         ),
                                         Column(
                                           children: [
                                             Text(
-                                              '${listNextRdv.elementAt(index).medecin!.lastName[0]}.${abbreviateName(listNextRdv.elementAt(index).medecin!.firstName)}',
+                                              '${listNextRdv.elementAt(index).patient!.lastName[0]}.${abbreviateName(listNextRdv.elementAt(index).patient!.firstName)}',
                                               style: const TextStyle(
                                                   color: Color.fromARGB(
                                                       1000, 60, 70, 120),
@@ -829,7 +829,7 @@ class _ListAppointmentState extends State<ListAppointment> {
                                             ),
                                             child: CachedNetworkImage(
                                               imageUrl:
-                                                  '$baseUrl${utilities!.ajouterPrefixe(listFinished.elementAt(index).medecin!.imageName!)}',
+                                                  '$baseUrl${utilities!.ajouterPrefixe(listFinished.elementAt(index).patient!.imageName!)}',
                                               placeholder: (context, url) =>
                                                   const CircularProgressIndicator(
                                                 color: Colors.redAccent,
@@ -848,7 +848,7 @@ class _ListAppointmentState extends State<ListAppointment> {
                                         Column(
                                           children: [
                                             Text(
-                                              '${listFinished.elementAt(index).medecin!.lastName[0]}.${abbreviateName(listFinished.elementAt(index).medecin!.firstName)}',
+                                              '${listFinished.elementAt(index).patient!.lastName[0]}.${abbreviateName(listFinished.elementAt(index).patient!.firstName)}',
                                               style: const TextStyle(
                                                   color: Color.fromARGB(
                                                       1000, 60, 70, 120),

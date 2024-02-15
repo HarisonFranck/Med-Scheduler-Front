@@ -508,8 +508,6 @@ class _AppointmentDialogState extends State<AppointmentDialog> {
                                   /// Si le switch devient false(desactivation)
                                   if (isDayDisabled==false) {
 
-                                        print('DAY DISABLED');
-
                                     /// On boucle tous les plages crées par défaut
                                     for (var appointment in listAppointment) {
                                       /// On initialise un variable boolean en isUnique = true a chaque appointment(par defaut activer)
@@ -614,7 +612,6 @@ class _AppointmentDialogState extends State<AppointmentDialog> {
                                     /// Si le Switch est desactiver ou bien le jour est reactiver de nouveau
                                   } else {
 
-                                    print('BOUCLE ENABLED');
 
                                     /// On boucle de nouveau les appointments par defaut crée
                                     for (var appointment in listAppointment) {
@@ -728,19 +725,16 @@ class _AppointmentDialogState extends State<AppointmentDialog> {
                                             : true),
                                         onChanged: (val) {
                                           setState(() {
-                                            print('FIRST VAL: $val');
 
                                             isDisableIndex[i] = val;
 
                                             if (isDisableIndex[i] ==
                                                 true) {
-                                              print('TRUE');
-                                              medecinRepository!.deleteUnavalaibleAppointment(
+                                             medecinRepository!.deleteUnavalaibleAppointment(
                                                   appointment);
 
                                               didChangeDependencies();
                                             } else {
-                                              print('FALSE');
 
 
                                               CustomAppointment appoint = CustomAppointment(
@@ -831,13 +825,11 @@ class _AppointmentDialogState extends State<AppointmentDialog> {
                                     : true),
                                 onChanged: (val) {
                                 setState(() {
-                                print('FIRST VAL: $val');
 
-                                isDisableIndex[i] = val;
+                            isDisableIndex[i] = val;
 
                                 if (isDisableIndex[i] ==
                                 true) {
-                                print('TRUE PRISE');
 
                                 CustomAppointment? appointmentPrise = getAppointmentDoctorPrise(unavAppointFinded);
 
@@ -850,19 +842,13 @@ class _AppointmentDialogState extends State<AppointmentDialog> {
 
                                 didChangeDependencies();
                                 } else {
-                                print('FALSE PRISE');
-
-                                //CustomAppointment newAppoint = CustomAppointment(id: appointment.id,patient: appointment.patient, type: appointment.type, startAt: appointment.startAt, timeStart: appointment.timeStart, timeEnd: appointment.timeEnd, reason: appointment.reason, createdAt: appointment.createdAt,appType: "Desactiver");
 
 
-                                print('APPOINT FINDED: ${unavAppointFinded.patient!.id}');
-
-                                CustomAppointment? appointmentPrise = getAppointmentDoctorPrise(unavAppointFinded);
+                               CustomAppointment? appointmentPrise = getAppointmentDoctorPrise(unavAppointFinded);
 
 
-                                print('APPPOINT PRISE : ${appointmentPrise!.patient!.id}');
 
-                                ConfirmDisableAppointment(appointmentPrise);
+                                ConfirmDisableAppointment(appointmentPrise!);
 
                                 }
                                 });

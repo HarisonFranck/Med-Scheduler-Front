@@ -15,6 +15,9 @@ import 'package:med_scheduler_front/Espace_Client/view/Login.dart';
 import 'dart:io';
 import 'package:med_scheduler_front/Patient.dart';
 import 'package:med_scheduler_front/ConnectionError.dart';
+import 'package:googleapis_auth/auth_io.dart' as auth;
+import 'package:flutter/services.dart';
+import 'dart:developer' as devtools show log;
 
 class UserRepository {
   final BuildContext context;
@@ -42,7 +45,6 @@ class UserRepository {
 
       final response = await http.get(url, headers: headers);
 
-      print('STATUS CODE APPOINTS: ${response.statusCode} \n');
 
       if (response.statusCode == 200) {
         final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
@@ -92,7 +94,7 @@ class UserRepository {
 
       // Ajouter les paramètres en fonction des cas
       if (lastName.trim().isNotEmpty) {
-        print('ANARANA');
+
         if (center.trim().isNotEmpty) {
           url = Uri.parse("$url&lastName=$lastName&center=$center");
         } else if (spec.isNotEmpty) {
@@ -110,7 +112,6 @@ class UserRepository {
         url = Uri.parse("$url&speciality=$spec");
       }
 
-      print('URI: $url');
 
       final headers = {'Authorization': 'Bearer $token'};
 
@@ -152,7 +153,6 @@ class UserRepository {
       token = authProvider.token;
 
       final url = Uri.parse("${baseUrl}api/appointments");
-      //final headers = {'Content-Type': 'application/json'};
 
       final headers = {
         'Content-Type': 'application/ld+json',
@@ -161,13 +161,10 @@ class UserRepository {
 
 
       String jsonUser = jsonEncode(appointment.toJson());
-      print('Request Body: $jsonUser');
-      final response = await http.post(url, headers: headers, body: jsonUser);
-      print(response.statusCode);
+    final response = await http.post(url, headers: headers, body: jsonUser);
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonResponse = json.decode(response.body);
-        print('ERRRR: $jsonResponse');
 
         if (jsonResponse.containsKey('error')) {
           utilities.error('Rendez-vous déja existant');
@@ -222,13 +219,11 @@ class UserRepository {
       };
 
       String jsonUser = jsonEncode(appointment.toJson());
-      print('Request Body: $jsonUser');
       final response = await http.post(url, headers: headers, body: jsonUser);
       print(response.statusCode);
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonResponse = json.decode(response.body);
-        print('ERRRR: $jsonResponse');
 
         if (jsonResponse.containsKey('error')) {
           utilities.error('Rendez-vous déja existant');
@@ -277,14 +272,10 @@ class UserRepository {
 
       final url = Uri.parse("${baseUrl}api/change-password/$id");
 
-      print('URL USER: $url');
-
-      //final headers = {'Authorization': 'Bearer $token'};
 
       final body = {"password": "$newPassword"};
 
       final response = await http.patch(url, body: jsonEncode(body));
-      print(' --- ST CODE: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         utilities.modifPasswordValider();
@@ -319,14 +310,11 @@ class UserRepository {
 
       final url = Uri.parse(
           "${baseUrl}api/users/${utilities.extractLastNumber(utilisateur.id)}");
-      //final headers = {'Content-Type': 'application/json'};
 
       final headers = {'Content-Type': 'application/merge-patch+json'};
 
       String jsonUser = jsonEncode(utilisateur.toJson());
-      print('Request Body: $jsonUser');
-      final response = await http.patch(url, headers: headers, body: jsonUser);
-      print(response.statusCode);
+    final response = await http.patch(url, headers: headers, body: jsonUser);
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonResponse = json.decode(response.body);
@@ -404,7 +392,6 @@ class UserRepository {
     if(await utilities.isConnectionAvailable()){
       final url = Uri.parse(
           "${baseUrl}api/image-profile/${utilities.extractLastNumber(utilisateur.id)}");
-      //final headers = {'Content-Type': 'application/json'};
 
       final headers = {'Content-Type': 'multipart/form-data'};
 
@@ -418,17 +405,11 @@ class UserRepository {
           filename: file.path.split('/').last);
       request.files.add(multipartFile);
 
-      //String jsonUser = jsonEncode(utilisateur.toJson());
-      //print('Request Body: $jsonUser');
-
       var response = await http.Response.fromStream(await request.send());
 
-      //final response = await http.patch(url, headers: headers, body: jsonUser);
-      print(response.statusCode);
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonResponse = json.decode(response.body);
-        print('ERRRR: $jsonResponse');
 
         if (jsonResponse.containsKey('error')) {
           utilities.error('Erreur de modification');
@@ -482,8 +463,7 @@ class UserRepository {
           Navigator.pushAndRemoveUntil(
             context, MaterialPageRoute(builder: (context) => const MyApp()),(route) => false,);
         }
-        print('RESP ERROR UNAV: ${response.body}');
-        // Gestion des erreurs HTTP
+      // Gestion des erreurs HTTP
         throw Exception(
             '-- Failed to load data. HTTP Status Code: ${response.statusCode}');
       }
@@ -511,7 +491,6 @@ class UserRepository {
       final headers = {'Authorization': 'Bearer $token'};
       final response = await http.get(url, headers: headers);
 
-      print('STATUS CODE APPOINTS AGENDA:  ${response.statusCode} \n');
 
       if (response.statusCode == 200) {
         final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
@@ -540,6 +519,104 @@ class UserRepository {
   }
 
 
+
+
+  Future<void> updatePatient(Utilisateur patient) async {
+
+    if(await utilities.isConnectionAvailable()){
+
+
+      authProvider = Provider.of<AuthProvider>(context, listen: false);
+      token = authProvider.token;
+
+      final url =
+      Uri.parse("${baseUrl}api/users/${utilities.extractLastNumber(patient.id)}");
+
+
+      final headers = {
+        'Content-Type': 'application/merge-patch+json',
+        'Authorization': 'Bearer $token'
+      };
+
+      String jsonSpec = jsonEncode(patient.toJson());
+
+
+      final response = await http.patch(url, headers: headers, body: jsonSpec);
+
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> jsonResponse = json.decode(response.body);
+
+
+        if (jsonResponse.containsKey('error')) {
+
+        } else {
+
+        }
+      } else {
+
+
+        if (response.statusCode == 401) {
+          authProvider.logout();
+          Navigator.pushReplacement(
+              context, MaterialPageRoute(builder: (context) => const MyApp()));
+        }
+        // Gestion des erreurs HTTP
+
+
+        utilities.error('Il y a une erreur.\n Veuillez ressayer ulterieurement.');
+        throw Exception(
+            '-- Failed to add user. HTTP Status Code: ${response.statusCode}');
+      }
+    }else{
+
+      utilities.handleConnectionError(ConnectionError("Une erreur de connexion s'est produite!"));
+    }
+
+  }
+
+
+
+
+  Future<bool> sendPushMessage({
+    required String recipientToken}) async {
+
+
+    final jsonCredentials = await rootBundle
+        .loadString('assets/data/med-scheduler-front-d86b24fcb422.json');
+    final creds = auth.ServiceAccountCredentials.fromJson(jsonCredentials);
+
+    final client = await auth.clientViaServiceAccount(
+      creds,
+      ['https://www.googleapis.com/auth/cloud-platform'],
+    );
+
+    final notificationData = {
+      'message': {
+        'token': recipientToken,
+        'notification': {'title': 'Nouveau rendez-vous', 'body': 'Un patient a pris un rendez-vous avec vous.'}
+      },
+    };
+
+    const String senderId = '469458129138';
+    final response = await client.post(
+      Uri.parse('https://fcm.googleapis.com/v1/projects/$senderId/messages:send'),
+      headers: {
+        'content-type': 'application/json',
+      },
+      body: jsonEncode(notificationData),
+    );
+
+    client.close();
+    if (response.statusCode == 200) {
+      return true; // Success!
+    }
+
+    devtools.log(
+        'Notification Sending Error Response status: ${response.statusCode}');
+    devtools.log('Notification Response body: ${response.body}');
+    return false;
+  }
 
 
 

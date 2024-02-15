@@ -423,15 +423,18 @@ class _MedecinDetailsState extends State<MedecinDetails> {
                             Row(
                               children: [
                                 const Padding(
-                                  padding: EdgeInsets.only(left: 5),
+                                  padding: EdgeInsets.only(left: 20),
                                   child: Text('Nom:'),
                                 ),
                                 Padding(
-                                  padding: const EdgeInsets.only(left: 45),
+                                  padding: const EdgeInsets.only(left: 63),
                                   child: Container(
                                     width:
-                                        MediaQuery.of(context).size.width / 1.78,
+                                        MediaQuery.of(context).size.width / 2.5,
                                     child: TextField(
+                                      style: TextStyle(
+                                          fontSize: 15
+                                      ),
                                       decoration: const InputDecoration(
                                         focusedBorder: UnderlineInputBorder(
                                           borderSide: BorderSide(
@@ -450,15 +453,18 @@ class _MedecinDetailsState extends State<MedecinDetails> {
                             Row(
                               children: [
                                 const Padding(
-                                  padding: EdgeInsets.only(left: 5),
+                                  padding: EdgeInsets.only(left: 20),
                                   child: Text('Prenom:'),
                                 ),
                                 Padding(
-                                  padding: const EdgeInsets.only(left: 26),
+                                  padding: const EdgeInsets.only(left: 40),
                                   child: Container(
                                     width:
-                                        MediaQuery.of(context).size.width / 1.8,
+                                        MediaQuery.of(context).size.width / 2.5,
                                     child: TextField(
+                                      style: TextStyle(
+                                          fontSize: 15
+                                      ),
                                       decoration: const InputDecoration(
                                         focusedBorder: UnderlineInputBorder(
                                           borderSide: BorderSide(
@@ -477,15 +483,18 @@ class _MedecinDetailsState extends State<MedecinDetails> {
                             Row(
                               children: [
                                 const Padding(
-                                  padding: EdgeInsets.only(left: 5),
+                                  padding: EdgeInsets.only(left: 20),
                                   child: Text('Email:'),
                                 ),
                                 Padding(
-                                  padding: const EdgeInsets.only(left: 40),
+                                  padding: const EdgeInsets.only(left: 55),
                                   child: Container(
                                     width: MediaQuery.of(context).size.width /
-                                        1.78,
+                                        2.5,
                                     child: TextField(
+                                      style: TextStyle(
+                                          fontSize: 15
+                                      ),
                                       decoration: const InputDecoration(
                                         focusedBorder: UnderlineInputBorder(
                                           borderSide: BorderSide(
@@ -504,15 +513,18 @@ class _MedecinDetailsState extends State<MedecinDetails> {
                             Row(
                               children: [
                                 const Padding(
-                                  padding: EdgeInsets.only(left: 5),
+                                  padding: EdgeInsets.only(left: 20),
                                   child: Text('Telephone:'),
                                 ),
                                 Padding(
-                                  padding: const EdgeInsets.only(left: 7),
+                                  padding: const EdgeInsets.only(left: 20),
                                   child: Container(
                                     width: MediaQuery.of(context).size.width /
-                                        1.82,
+                                        2.5,
                                     child: TextField(
+                                      style: TextStyle(
+                                          fontSize: 15
+                                      ),
                                       maxLength: 10,
                                       keyboardType: TextInputType.number,
                                       decoration: const InputDecoration(
@@ -533,15 +545,18 @@ class _MedecinDetailsState extends State<MedecinDetails> {
                             Row(
                               children: [
                                 const Padding(
-                                  padding: EdgeInsets.only(left: 5),
+                                  padding: EdgeInsets.only(left: 20),
                                   child: Text('Centre:',textAlign: TextAlign.start,),
                                 ),
                                 Padding(
-                                  padding: const EdgeInsets.only(left: 27),
+                                  padding: const EdgeInsets.only(left: 45),
                                   child: Container(
                                     width: MediaQuery.of(context).size.width /
-                                        1.82,
+                                        2.5,
                                     child: TextField(
+                                      style: TextStyle(
+                                        fontSize: 15
+                                      ),
                                       keyboardType: TextInputType.name,
                                       decoration: const InputDecoration(
                                         focusedBorder: UnderlineInputBorder(

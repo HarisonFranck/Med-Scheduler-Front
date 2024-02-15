@@ -162,14 +162,17 @@ class _MedecinDetailsState extends State<MedecinDetails> {
                         Row(
                           children: [
                             const Padding(
-                              padding: EdgeInsets.only(left: 50),
+                              padding: EdgeInsets.only(left: 20),
                               child: Text('Nom:'),
                             ),
                             Padding(
-                              padding: const EdgeInsets.only(left: 26),
+                              padding: const EdgeInsets.only(left: 68),
                               child: Container(
-                                width: MediaQuery.of(context).size.width / 1.8,
+                                width: MediaQuery.of(context).size.width / 2.2,
                                 child: TextField(
+                                  style: TextStyle(
+                                      fontSize: 15
+                                  ),
                                   decoration: const InputDecoration(
                                     focusedBorder: UnderlineInputBorder(
                                       borderSide: BorderSide(
@@ -187,14 +190,17 @@ class _MedecinDetailsState extends State<MedecinDetails> {
                         Row(
                           children: [
                             const Padding(
-                              padding: EdgeInsets.only(left: 25),
+                              padding: EdgeInsets.only(left: 20),
                               child: Text('Prenom:'),
                             ),
                             Padding(
-                              padding: const EdgeInsets.only(left: 26),
+                              padding: const EdgeInsets.only(left: 45),
                               child: Container(
-                                width: MediaQuery.of(context).size.width / 1.8,
+                                width: MediaQuery.of(context).size.width / 2.2,
                                 child: TextField(
+                                  style: TextStyle(
+                                      fontSize: 15
+                                  ),
                                   decoration: const InputDecoration(
                                     focusedBorder: UnderlineInputBorder(
                                       borderSide: BorderSide(
@@ -212,14 +218,17 @@ class _MedecinDetailsState extends State<MedecinDetails> {
                         Row(
                           children: [
                             const Padding(
-                              padding: EdgeInsets.only(left: 10),
+                              padding: EdgeInsets.only(left: 20),
                               child: Text('Specialite:'),
                             ),
                             Padding(
-                              padding: const EdgeInsets.only(left: 26),
+                              padding: const EdgeInsets.only(left: 30),
                               child: Container(
-                                width: MediaQuery.of(context).size.width / 1.8,
+                                width: MediaQuery.of(context).size.width / 2.2,
                                 child: TextField(
+                                  style: TextStyle(
+                                      fontSize: 15
+                                  ),
                                   decoration: const InputDecoration(
                                     focusedBorder: UnderlineInputBorder(
                                       borderSide: BorderSide(
@@ -237,14 +246,17 @@ class _MedecinDetailsState extends State<MedecinDetails> {
                         Row(
                           children: [
                             const Padding(
-                              padding: EdgeInsets.only(left: 40),
+                              padding: EdgeInsets.only(left: 20),
                               child: Text('Email:'),
                             ),
                             Padding(
-                              padding: const EdgeInsets.only(left: 26),
+                              padding: const EdgeInsets.only(left: 62),
                               child: Container(
-                                width: MediaQuery.of(context).size.width / 1.8,
+                                width: MediaQuery.of(context).size.width / 2.2,
                                 child: TextField(
+                                  style: TextStyle(
+                                    fontSize: 15
+                                  ),
                                   decoration: const InputDecoration(
                                     focusedBorder: UnderlineInputBorder(
                                       borderSide: BorderSide(
@@ -262,14 +274,17 @@ class _MedecinDetailsState extends State<MedecinDetails> {
                         Row(
                           children: [
                             const Padding(
-                              padding: EdgeInsets.only(left: 5),
+                              padding: EdgeInsets.only(left: 20),
                               child: Text('Telephone:'),
                             ),
                             Padding(
-                              padding: const EdgeInsets.only(left: 26),
+                              padding: const EdgeInsets.only(left: 25),
                               child: Container(
-                                width: MediaQuery.of(context).size.width / 1.8,
+                                width: MediaQuery.of(context).size.width / 2.2,
                                 child: TextField(
+                                  style: TextStyle(
+                                      fontSize: 15
+                                  ),
                                   decoration: const InputDecoration(
                                     focusedBorder: UnderlineInputBorder(
                                       borderSide: BorderSide(
@@ -287,14 +302,17 @@ class _MedecinDetailsState extends State<MedecinDetails> {
                         Row(
                           children: [
                             const Padding(
-                              padding: EdgeInsets.only(left: 50),
+                              padding: EdgeInsets.only(left: 20),
                               child: Text('Ville:'),
                             ),
                             Padding(
-                              padding: const EdgeInsets.only(left: 26),
+                              padding: const EdgeInsets.only(left: 70),
                               child: Container(
-                                width: MediaQuery.of(context).size.width / 1.8,
+                                width: MediaQuery.of(context).size.width / 2.2,
                                 child: TextField(
+                                  style: TextStyle(
+                                      fontSize: 15
+                                  ),
                                   decoration: const InputDecoration(
                                     focusedBorder: UnderlineInputBorder(
                                       borderSide: BorderSide(

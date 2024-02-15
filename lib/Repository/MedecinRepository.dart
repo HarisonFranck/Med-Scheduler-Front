@@ -13,6 +13,8 @@ import 'package:med_scheduler_front/Utilitie/Utilities.dart';
 import 'package:med_scheduler_front/ConnectionError.dart';
 import 'package:med_scheduler_front/Espace_Medecin/view/IndexAcceuilMedecin.dart';
 import 'package:intl/intl.dart';
+import 'package:med_scheduler_front/Specialite.dart';
+import 'package:med_scheduler_front/Centre.dart';
 
 class MedecinRepository {
   final BuildContext context;
@@ -39,21 +41,18 @@ class MedecinRepository {
       String formated = DateFormat('yyyy-MM-dd').format(dtClicked);
 
 
-      print('MED ID: ${widgetMedecin.id}');
-      final url = Uri.parse(
+     final url = Uri.parse(
           "${baseUrl}api/unavailable_appointments?page=1&startAt[before]=$formated&startAt[after]=$formated");
 
       final headers = {'Authorization': 'Bearer $token'};
 
       final response = await http.get(url, headers: headers);
 
-      print('STATUS CODE APPOINTS AGENDA:  ${response.statusCode} \n');
 
       if (response.statusCode == 200) {
         final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
         final datas = jsonData['hydra:member'] as List<dynamic>;
 
-        //return datas.map((e) => CustomAppointment.fromJson(e)).toList();
 
         final unavAppoints = datas.where((e) {
           final med = Medecin.fromJson(e['doctor']);
@@ -101,13 +100,11 @@ class MedecinRepository {
 
       final response = await http.get(url, headers: headers);
 
-      print('STATUS CODE APPOINTS AGNENDAAA: ${response.statusCode} \n');
 
       if (response.statusCode == 200) {
         final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
         final datas = jsonData['hydra:member'] as List<dynamic>;
 
-        //return datas.map((e) => CustomAppointment.fromJson(e)).toList();
 
         // Filtrer les rendez-vous à venir
         final upcomingAppointments = datas.where((e) {
@@ -196,7 +193,6 @@ class MedecinRepository {
       token = authProvider.token;
 
       final url = Uri.parse("${baseUrl}api/appointments/${utilities!.extractLastNumber(appointment.id)}");
-    //final headers = {'Content-Type': 'application/json'};
 
     final headers = {
     'Content-Type': 'application/merge-patch+json',
@@ -208,7 +204,6 @@ class MedecinRepository {
 
 
     final response = await http.patch(url, headers: headers, body: jsonUser);
-    print('${response.statusCode} \n BODY PATCH: ${response.body} ');
 
     if (response.statusCode == 200) {
     final Map<String, dynamic> jsonResponse = json.decode(response.body);
@@ -260,7 +255,6 @@ class MedecinRepository {
       String jsonUser = jsonEncode(appointment.toJsonUnav());
 
       final response = await http.post(url, headers: headers, body: jsonUser);
-      print('${response.statusCode} \n BODY: ${response.body} ');
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonResponse = json.decode(response.body);
@@ -301,7 +295,6 @@ class MedecinRepository {
 
       final url = Uri.parse(
           "${baseUrl}api/unavailable_appointments/${utilities.extractLastNumber(appointment.id)}");
-      //final headers = {'Content-Type': 'application/json'};
 
       final headers = {'Authorization': 'Bearer $token'};
 
@@ -346,7 +339,6 @@ class MedecinRepository {
       authProvider = Provider.of<AuthProvider>(context, listen: false);
       token = authProvider.token;
 
-      print('ID MED: ${user.id}');
 
       final url = Uri.parse(
           "${baseUrl}api/doctors/appointments/${utilities.extractLastNumber(user.id)}");
@@ -355,7 +347,6 @@ class MedecinRepository {
 
       final response = await http.get(url, headers: headers);
 
-      print('STATUS CODE APPOINTS: ${response.statusCode} \n');
 
       if (response.statusCode == 200) {
         final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
@@ -392,14 +383,9 @@ class MedecinRepository {
 
       final url = Uri.parse("${baseUrl}api/change-password/$id");
 
-      print('URL USER: $url');
-
-      //final headers = {'Authorization': 'Bearer $token'};
-
       final body = {"password": "$newPassword"};
 
       final response = await http.patch(url, body: jsonEncode(body));
-      print(' --- ST CODE: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         utilities.modifPasswordValider();
@@ -424,6 +410,150 @@ class MedecinRepository {
     }
 
   }
+
+
+  Future<void> updateMedecin(Utilisateur medecin) async {
+
+    if(await utilities.isConnectionAvailable()){
+
+
+      authProvider = Provider.of<AuthProvider>(context, listen: false);
+      token = authProvider.token;
+
+      final url =
+      Uri.parse("${baseUrl}api/users/${utilities.extractLastNumber(medecin.id)}");
+
+      final headers = {
+        'Content-Type': 'application/merge-patch+json',
+        'Authorization': 'Bearer $token'
+      };
+
+      String jsonSpec = jsonEncode(medecin.toJson());
+
+
+      final response = await http.patch(url, headers: headers, body: jsonSpec);
+
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> jsonResponse = json.decode(response.body);
+
+
+        if (jsonResponse.containsKey('error')) {
+          utilities.error('Medecin déja existant');
+        } else {
+
+        }
+      } else {
+
+
+        if (response.statusCode == 401) {
+          authProvider.logout();
+          Navigator.pushReplacement(
+              context, MaterialPageRoute(builder: (context) => const MyApp()));
+        }
+        // Gestion des erreurs HTTP
+
+        utilities.error('Il y a une erreur.\n Veuillez ressayer ulterieurement.');
+        throw Exception(
+            '-- Failed to add user. HTTP Status Code: ${response.statusCode}');
+      }
+    }else{
+
+      utilities.handleConnectionError(ConnectionError("Une erreur de connexion s'est produite!"));
+    }
+
+  }
+
+
+
+  Future<Specialite> getSpecialite(String id) async {
+
+    if(await utilities.isConnectionAvailable()){
+
+      final url =
+      Uri.parse("${baseUrl}api/specialities/${utilities.extractLastNumber(id)}");
+
+      authProvider = Provider.of<AuthProvider>(context, listen: false);
+      token = authProvider.token;
+
+      final headers = {'Authorization': 'Bearer $token'};
+
+
+      final response = await http.get(url, headers: headers);
+
+      if (response.statusCode == 200) {
+        final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
+
+        Specialite specialite = Specialite.fromJson(jsonData);
+
+        return specialite;
+      } else {
+        if (response.statusCode == 401) {
+          authProvider.logout();
+          Navigator.pushReplacement(
+              context, MaterialPageRoute(builder: (context) => const MyApp()));
+        }
+        // Gestion des erreurs HTTP
+        throw Exception(
+            '-- Failed to load data. HTTP Status Code: ${response.statusCode}');
+      }
+
+    }else{
+      utilities.handleConnectionError(ConnectionError("Une erreur de connexion s'est produite!"));
+      throw Exception(
+          '-- Failed to load data.');
+    }
+
+
+  }
+
+
+
+  Future<Centre> getCenter(String id) async {
+
+    if(await utilities.isConnectionAvailable()){
+
+      final url =
+      Uri.parse("${baseUrl}api/centers/${utilities.extractLastNumber(id)}");
+
+      authProvider = Provider.of<AuthProvider>(context, listen: false);
+      token = authProvider.token;
+
+      final headers = {'Authorization': 'Bearer $token'};
+
+
+      final response = await http.get(url, headers: headers);
+
+      if (response.statusCode == 200) {
+        final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
+
+        Centre center = Centre.fromJson(jsonData);
+
+        return center;
+      } else {
+        if (response.statusCode == 401) {
+          authProvider.logout();
+          Navigator.pushReplacement(
+              context, MaterialPageRoute(builder: (context) => const MyApp()));
+        }
+        // Gestion des erreurs HTTP
+        throw Exception(
+            '-- Failed to load data. HTTP Status Code: ${response.statusCode}');
+      }
+
+    }else{
+      utilities.handleConnectionError(ConnectionError("Une erreur de connexion s'est produite!"));
+      throw Exception(
+          '-- Failed to load data.');
+    }
+
+
+  }
+
+
+
+
+
 
 
 }

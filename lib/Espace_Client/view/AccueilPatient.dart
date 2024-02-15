@@ -25,6 +25,10 @@ import 'package:med_scheduler_front/Repository/BaseRepository.dart';
 import 'package:med_scheduler_front/Utilitie/Utilities.dart';
 import 'package:med_scheduler_front/AuthProviderUser.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:med_scheduler_front/firebase_options.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:med_scheduler_front/FirebaseApi.dart';
 
 class AccueilPatient extends StatefulWidget {
   @override
@@ -37,6 +41,10 @@ class _AccueilPatientState extends State<AccueilPatient> {
   UserRepository? userRepository;
   BaseRepository? baseRepository;
   Utilities? utilities;
+
+  String FireBaseTokenPatient = "";
+
+  String fireBaseTokenPatient = "";
 
   Utilisateur? user;
 
@@ -166,6 +174,20 @@ class _AccueilPatientState extends State<AccueilPatient> {
     super.dispose();
   }
 
+  InitFireBase() async {
+
+    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+    await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform);
+
+    FireBaseTokenPatient = await FirebaseApi().initFireBase();
+
+    sharedPreferences.setString('FireBaseTokenPatient', FireBaseTokenPatient);
+
+    await FirebaseApi().initPushForegroundNotif();
+    await FirebaseApi().initLocalNotif();
+  }
+
   @override
   void initState() {
     super.initState();
@@ -173,6 +195,7 @@ class _AccueilPatientState extends State<AccueilPatient> {
     userRepository = UserRepository(context: context, utilities: utilities!);
 
     WidgetsFlutterBinding.ensureInitialized();
+    //InitFireBase();
   }
 
   List<CustomAppointment> listAppointment = [];
@@ -307,11 +330,40 @@ class _AccueilPatientState extends State<AccueilPatient> {
     authProvider = Provider.of<AuthProvider>(context);
     token = authProvider.token;
     WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await Firebase.initializeApp(
+          options: DefaultFirebaseOptions.currentPlatform);
+
+      FireBaseTokenPatient = await FirebaseApi().initFireBase();
+
+      await FirebaseApi().initPushForegroundNotif();
+      await FirebaseApi().initLocalNotif();
+
       await getAllAsync();
       Map<String, dynamic> payload = Jwt.parseJwt(token);
       idUser = payload['id'] ?? '';
       dataLoaded = true;
+
+      Utilisateur patientWithToken = Utilisateur(
+          id: user!.id,
+          imageName: (user!.imageName != null && user!.imageName != "")
+              ? utilities!.extraireNomFichier(user!.imageName!)
+              : '',
+          lastName: user!.lastName,
+          firstName: user!.firstName,
+          userType: user!.userType,
+          phone: user!.phone,
+          password: user!.password,
+          email: user!.email,
+          category: user!.category,
+          address: user!.address,
+          roles: user!.roles,
+          city: user!.city,
+          token: FireBaseTokenPatient);
+
+     userRepository!.updatePatient(patientWithToken);
+
       patient = Patient(
+          token: patientWithToken.token,
           id: user!.id,
           type: user!.userType,
           lastName: user!.lastName,
@@ -555,6 +607,7 @@ class _AccueilPatientState extends State<AccueilPatient> {
       child: const Card(
           color: Color.fromARGB(1000, 60, 70, 120),
           child: Column(children: [
+            Spacer(),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
@@ -562,6 +615,13 @@ class _AccueilPatientState extends State<AccueilPatient> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      Center(
+                        child: Icon(
+                          Icons.update,
+                          size: 30,
+                          color: Colors.white,
+                        ),
+                      ),
                       Text(
                         'Aucun rendez-vous pour cette semaine',
                         textAlign: TextAlign.center,
@@ -576,22 +636,18 @@ class _AccueilPatientState extends State<AccueilPatient> {
                 ),
               ],
             ),
-            Opacity(
-              opacity: 0.4,
-              child: Divider(
-                thickness: 1,
-                indent: 20,
-                endIndent: 20,
-                color: Colors.white70,
-              ),
-            ),
+
+            Spacer()
           ])));
 
   Widget BuildCard(CustomAppointment appointment) => Container(
       margin: const EdgeInsets.symmetric(horizontal: 6),
       child: Card(
           color: const Color.fromARGB(1000, 60, 70, 120),
-          child: ListView(children: [
+          child: Column(children: [
+            SizedBox(
+              height: 10,
+            ),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
@@ -624,7 +680,7 @@ class _AccueilPatientState extends State<AccueilPatient> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '${appointment.medecin!.lastName[0]}.${abbreviateName(appointment.medecin!.firstName)}',
+                        'Dr ${appointment.medecin!.lastName[0]}.${abbreviateName(appointment.medecin!.firstName)}',
                         overflow: TextOverflow.fade,
                         style: const TextStyle(
                             color: Colors.white, fontWeight: FontWeight.w500),
@@ -638,9 +694,6 @@ class _AccueilPatientState extends State<AccueilPatient> {
                       )
                     ],
                   ),
-                ),
-                const SizedBox(
-                  width: 10,
                 ),
                 IconButton(
                   onPressed: () {
@@ -667,17 +720,31 @@ class _AccueilPatientState extends State<AccueilPatient> {
                 color: Colors.white70,
               ),
             ),
-            Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-              Image.asset(
-                'assets/images/date-limite.png',
-                width: 30,
-              ),
-              Text(
-                '${formatDateTimeAppointment(appointment.startAt, appointment.timeStart, appointment.timeEnd)} ',
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: Colors.white),
-              )
-            ])
+            Row(
+              children: [
+                Padding(
+                  padding: EdgeInsets.only(left: 20),
+                  child: Image.asset(
+                    'assets/images/date-limite.png',
+                    width: 30,
+                  ),
+                ),
+                Spacer()
+              ],
+            ),
+            Row(
+              children: [
+                Padding(
+                  padding: EdgeInsets.only(left: 20, top: 5),
+                  child: Text(
+                    '${formatDateTimeAppointment(appointment.startAt, appointment.timeStart, appointment.timeEnd)} ',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                ),
+                Spacer()
+              ],
+            )
           ])));
 
   bool isCenter = false;
@@ -786,7 +853,7 @@ class _AccueilPatientState extends State<AccueilPatient> {
                                   : CardNothing());
                         },
                         options: CarouselOptions(
-                            height: isLandscape ? 60 : 150,
+                            height: isLandscape ? 60 : 190,
                             autoPlay: true,
                             enlargeCenterPage: true,
                             enlargeStrategy: CenterPageEnlargeStrategy.height),
@@ -1398,7 +1465,7 @@ class _AccueilPatientState extends State<AccueilPatient> {
                                                           Column(
                                                             children: [
                                                               Text(
-                                                                '${medecin.lastName[0]}.${abbreviateName(medecin.firstName)}',
+                                                                'Dr ${medecin.lastName[0]}.${abbreviateName(medecin.firstName)}',
                                                                 overflow:
                                                                     TextOverflow
                                                                         .fade,

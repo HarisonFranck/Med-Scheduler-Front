@@ -411,7 +411,7 @@ class AgendaState extends State<Agenda> {
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(23),
                   child: Container(
-                    height: 85,
+                    height: 95,
                     child: Card(
                       elevation: 0.5,
                       color: Colors.white,
@@ -649,7 +649,7 @@ class AgendaState extends State<Agenda> {
                                                   minimumSize:
                                                       MaterialStateProperty.all(
                                                           const Size(
-                                                              300.0, 40.0)),
+                                                              255.0, 40.0)),
                                                 ),
                                                 onPressed: () {
                                                   Navigator.push(
@@ -710,7 +710,7 @@ class AgendaState extends State<Agenda> {
                                                   minimumSize:
                                                       MaterialStateProperty.all(
                                                           const Size(
-                                                              300.0, 40.0)),
+                                                              255.0, 40.0)),
                                                 ),
                                                 onPressed: () {
                                                   Navigator.push(
@@ -867,7 +867,7 @@ class AgendaState extends State<Agenda> {
                   ),
                 ),
                 Container(
-                  width: MediaQuery.of(context).size.width / 1.30,
+                  width: MediaQuery.of(context).size.width / 1.40,
                   height:
                       (appoint.isDeleted != null && appoint.isDeleted == true)
                           ? 75
@@ -981,7 +981,7 @@ class AgendaState extends State<Agenda> {
                 child: Padding(
                   padding: const EdgeInsets.only(left: 0),
                   child: Container(
-                    width: MediaQuery.of(context).size.width / 1.30,
+                    width: MediaQuery.of(context).size.width / 1.40,
                     height:
                         (appoint.isDeleted != null && appoint.isDeleted == true)
                             ? 75
@@ -1376,7 +1376,7 @@ class AgendaState extends State<Agenda> {
                             ),
                             const Spacer(),
                             Text(
-                              '  ${formatDateTimeAppointment(appointment.startAt.toLocal(), appointment.timeStart, appointment.timeEnd.toLocal())}',
+                              '${DateTimeFormatAppointment(appointment.startAt, appointment.timeEnd)}',
                               style: const TextStyle(
                                   color: Color.fromARGB(230, 20, 20, 90),
                                   fontSize: 14,
@@ -1406,7 +1406,7 @@ class AgendaState extends State<Agenda> {
                             ),
                             const Spacer(),
                             Text(
-                              '${DateTimeFormatAppointment(appointment.startAt, appointment.timeEnd)}',
+                              '${formatDateTimeAppointment(appointment.startAt.toLocal(), appointment.timeStart, appointment.timeEnd.toLocal())}',
                               style: const TextStyle(
                                   color: Color.fromARGB(230, 20, 20, 90),
                                   fontSize: 14,
