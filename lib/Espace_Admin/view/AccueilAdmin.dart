@@ -2177,6 +2177,7 @@ class _AccueilAdminState extends State<AccueilAdmin> {
 
                               if (mail == null) {
                                 Utilisateur user = Utilisateur(
+
                                     id: medecin.id,
                                     lastName: modifNomController.text.trim(),
                                     roles: ['ROLE_USER'],
@@ -2188,7 +2189,7 @@ class _AccueilAdminState extends State<AccueilAdmin> {
                                     center: modifCenter!,
                                     phone: modifPhoneController.text.trim(),
                                     email: modifEmailController.text.trim(),
-                                    imageName: "",
+                                    imageName: (medecin.imageName!=null&&medecin.imageName!="")?utilities!.extraireNomFichier(medecin.imageName!):'',
                                     address:
                                         modifAddresseController.text.trim(),
                                     category: null,

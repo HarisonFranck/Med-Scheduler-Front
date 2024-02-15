@@ -181,6 +181,7 @@ class _NotificationAdminState extends State<NotificationAdmin> {
     return firstList;
   }
 
+
   @override
   Widget build(BuildContext context) {
     return PopScope(
@@ -190,7 +191,7 @@ class _NotificationAdminState extends State<NotificationAdmin> {
           body: ListView(
             children: [
               Padding(
-                padding: const EdgeInsets.only(top: 10, left: 10, bottom: 10),
+                padding: const EdgeInsets.only(top: 10, left: 10),
                 child: Row(
                   children: [
                     GestureDetector(
@@ -207,7 +208,8 @@ class _NotificationAdminState extends State<NotificationAdmin> {
                         Navigator.pushReplacement(
                             context,
                             MaterialPageRoute(
-                                builder: (context) => IndexAccueilAdmin()));
+                                builder: (context) =>
+                                    IndexAccueilAdmin()));
                       },
                     ),
                     const Spacer(),
@@ -230,10 +232,9 @@ class _NotificationAdminState extends State<NotificationAdmin> {
               ),
               Padding(
                 padding: const EdgeInsets.only(
-                    top: 20, bottom: 20, right: 5, left: 5),
+                    top: 10, bottom: 20, right: 5, left: 5),
                 child: FutureBuilder<List<CustomAppointment>>(
-                  future: filterAppointments(
-                      addAllAppointmentPage()), // Appelez votre fonction de récupération de données ici
+                  future: filterAppointments(addAllAppointmentPage()), // Appelez votre fonction de récupération de données ici
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       // Affichez un indicateur de chargement pendant le chargement
@@ -252,7 +253,7 @@ class _NotificationAdminState extends State<NotificationAdmin> {
                             child: ClipRRect(
                           borderRadius: BorderRadius.circular(6),
                           child: Container(
-                            color: Colors.white,
+                            color: Colors.transparent,
                             width: MediaQuery.of(context).size.width / 1.2,
                             height: MediaQuery.of(context).size.height / 1.4,
                             child: Card(
@@ -297,22 +298,40 @@ class _NotificationAdminState extends State<NotificationAdmin> {
                                             )),
                                       ),
                                     ),
-                                    const Spacer(),
-                                    const Padding(
-                                      padding: EdgeInsets.only(bottom: 10),
-                                      child: Icon(
-                                        Icons.update,
-                                        size: 30,
-                                        color: Color.fromARGB(230, 20, 20, 90),
-                                      ),
+                                    SizedBox(
+                                      height: 20,
                                     ),
-                                    const Text(
-                                      'Aucune notification récente.',
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(
-                                          letterSpacing: 2,
-                                          color: Colors.black,
-                                          fontSize: 16),
+                                    Container(
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(6),
+                                        color: Colors.white,
+                                      ),
+                                      height: 130,
+                                      width: MediaQuery.of(context).size.width -
+                                          90,
+                                      child: const Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.center,
+                                        children: [
+                                          Padding(
+                                            padding: EdgeInsets.only(top: 30),
+                                            child: Icon(
+                                              Icons.update,
+                                              size: 30,
+                                              color: Color.fromARGB(
+                                                  230, 20, 20, 90),
+                                            ),
+                                          ),
+                                          Text(
+                                            'Aucune notification récente.',
+                                            textAlign: TextAlign.center,
+                                            style: TextStyle(
+                                                letterSpacing: 2,
+                                                color: Colors.black,
+                                                fontSize: 15),
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                     const Spacer()
                                   ],
@@ -324,7 +343,7 @@ class _NotificationAdminState extends State<NotificationAdmin> {
                           child: Container(
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(6),
-                                color: Colors.white,
+                                color: Colors.transparent,
                               ),
                               width: MediaQuery.of(context).size.width / 1.2,
                               height: MediaQuery.of(context).size.height / 1.4,
@@ -336,8 +355,8 @@ class _NotificationAdminState extends State<NotificationAdmin> {
                                           MainAxisAlignment.center,
                                       children: [
                                         Padding(
-                                          padding: const EdgeInsets.only(
-                                              bottom: 20, top: 10),
+                                          padding:
+                                              const EdgeInsets.only(bottom: 20),
                                           child: Center(
                                             child: Container(
                                                 width: MediaQuery.of(context)
@@ -376,7 +395,7 @@ class _NotificationAdminState extends State<NotificationAdmin> {
                                         Expanded(
                                             child: ListView.builder(
                                           padding:
-                                              const EdgeInsets.only(top: 30),
+                                              const EdgeInsets.only(top: 20),
                                           itemCount: snapshot.data!.length,
                                           itemBuilder: (context, index) {
                                             List<CustomAppointment> listRDV =
@@ -385,16 +404,13 @@ class _NotificationAdminState extends State<NotificationAdmin> {
 
                                             return Padding(
                                                 padding: const EdgeInsets.only(
-                                                  bottom: 40,
-                                                ),
+                                                    bottom: 15,
+                                                    left: 5,
+                                                    right: 5),
                                                 child: Container(
-                                                    width: 410,
-                                                    height: 200,
+                                                    width: 440,
+                                                    height: 220,
                                                     decoration: BoxDecoration(
-                                                      border: Border.all(
-                                                        color: Colors.redAccent,
-                                                        width: 1,
-                                                      ),
                                                       borderRadius:
                                                           BorderRadius.circular(
                                                               6),
@@ -405,7 +421,7 @@ class _NotificationAdminState extends State<NotificationAdmin> {
                                                       child: Column(
                                                         children: [
                                                           const SizedBox(
-                                                            height: 20,
+                                                            height: 10,
                                                           ),
                                                           Row(
                                                             mainAxisAlignment:
@@ -416,7 +432,7 @@ class _NotificationAdminState extends State<NotificationAdmin> {
                                                                 borderRadius:
                                                                     BorderRadius
                                                                         .circular(
-                                                                            6),
+                                                                            50),
                                                                 child:
                                                                     Container(
                                                                   width: 60,
@@ -425,7 +441,7 @@ class _NotificationAdminState extends State<NotificationAdmin> {
                                                                       BoxDecoration(
                                                                     borderRadius:
                                                                         BorderRadius
-                                                                            .circular(6),
+                                                                            .circular(5),
                                                                   ),
                                                                   child:
                                                                       CachedNetworkImage(
@@ -441,14 +457,14 @@ class _NotificationAdminState extends State<NotificationAdmin> {
                                                                     errorWidget: (context,
                                                                             url,
                                                                             error) =>
-                                                                        Image
-                                                                            .asset(
-                                                                      'assets/images/medecin.png',
-                                                                      fit: BoxFit
-                                                                          .cover,
-                                                                      width: 50,
-                                                                      height:
-                                                                          50,
+                                                                        Icon(
+                                                                      Icons
+                                                                          .account_circle,
+                                                                      size: 60,
+                                                                      color: Colors
+                                                                          .black
+                                                                          .withOpacity(
+                                                                              0.6),
                                                                     ), // Affiche une icône d'erreur si le chargement échoue
                                                                   ),
                                                                 ),
@@ -494,28 +510,36 @@ class _NotificationAdminState extends State<NotificationAdmin> {
                                                                   Colors.grey,
                                                             ),
                                                           ),
-                                                          Expanded(
-                                                              child: Text(
-                                                                  'Le Dr.${listRDV.elementAt(index).medecin!.lastName} ${abbreviateName(listRDV.elementAt(index).medecin!.firstName)} a un rendez-vous prévu avec un patient :',
-                                                                  style: TextStyle(
-                                                                      color: Colors
-                                                                          .black
-                                                                          .withOpacity(
-                                                                              0.5)))),
+                                                          Row(children: [
+                                                            const SizedBox(
+                                                                width: 25),
+                                                            Expanded(
+                                                                child: Text(
+                                                                    'Le Dr.${listRDV.elementAt(index).medecin!.lastName} ${abbreviateName(listRDV.elementAt(index).medecin!.firstName)} a un rendez-vous prévu avec un patient :',
+                                                            style: TextStyle(
+                                                                        color: Colors
+                                                                            .black
+                                                                            .withOpacity(0.5)))),
+                                                            const SizedBox(
+                                                                width: 25),
+                                                          ]),
+                                                          const Spacer(),
                                                           Row(
                                                             mainAxisAlignment:
                                                                 MainAxisAlignment
                                                                     .center,
                                                             children: [
+                                                              const Spacer(),
                                                               Image.asset(
                                                                 'assets/images/date-limite.png',
                                                                 width: 20,
                                                                 height: 20,
                                                               ),
-                                                              const Spacer(),
+                                                              const SizedBox(
+                                                                  width: 10),
                                                               Text(
                                                                 '${formatTimeAppointment(listRDV.elementAt(index).startAt, listRDV.elementAt(index).timeStart, listRDV.elementAt(index).timeEnd)}',
-                                                                textAlign:
+                                                                  textAlign:
                                                                     TextAlign
                                                                         .center,
                                                                 style: const TextStyle(
@@ -528,6 +552,9 @@ class _NotificationAdminState extends State<NotificationAdmin> {
                                                               ),
                                                               const Spacer(),
                                                             ],
+                                                          ),
+                                                          const SizedBox(
+                                                            height: 10,
                                                           ),
                                                         ],
                                                       ),

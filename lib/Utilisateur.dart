@@ -26,6 +26,7 @@ class Utilisateur{
   List<String>? patientUnavailableAppointments;
   List<String>? doctorAppointments;
   List<String>? doctorUnavailableAppointments;
+  String? token;
 
 
   Utilisateur({
@@ -49,6 +50,7 @@ class Utilisateur{
     this.doctorAppointments,
     this.doctorUnavailableAppointments,
     required this.city,
+    this.token
   });
 
   // Constructeur nommé pour créer un Utilisateur à partir d'un objet JSON
@@ -67,6 +69,7 @@ class Utilisateur{
       category: json['category'],
       address: json['address'],
       city: json['city'],
+      token: json['token'],
       center: json['center']!=null?Centre.fromJson(json['center']):json['center'],
       createdAt: json['createdAt']!=null?DateTime.parse(json['createdAt']):null,
       updatedAt: json['updatedAt']!=null?DateTime.parse(json['updatedAt']):null,
@@ -95,6 +98,7 @@ class Utilisateur{
       "city":city,
       "center":(center!=null)?center!.id:null,
       "roles":roles,
+      "token":token,
       "speciality": (speciality!=null)?speciality!.id:null,
       "createdAt": (createdAt!=null)?createdAt!.toIso8601String():null,
       "updaedAt": (updatedAt!=null)?updatedAt!.toIso8601String():null,

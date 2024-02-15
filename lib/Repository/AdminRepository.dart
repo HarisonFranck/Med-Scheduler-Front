@@ -353,7 +353,7 @@ class AdminRepository{
         // Gestion des erreurs HTTP
         utilities.error('Il y a une erreur.\n Veuillez ressayer ulterieurement.');
         throw Exception(
-            '-- Failed to add user. HTTP Status Code: ${response.statusCode}');
+            '-- Erreur reseau');
       }
 
     }else{
@@ -398,7 +398,7 @@ class AdminRepository{
 
 
         if (jsonResponse.containsKey('error')) {
-          utilities.error('Specialite déja existant');
+          utilities.error('Medecin déja existant');
         } else {
           utilities.UpdateUtilisateur();
         }
@@ -412,11 +412,9 @@ class AdminRepository{
         }
         // Gestion des erreurs HTTP
 
-        print('REQ ERROR: ${response.body}');
-
         utilities.error('Il y a une erreur.\n Veuillez ressayer ulterieurement.');
         throw Exception(
-            '-- Failed to add user. HTTP Status Code: ${response.statusCode}');
+            '-- Failed to add user.');
       }
     }else{
 
@@ -492,8 +490,6 @@ class AdminRepository{
       final url =
       Uri.parse("${baseUrl}api/users/${utilities.extractLastNumber(medecin.id)}");
       //final headers = {'Content-Type': 'application/merge-patch+json'};
-
-      print('URL DELETE: $url');
 
       final headers = {
         'Content-Type': 'application/merge-patch+json',

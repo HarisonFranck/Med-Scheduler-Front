@@ -258,12 +258,11 @@ class _AppointmentDetailsState extends State<AppointmentDetails> {
                                   color: Colors.redAccent,
                                 ), // Affiche un indicateur de chargement en attendant l'image
                                 errorWidget: (context, url, error) =>
-                                    Image.asset(
-                                  'assets/images/medecin.png',
-                                  fit: BoxFit.cover,
-                                  width: 50,
-                                  height: 50,
-                                ), // Affiche une icône d'erreur si le chargement échoue
+                                    Icon(
+                                      Icons.account_circle,
+                                      size: 120,
+                                      color: Colors.black.withOpacity(0.6),
+                                    )// Affiche une icône d'erreur si le chargement échoue
                               ),
                             ),
                           ),
@@ -274,20 +273,12 @@ class _AppointmentDetailsState extends State<AppointmentDetails> {
                         Column(
                           children: [
                             Text(
+                              overflow: TextOverflow.fade,
                               textAlign: TextAlign.start,
-                              'Dr ${abbreviateName(appointment.medecin!.lastName)} \n ${abbreviateFirstName(appointment.medecin!.firstName)}',
+                              '${abbreviateName(appointment.patient!.lastName)} \n ${abbreviateFirstName(appointment.patient!.firstName)}',
                               style: const TextStyle(fontSize: 20),
                             ),
-                            if (appointment.medecin!.speciality != null) ...[
-                              Padding(
-                                padding: EdgeInsets.only(top: 10),
-                                child: Text(
-                                  textAlign: TextAlign.start,
-                                  '${appointment.medecin!.speciality!.label}',
-                                  style: const TextStyle(fontSize: 20),
-                                ),
-                              )
-                            ]
+
                           ],
                         ),
                         const Spacer(),
@@ -319,7 +310,7 @@ class _AppointmentDetailsState extends State<AppointmentDetails> {
                         child: Row(
                           children: [
                             const Padding(
-                              padding: EdgeInsets.only(left: 10),
+                              padding: EdgeInsets.only(left: 20),
                               child: Text(
                                 'Raison:',
                                 style: TextStyle(
@@ -328,7 +319,7 @@ class _AppointmentDetailsState extends State<AppointmentDetails> {
                                     fontWeight: FontWeight.w500),
                               ),
                             ),
-                            const Spacer(),
+                            const SizedBox(width: 40,),
                             Expanded(
                               child: Text(
                                 '${appointment.reason}',
@@ -337,7 +328,9 @@ class _AppointmentDetailsState extends State<AppointmentDetails> {
                                     fontSize: 14,
                                     fontWeight: FontWeight.w500),
                               ),
-                            )
+
+                            ),
+                            Spacer()
                           ],
                         )),
                     Divider(
@@ -352,7 +345,7 @@ class _AppointmentDetailsState extends State<AppointmentDetails> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             const Padding(
-                              padding: EdgeInsets.only(left: 10),
+                              padding: EdgeInsets.only(left: 20),
                               child: Text(
                                 'Le:',
                                 style: TextStyle(
@@ -361,14 +354,15 @@ class _AppointmentDetailsState extends State<AppointmentDetails> {
                                     fontWeight: FontWeight.w500),
                               ),
                             ),
-                            const Spacer(),
+                            const SizedBox(width: 70),
                             Text(
-                              '  ${formatDateTimeAppointment(appointment.startAt.toLocal(), appointment.timeEnd.toLocal())}',
+                              '${formatDateTimeAppointment(appointment.startAt.toLocal(), appointment.timeEnd.toLocal())}',
                               style: const TextStyle(
                                   color: Color.fromARGB(230, 20, 20, 90),
                                   fontSize: 14,
                                   fontWeight: FontWeight.w500),
                             ),
+                            Spacer()
                           ],
                         )),
                     Divider(
@@ -382,7 +376,7 @@ class _AppointmentDetailsState extends State<AppointmentDetails> {
                         child: Row(
                           children: [
                             const Padding(
-                              padding: EdgeInsets.only(left: 10),
+                              padding: EdgeInsets.only(left: 20),
                               child: Text(
                                 'De:',
                                 style: TextStyle(
@@ -391,7 +385,7 @@ class _AppointmentDetailsState extends State<AppointmentDetails> {
                                     fontWeight: FontWeight.w500),
                               ),
                             ),
-                            const Spacer(),
+                            const SizedBox(width: 68,),
                             Text(
                               '${formatTimeAppointment(appointment.timeStart, appointment.timeEnd)}',
                               style: const TextStyle(
@@ -399,6 +393,7 @@ class _AppointmentDetailsState extends State<AppointmentDetails> {
                                   fontSize: 14,
                                   fontWeight: FontWeight.w500),
                             ),
+                            Spacer()
                           ],
                         )),
                     Divider(

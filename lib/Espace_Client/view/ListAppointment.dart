@@ -222,6 +222,65 @@ class _ListAppointmentState extends State<ListAppointment> {
     }
   }
 
+
+  String formatTimeAppointmentNow(
+      DateTime startDateTime, DateTime timeStart, DateTime timeEnd) {
+    // Liste des jours de la semaine
+    final List<String> jours = [
+      'Lundi',
+      'Mardi',
+      'Mercredi',
+      'Jeudi',
+      'Vendredi',
+      'Samedi',
+      'Dimanche'
+    ];
+
+    // Liste des mois de l'année
+    final List<String> mois = [
+      '',
+      'Janvier',
+      'Février',
+      'Mars',
+      'Avril',
+      'Mai',
+      'Juin',
+      'Juillet',
+      'Août',
+      'Septembre',
+      'Octobre',
+      'Novembre',
+      'Décembre'
+    ];
+
+    // Extraire les composants de la date et de l'heure
+    int jour = startDateTime.day;
+    int moisIndex = startDateTime.month;
+    int annee = startDateTime.year;
+    int heureStart = timeStart.hour;
+    int minuteStart = timeStart.minute;
+    int heureEnd = timeEnd.hour;
+    int minuteEnd = timeEnd.minute;
+
+    // Formater le jour de la semaine
+    String jourSemaine = jours[startDateTime.weekday - 1];
+
+    // Formater le mois
+    String nomMois = mois[moisIndex];
+
+    // Formater l'heure
+    String formatHeureStart =
+        '${heureStart.toString().padLeft(2, '0')}:${minuteStart.toString().padLeft(2, '0')}';
+    String formatHeureEnd =
+        '${heureEnd.toString().padLeft(2, '0')}:${minuteEnd.toString().padLeft(2, '0')}';
+
+    // Construire la chaîne lisible
+    String resultat = 'Ajourd\'hui  $formatHeureStart - $formatHeureEnd';
+
+    return resultat;
+  }
+
+
   String formatTimeAppointment(
       DateTime startDateTime, DateTime timeStart, DateTime timeEnd) {
     // Liste des jours de la semaine
@@ -448,7 +507,7 @@ class _ListAppointmentState extends State<ListAppointment> {
                                         Column(
                                           children: [
                                             Text(
-                                              '${listRDV.elementAt(index).medecin!.lastName[0]}.${abbreviateName(listRDV.elementAt(index).medecin!.firstName)}',
+                                              'Dr ${listRDV.elementAt(index).medecin!.lastName[0]}.${abbreviateName(listRDV.elementAt(index).medecin!.firstName)}',
                                               style: const TextStyle(
                                                   color: Color.fromARGB(
                                                       1000, 60, 70, 120),
@@ -490,7 +549,7 @@ class _ListAppointmentState extends State<ListAppointment> {
                                           width: 10,
                                         ),
                                         Text(
-                                          '${formatTimeAppointment(listRDV.elementAt(index).startAt, listRDV.elementAt(index).timeStart, listRDV.elementAt(index).timeEnd)}',
+                                          '${formatTimeAppointmentNow(listRDV.elementAt(index).startAt, listRDV.elementAt(index).timeStart, listRDV.elementAt(index).timeEnd)}',
                                           textAlign: TextAlign.center,
                                           style: const TextStyle(
                                               color: Color.fromARGB(
@@ -654,7 +713,7 @@ class _ListAppointmentState extends State<ListAppointment> {
                                         Column(
                                           children: [
                                             Text(
-                                              '${listNextRdv.elementAt(index).medecin!.lastName[0]}.${abbreviateName(listNextRdv.elementAt(index).medecin!.firstName)}',
+                                              'Dr ${listNextRdv.elementAt(index).medecin!.lastName[0]}.${abbreviateName(listNextRdv.elementAt(index).medecin!.firstName)}',
                                               style: const TextStyle(
                                                   color: Color.fromARGB(
                                                       1000, 60, 70, 120),
@@ -859,7 +918,7 @@ class _ListAppointmentState extends State<ListAppointment> {
                                         Column(
                                           children: [
                                             Text(
-                                              '${listFinished.elementAt(index).medecin!.lastName[0]}.${abbreviateName(listFinished.elementAt(index).medecin!.firstName)}',
+                                              'Dr ${listFinished.elementAt(index).medecin!.lastName[0]}.${abbreviateName(listFinished.elementAt(index).medecin!.firstName)}',
                                               style: const TextStyle(
                                                   color: Color.fromARGB(
                                                       1000, 60, 70, 120),

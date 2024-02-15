@@ -5,21 +5,15 @@ import 'AuthProvider.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:med_scheduler_front/AuthProviderUser.dart';
 import 'AppLifecycleManager.dart';
-import 'package:med_scheduler_front/firebase_options.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'FirebaseApi.dart';
+
 
 
 
 void main()async {
   tz.initializeTimeZones();
-  WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  await FirebaseApi().initFireBase();
-  await FirebaseApi().initPushForegroundNotif();
-  await FirebaseApi().initLocalNotif();
-  AppLifecycleManager().startListening();
 
+  WidgetsFlutterBinding.ensureInitialized();
+  AppLifecycleManager().startListening();
   runApp(
     MultiProvider(
       providers: [

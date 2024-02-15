@@ -554,7 +554,6 @@ class _AppointmentDialogState extends State<AppointmentDialog> {
                               /// Si le switch devient false(desactivation)
                               if (isDayDisabled==false) {
 
-                                print('DAY DISABLED');
 
                                 /// On boucle tous les plages crées par défaut
                                 for (var appointment in listAppointment) {
@@ -618,9 +617,7 @@ class _AppointmentDialogState extends State<AppointmentDialog> {
 
 
                                   }else{
-
-                                    print('app ADD: ${appointment.timeStart.hour}');
-                                    if(isInUnavalaibleDesactiver(listUnavalaibleAppointment,appointment)==null){
+                                  if(isInUnavalaibleDesactiver(listUnavalaibleAppointment,appointment)==null){
                                       /// On ajoute l'appointment dans la liste a desctiver après
                                       appointsList.add(appointment);
                                     }
@@ -660,8 +657,6 @@ class _AppointmentDialogState extends State<AppointmentDialog> {
 
                                 /// Si le Switch est desactiver ou bien le jour est reactiver de nouveau
                               } else {
-
-                                print('BOUCLE ENABLED');
 
                                 /// On boucle de nouveau les appointments par defaut crée
                                 for (var appointment in listAppointment) {

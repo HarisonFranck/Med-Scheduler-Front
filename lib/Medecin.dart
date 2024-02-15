@@ -22,6 +22,7 @@ class Medecin{
   DateTime? createdAt;
   String city;
   Centre? center;
+  String? token;
   List<dynamic>? doctorAppointments;
 
 
@@ -41,6 +42,7 @@ class Medecin{
     required this.center,
     required this.createdAt,
     required this.city,
+    this.token
   });
 
   // Constructeur nommé pour créer un Utilisateur à partir d'un objet JSON
@@ -58,6 +60,7 @@ class Medecin{
         category: json['category']!=null?Categorie.fromJson(json['category']):null,
         address: json['address']??'',
         city: json['city']??'',
+        token: json ['token'],
         doctorAppointments: json['doctorAppointments']!=null?json['doctorAppointments'] as List<dynamic>:[],
         center: json['center']!=null?Centre.fromJson(json['center']):null,
       createdAt: json['createdAt']!=null?DateTime.parse(json['createdAt']):DateTime.now()
@@ -77,6 +80,7 @@ class Medecin{
       "category": category,
       "address": address,
       "city":city,
+      "token":token,
       "createdAt": (createdAt!=null)?createdAt!.toIso8601String():DateTime.now().toIso8601String()
 
     };

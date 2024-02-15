@@ -11,12 +11,13 @@ class FirebaseApi{
 
   final flutterLocalNotif = FlutterLocalNotificationsPlugin();
 
-  Future<void> initFireBase()async{
+  Future<String> initFireBase()async{
     await firebaseMessaging.requestPermission();
 
     final token = await firebaseMessaging.getToken();
 
-    print("TOKEN FIREBASE: ${token.toString()}");
+
+    return token.toString();
 
   }
 

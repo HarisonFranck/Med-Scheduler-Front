@@ -475,7 +475,7 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
 
   void AjouterRDV(BuildContext context, DateTime dtClicker, Medecin medecin,
       Patient patient, List<CustomAppointment> appoints) {
-    print('APPOINTMENTS LENGTH: ${appoints.length}');
+
 
     showDialog(
       context: context,
@@ -527,6 +527,7 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
                         .length
                     : 0,
                 itemBuilder: (context, i) {
+
                   CustomAppointment appointment = getAvailableAppointments(
                           dtClicker,
                           appoints,
@@ -1062,7 +1063,7 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
                                 letterSpacing: 2),
                           ),
                           Text(
-                            '${medecinCliked!.speciality!.label}',
+                            '${(medecinCliked!.speciality!=null)?medecinCliked!.speciality!.label:''}',
                             style: const TextStyle(
                                 color:
                                 Color.fromARGB(1000, 60, 70, 120),
@@ -1296,7 +1297,7 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
       const Spacer(),
       GestureDetector(
         onTap: () {
-          print('ADD');
+
           AjouterRDV(
               context, dt, medecinCliked!, widget.patient, listAppointment);
         },
@@ -1355,7 +1356,7 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
               ),
             ),
             Container(
-              width: MediaQuery.of(context).size.width / 1.30,
+              width: MediaQuery.of(context).size.width / 1.40,
               height: (appoint.isDeleted != null && appoint.isDeleted == true)
                   ? 95
                   : 55,

@@ -356,7 +356,6 @@ class _PatientDetailsState extends State<PatientDetails> {
       print(response.statusCode);
 
       if (response.statusCode == 200) {
-
         setState(() {
           isLoading = false;
         });
@@ -407,7 +406,7 @@ class _PatientDetailsState extends State<PatientDetails> {
   void didChangeDependencies() {
     // TODO: implement didChangeDependencies
     super.didChangeDependencies();
-    print('DID INDRAY');
+
     authProviderUser = Provider.of<AuthProviderUser>(context, listen: false);
 
     user = Provider.of<AuthProviderUser>(context).utilisateur;
@@ -424,7 +423,8 @@ class _PatientDetailsState extends State<PatientDetails> {
               : null;
           nomController.text = utilisateur.firstName;
           prenomController.text = utilisateur.lastName;
-          phoneController.text = utilities!.formatPhoneNumber(utilisateur.phone);
+          phoneController.text =
+              utilities!.formatPhoneNumber(utilisateur.phone);
           emailController.text = utilisateur.email;
           categorieController.text = (utilisateur.category != null)
               ? categorieSet(utilisateur.category!)
@@ -476,10 +476,6 @@ class _PatientDetailsState extends State<PatientDetails> {
       Navigator.of(context).pop();
     });
   }
-
-
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -597,8 +593,6 @@ class _PatientDetailsState extends State<PatientDetails> {
                                                     bool isGranted =
                                                         await _requestGalleryPermission();
                                                     if (isGranted) {
-
-
                                                       FilePickerResult? result =
                                                           await FilePicker
                                                               .platform
@@ -651,15 +645,16 @@ class _PatientDetailsState extends State<PatientDetails> {
                             Row(
                               children: [
                                 const Padding(
-                                  padding: EdgeInsets.only(left: 5),
+                                  padding: EdgeInsets.only(left: 20),
                                   child: Text('Nom:'),
                                 ),
                                 Padding(
-                                  padding: const EdgeInsets.only(left: 45),
+                                  padding: const EdgeInsets.only(left: 60),
                                   child: Container(
                                     width:
-                                        MediaQuery.of(context).size.width / 2.1,
+                                        MediaQuery.of(context).size.width / 2.5,
                                     child: TextField(
+                                      style: TextStyle(fontSize: 15),
                                       decoration: const InputDecoration(
                                         focusedBorder: UnderlineInputBorder(
                                           borderSide: BorderSide(
@@ -678,15 +673,16 @@ class _PatientDetailsState extends State<PatientDetails> {
                             Row(
                               children: [
                                 const Padding(
-                                  padding: EdgeInsets.only(left: 5),
+                                  padding: EdgeInsets.only(left: 20),
                                   child: Text('Prenom:'),
                                 ),
                                 Padding(
-                                  padding: const EdgeInsets.only(left: 26),
+                                  padding: const EdgeInsets.only(left: 36),
                                   child: Container(
                                     width:
-                                        MediaQuery.of(context).size.width /2.1,
+                                        MediaQuery.of(context).size.width / 2.5,
                                     child: TextField(
+                                      style: TextStyle(fontSize: 15),
                                       decoration: const InputDecoration(
                                         focusedBorder: UnderlineInputBorder(
                                           borderSide: BorderSide(
@@ -705,15 +701,16 @@ class _PatientDetailsState extends State<PatientDetails> {
                             Row(
                               children: [
                                 const Padding(
-                                  padding: EdgeInsets.only(left: 5),
+                                  padding: EdgeInsets.only(left: 20),
                                   child: Text('Email:'),
                                 ),
                                 Padding(
-                                  padding: const EdgeInsets.only(left: 40),
+                                  padding: const EdgeInsets.only(left: 53),
                                   child: Container(
-                                    width: MediaQuery.of(context).size.width /
-                                        2.1,
+                                    width:
+                                        MediaQuery.of(context).size.width / 2.5,
                                     child: TextField(
+                                      style: TextStyle(fontSize: 15),
                                       decoration: const InputDecoration(
                                         focusedBorder: UnderlineInputBorder(
                                           borderSide: BorderSide(
@@ -772,10 +769,6 @@ class _PatientDetailsState extends State<PatientDetails> {
                                     } else {
                                       String? mail = _validateEmail(email);
                                       if (mail == null) {
-
-
-
-
                                         Utilisateur userInterm = Utilisateur(
                                             id: utilisateur.id,
                                             lastName: utilisateur.lastName,
@@ -784,7 +777,10 @@ class _PatientDetailsState extends State<PatientDetails> {
                                             phone: utilisateur.phone,
                                             password: utilisateur.password,
                                             email: email,
-                                            imageName: (user!.imageName!=null)?utilities!.extraireNomFichier(user!.imageName!):null,
+                                            imageName: (user!.imageName != null)
+                                                ? utilities!.extraireNomFichier(
+                                                    user!.imageName!)
+                                                : null,
                                             category: utilisateur.category,
                                             address: utilisateur.address,
                                             roles: utilisateur.roles,
@@ -819,15 +815,16 @@ class _PatientDetailsState extends State<PatientDetails> {
                             Row(
                               children: [
                                 const Padding(
-                                  padding: EdgeInsets.only(left: 5),
+                                  padding: EdgeInsets.only(left: 20),
                                   child: Text('Telephone:'),
                                 ),
                                 Padding(
-                                  padding: const EdgeInsets.only(left: 7),
+                                  padding: const EdgeInsets.only(left: 17),
                                   child: Container(
-                                    width: MediaQuery.of(context).size.width /
-                                        2.1,
+                                    width:
+                                        MediaQuery.of(context).size.width / 2.5,
                                     child: TextField(
+                                      style: TextStyle(fontSize: 15),
                                       maxLength: 10,
                                       keyboardType: TextInputType.number,
                                       decoration: const InputDecoration(
@@ -883,14 +880,16 @@ class _PatientDetailsState extends State<PatientDetails> {
                                       utilities!.ModificationError(
                                           'Veuillez inserer un numero valide');
                                     } else {
-
                                       Utilisateur userInterm = Utilisateur(
                                           id: utilisateur.id,
                                           lastName: utilisateur.lastName,
                                           firstName: utilisateur.firstName,
                                           userType: utilisateur.userType,
                                           phone: phone,
-                                          imageName: (user!.imageName!=null)?utilities!.extraireNomFichier(user!.imageName!):null,
+                                          imageName: (user!.imageName != null)
+                                              ? utilities!.extraireNomFichier(
+                                                  user!.imageName!)
+                                              : null,
                                           password: utilisateur.password,
                                           email: utilisateur.email,
                                           category: utilisateur.category,
@@ -922,15 +921,16 @@ class _PatientDetailsState extends State<PatientDetails> {
                             Row(
                               children: [
                                 const Padding(
-                                  padding: EdgeInsets.only(left: 5),
+                                  padding: EdgeInsets.only(left: 20),
                                   child: Text('Categorie:'),
                                 ),
                                 Padding(
-                                  padding: const EdgeInsets.only(left: 15),
+                                  padding: const EdgeInsets.only(left: 22),
                                   child: Container(
                                     width:
-                                        MediaQuery.of(context).size.width / 2.17,
+                                        MediaQuery.of(context).size.width / 2.5,
                                     child: TextField(
+                                      style: TextStyle(fontSize: 15),
                                       decoration: const InputDecoration(
                                         focusedBorder: UnderlineInputBorder(
                                           borderSide: BorderSide(

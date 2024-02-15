@@ -22,6 +22,15 @@ import 'package:med_scheduler_front/Utilisateur.dart';
 import 'package:med_scheduler_front/AuthProviderUser.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:med_scheduler_front/Specialite.dart';
+import 'package:med_scheduler_front/Centre.dart';
+import 'package:med_scheduler_front/firebase_options.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:med_scheduler_front/FirebaseApi.dart';
+import 'package:awesome_dialog/awesome_dialog.dart';
+
+
 
 class Agenda extends StatefulWidget {
   @override
@@ -32,12 +41,18 @@ class AgendaState extends State<Agenda> {
   late AuthProvider authProvider;
   late String token;
 
+
+  String firebaseTokenMed = "";
+
   MedecinRepository? medecinRepository;
   BaseRepository? baseRepository;
   Utilities? utilities;
 
   Utilisateur? user;
   Medecin? widgetMedecin;
+
+
+
 
   Future<void> initializeCalendar() async {
     tz.initializeTimeZones();
@@ -175,16 +190,73 @@ class AgendaState extends State<Agenda> {
     return isIt;
   }
 
+
+  InitFireBase()async{
+   SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+      firebaseTokenMed = await FirebaseApi().initFireBase();
+
+    sharedPreferences.setString('firebaseTokenMed', firebaseTokenMed);
+
+    await FirebaseApi().initPushForegroundNotif();
+    await FirebaseApi().initLocalNotif();
+  }
+
+
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
+    WidgetsFlutterBinding.ensureInitialized();
+
+    //InitFireBase();
+
     utilities = Utilities(context: context);
     medecinRepository =
         MedecinRepository(context: context, utilities: utilities!);
     baseRepository = BaseRepository(context: context, utilities: utilities!);
 
+
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      // Traitez le message ici
+      newAppointmentRequestRefresh();
+      setState(() {
+
+      });
+
+    });
+
+
   }
+
+
+  void newAppointmentRequestRefresh() {
+    // Définissez la fonction callback pour mettre à jour le state
+    void updateState() {
+
+      didChangeDependencies();
+      setState(()async {
+        listAppointment = await medecinRepository!.getAllAppointmentMedecin(widgetMedecin!);
+      });
+    }
+
+    AwesomeDialog(
+      context: context,
+      dialogType: DialogType.info,
+      animType: AnimType.rightSlide,
+      titleTextStyle: const TextStyle(letterSpacing: 2,color: Color.fromARGB(1000, 60, 70, 120)),
+      descTextStyle: TextStyle(letterSpacing: 2,color: Color.fromARGB(1000, 60, 70, 120).withOpacity(0.8),fontSize: 15),
+      title: 'Nouveau rendez-vous',
+      desc: 'Un patient a pris un rendez-vous avec vous.\nIl est donc necessaire d\'actualiser votre agenda',
+      btnOkText: 'Actualiser',
+      btnOkColor: Color.fromARGB(1000, 60, 70, 120),
+      btnCancel: null,
+      // Passez la fonction callback au bouton "Ok" onPress
+      btnOkOnPress: updateState,
+    ).show();
+  }
+
 
   List<CustomAppointment> listAppointment = [];
   List<CustomAppointment> listUnavalaibleAppointment = [];
@@ -222,6 +294,9 @@ class AgendaState extends State<Agenda> {
     return filteredList;
   }
 
+
+
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -246,12 +321,28 @@ class AgendaState extends State<Agenda> {
     token = authProvider.token;
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-        print('FCM Message received: ${message.notification!.title}');
-        // Traitez la notification pour mettre à jour l'agenda du médecin
-        // Par exemple, vous pouvez rafraîchir l'interface utilisateur pour afficher le nouveau rendez-vous
-      });
-      //await getAllAsync();
+
+
+      await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+      firebaseTokenMed = await FirebaseApi().initFireBase();
+
+
+
+      await FirebaseApi().initPushForegroundNotif();
+      await FirebaseApi().initLocalNotif();
+
+        Specialite specialite = await medecinRepository!.getSpecialite(user!.speciality!.id);
+      Centre center = await medecinRepository!.getCenter(user!.center!.id);
+
+
+
+        Utilisateur medecinWithToken = Utilisateur(id: user!.id,imageName: (user!.imageName!=null&&user!.imageName!="")?utilities!.extraireNomFichier(
+            user!.imageName!):'',category: user!.category,password: user!.password, roles: user!.roles, speciality: specialite, lastName: user!.lastName, firstName: user!.firstName, userType: user!.userType, phone: user!.phone, email: user!.email, address: user!.address, center: center, createdAt: user!.createdAt, city: user!.city, token:firebaseTokenMed);
+
+        medecinRepository!.updateMedecin(medecinWithToken);
+
+
       listAppointment =
           await medecinRepository!.getAllAppointmentMedecin(widgetMedecin!);
       listUnavalaibleAppointment =
@@ -749,7 +840,7 @@ class AgendaState extends State<Agenda> {
                                                   minimumSize:
                                                       MaterialStateProperty.all(
                                                           const Size(
-                                                              300.0, 40.0)),
+                                                              255.0, 40.0)),
                                                 ),
                                                 onPressed: () {
                                                   Navigator.push(
@@ -807,7 +898,7 @@ class AgendaState extends State<Agenda> {
                                                   minimumSize:
                                                       MaterialStateProperty.all(
                                                           const Size(
-                                                              300.0, 40.0)),
+                                                              255.0, 40.0)),
                                                 ),
                                                 onPressed: () {
                                                   Navigator.push(
@@ -966,7 +1057,7 @@ class AgendaState extends State<Agenda> {
                   ),
                 ),
                 Container(
-                  width: MediaQuery.of(context).size.width / 1.30,
+                  width: MediaQuery.of(context).size.width / 1.40,
                   height:
                       (appoint.isDeleted != null && appoint.isDeleted == true)
                           ? 75
@@ -1064,7 +1155,6 @@ class AgendaState extends State<Agenda> {
 
   Widget showAppointmentAfterFirst(
       CustomAppointment appoint, DateTime clickedDt) {
-    print('ISDELETED: ${appoint.isDeleted} ');
 
     return Column(
       children: [
@@ -1080,7 +1170,7 @@ class AgendaState extends State<Agenda> {
                 child: Padding(
                   padding: const EdgeInsets.only(left: 0),
                   child: Container(
-                    width: MediaQuery.of(context).size.width / 1.30,
+                    width: MediaQuery.of(context).size.width / 1.40,
                     height:
                         (appoint.isDeleted != null && appoint.isDeleted == true)
                             ? 75
@@ -1496,7 +1586,7 @@ class AgendaState extends State<Agenda> {
                             ),
                             Spacer(),
                             Text(
-                              '  ${formatDateTimeAppointment(appointment.startAt.toLocal(), appointment.timeStart, appointment.timeEnd.toLocal())}',
+                              '${DateTimeFormatAppointment(appointment.startAt, appointment.timeEnd)}',
                               style: TextStyle(
                                   color: Color.fromARGB(230, 20, 20, 90),
                                   fontSize: 14,
@@ -1526,7 +1616,7 @@ class AgendaState extends State<Agenda> {
                             ),
                             Spacer(),
                             Text(
-                              '${DateTimeFormatAppointment(appointment.startAt, appointment.timeEnd)}',
+                              ' ${formatDateTimeAppointment(appointment.startAt.toLocal(), appointment.timeStart, appointment.timeEnd.toLocal())}',
                               style: TextStyle(
                                   color: Color.fromARGB(230, 20, 20, 90),
                                   fontSize: 14,

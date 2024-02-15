@@ -44,20 +44,18 @@ class BaseRepository{
       token = authProvider.token;
 
       final url = Uri.parse("${baseUrl}api/appointments/${utilities.extractLastNumber(appointment.id)}");
-      //final headers = {'Content-Type': 'application/json'};
 
       final headers = {
         'Content-Type': 'application/merge-patch+json',
         'Authorization': 'Bearer $token'
       };
 
-      print('PATCH ISDELETED: ${appointment.isDeleted}');
+
       String jsonUser = jsonEncode(appointment.toJsonUnav());
 
-      print('JSOON USER: ${jsonUser}');
+
 
       final response = await http.patch(url, headers: headers, body: jsonUser);
-      print('${response.statusCode} \n BODY PATCH: ${response.body} ');
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonResponse = json.decode(response.body);
@@ -105,7 +103,7 @@ class BaseRepository{
       token = authProvider.token;
 
       final url = Uri.parse("${baseUrl}api/unavailable_appointments");
-      //final headers = {'Content-Type': 'application/json'};
+
 
       final headers = {
         'Content-Type': 'application/ld+json',
@@ -115,7 +113,6 @@ class BaseRepository{
       String jsonUser = jsonEncode(appointment.toJsonUnav());
 
       final response = await http.post(url, headers: headers, body: jsonUser);
-      print('${response.statusCode} \n BODY: ${response.body} ');
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonResponse = json.decode(response.body);
@@ -137,7 +134,7 @@ class BaseRepository{
           // Gestion des erreurs HTTP
 
           utilities.error(
-              'Il y a une erreur APPOINTMENT. HTTP Status Code: ${response.statusCode}');
+              'Il y a une erreur reseau.');
         }
       }
 
@@ -159,13 +156,12 @@ class BaseRepository{
 
       final url = Uri.parse(
           "${baseUrl}api/unavailable_appointments/${utilities.extractLastNumber(appointment.id)}");
-      //final headers = {'Content-Type': 'application/json'};
+
 
       final headers = {'Authorization': 'Bearer $token'};
 
-      //print('Request Body: $jsonUser');
       final response = await http.delete(url, headers: headers);
-      print(response.statusCode);
+
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonResponse = json.decode(response.body);
@@ -186,7 +182,7 @@ class BaseRepository{
           // Gestion des erreurs HTTP
 
           utilities.error(
-              'Il y a une erreur APPOINTMENT. HTTP Status Code: ${response.statusCode}');
+              'Il y a une erreur reseau');
         }
       }
 
@@ -221,7 +217,6 @@ class BaseRepository{
 
         Utilisateur user = Utilisateur.fromJson(jsonData);
 
-        print('UTILISATEUR: ${user.lastName}');
 
         return user;
       } else {
@@ -258,12 +253,11 @@ class BaseRepository{
       // Définir l'URL de base
       Uri url = Uri.parse("${baseUrl}api/doctors?page=1");
 
-      print('URI: $url');
 
       final headers = {'Authorization': 'Bearer $token'};
 
       final response = await http.get(url, headers: headers);
-      print('STATUS CODE MEDS: ${response.statusCode} \n');
+
 
       if (response.statusCode == 200) {
         final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
@@ -346,7 +340,6 @@ class BaseRepository{
       final headers = {'Authorization': 'Bearer $token'};
 
       final response = await http.get(url, headers: headers);
-      print('STATUS CODE SPECS: ${response.statusCode} \n');
 
       if (response.statusCode == 200) {
         final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
@@ -385,7 +378,6 @@ class BaseRepository{
       token = authProvider.token;
 
 
-      print('MED ID: ${medecinClicked.id}');
       final url = Uri.parse(
           "${baseUrl}api/doctors/unavailable/appointments/${utilities.extractLastNumber(medecinClicked.id)}");
 
@@ -394,7 +386,6 @@ class BaseRepository{
 
       final response = await http.get(url, headers: headers);
 
-      print('STATUS CODE APPOINTS AGENDA:  ${response.statusCode} \n');
 
       if (response.statusCode == 200) {
         final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
@@ -441,8 +432,6 @@ class BaseRepository{
       final headers = {'Authorization': 'Bearer $token'};
 
       final response = await http.get(url, headers: headers);
-
-      print('STATUS CODE APPOINTS AGNENDAAA: ${response.statusCode} \n');
 
       if (response.statusCode == 200) {
         final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
@@ -496,13 +485,11 @@ class BaseRepository{
 
       final response = await http.get(url, headers: headers);
 
-      print('STATUS CODE APPOINTS: ${response.statusCode} \n');
 
       if (response.statusCode == 200) {
         final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
         final datas = jsonData['hydra:member'] as List<dynamic>;
 
-        print('DATAS SIZE:${datas.length}');
 
         return datas.map((e) => CustomAppointment.fromJson(e)).toList();
       } else {
@@ -549,9 +536,6 @@ class BaseRepository{
 
         Utilisateur user = Utilisateur.fromJson(jsonData);
 
-
-
-        print('UTILISATEUR: ${user.lastName}');
 
         return user;
       } else {
@@ -614,7 +598,6 @@ class BaseRepository{
           Map<String, dynamic> payload = Jwt.parseJwt(token);
 
           int idUser = payload['id'];
-          print('ID USER INDEXED: $idUser');
 
           Utilisateur utilisateur = await getUserById(idUser, token);
 
@@ -633,8 +616,7 @@ class BaseRepository{
         }
       } else {
 
-        // Gestion des erreurs HTTP
-        print('ERROR');
+
         utilities.error('Utilisateur introuvable');
         //throw Exception('-- Failed to get user. HTTP Status Code: ${response.statusCode}');
       }
@@ -707,7 +689,6 @@ class BaseRepository{
 
       }
 
-      print('URI: $url');
 
       final headers = {'Authorization': 'Bearer $token'};
 

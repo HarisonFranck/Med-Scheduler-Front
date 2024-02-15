@@ -193,7 +193,7 @@ class _NotificationMedecinState extends State<NotificationMedecin> {
           body: ListView(
             children: [
               Padding(
-                padding: const EdgeInsets.only(top: 10, left: 10, bottom: 10),
+                padding: const EdgeInsets.only(top: 10, left: 10),
                 child: Row(
                   children: [
                     GestureDetector(
@@ -210,7 +210,7 @@ class _NotificationMedecinState extends State<NotificationMedecin> {
                         Navigator.pushReplacement(
                             context,
                             MaterialPageRoute(
-                                builder: (context) => IndexAcceuilMedecin()));
+                                builder: (context) => const IndexAcceuilMedecin()));
                       },
                     ),
                     const Spacer(),
@@ -233,7 +233,7 @@ class _NotificationMedecinState extends State<NotificationMedecin> {
               ),
               Padding(
                 padding: const EdgeInsets.only(
-                    top: 20, bottom: 20, right: 5, left: 5),
+                    top: 10, bottom: 20, right: 5, left: 5),
                 child: FutureBuilder<List<CustomAppointment>>(
                   future: filterAppointments(medecinRepository!
                       .getAllAppointmentByMedecin(
@@ -243,7 +243,7 @@ class _NotificationMedecinState extends State<NotificationMedecin> {
                       // Affichez un indicateur de chargement pendant le chargement
                       return Padding(
                         padding: EdgeInsets.only(
-                            top: MediaQuery.of(context).size.height / 3.6),
+                            top: MediaQuery.of(context).size.height / 4),
                         child: Center(child: loadingWidget()),
                       );
                     } else if (snapshot.hasError) {
@@ -256,7 +256,7 @@ class _NotificationMedecinState extends State<NotificationMedecin> {
                             child: ClipRRect(
                           borderRadius: BorderRadius.circular(6),
                           child: Container(
-                            color: Colors.white,
+                            color: Colors.transparent,
                             width: MediaQuery.of(context).size.width / 1.2,
                             height: MediaQuery.of(context).size.height / 1.4,
                             child: Card(
@@ -301,22 +301,39 @@ class _NotificationMedecinState extends State<NotificationMedecin> {
                                             )),
                                       ),
                                     ),
-                                    const Spacer(),
-                                    const Padding(
-                                      padding: EdgeInsets.only(bottom: 10),
-                                      child: Icon(
-                                        Icons.update,
-                                        size: 30,
-                                        color: Color.fromARGB(230, 20, 20, 90),
+                                    SizedBox(height: 20,),
+                                    Container(
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(6),
+                                        color: Colors.white,
                                       ),
-                                    ),
-                                    const Text(
-                                      'Aucune notification récente.',
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(
-                                          letterSpacing: 2,
-                                          color: Colors.black,
-                                          fontSize: 16),
+                                      height: 130,
+                                      width: MediaQuery.of(context)
+                                          .size
+                                          .width -
+                                          90,
+
+                                      child: const Column(
+                                        crossAxisAlignment: CrossAxisAlignment.center,
+                                        children: [
+                                          Padding(
+                                            padding: EdgeInsets.only(top: 30),
+                                            child: Icon(
+                                              Icons.update,
+                                              size: 30,
+                                              color: Color.fromARGB(230, 20, 20, 90),
+                                            ),
+                                          ),
+                                          Text(
+                                            'Aucune notification récente.',
+                                            textAlign: TextAlign.center,
+                                            style: TextStyle(
+                                                letterSpacing: 2,
+                                                color: Colors.black,
+                                                fontSize: 15),
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                     const Spacer()
                                   ],
@@ -328,7 +345,7 @@ class _NotificationMedecinState extends State<NotificationMedecin> {
                           child: Container(
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(6),
-                                color: Colors.white,
+                                color: Colors.transparent,
                               ),
                               width: MediaQuery.of(context).size.width / 1.2,
                               height: MediaQuery.of(context).size.height / 1.4,
@@ -340,8 +357,8 @@ class _NotificationMedecinState extends State<NotificationMedecin> {
                                           MainAxisAlignment.center,
                                       children: [
                                         Padding(
-                                          padding: const EdgeInsets.only(
-                                              bottom: 20, top: 10),
+                                          padding:
+                                              const EdgeInsets.only(bottom: 20),
                                           child: Center(
                                             child: Container(
                                                 width: MediaQuery.of(context)
@@ -380,7 +397,7 @@ class _NotificationMedecinState extends State<NotificationMedecin> {
                                         Expanded(
                                             child: ListView.builder(
                                           padding:
-                                              const EdgeInsets.only(top: 30),
+                                              const EdgeInsets.only(top: 20),
                                           itemCount: snapshot.data!.length,
                                           itemBuilder: (context, index) {
                                             List<CustomAppointment> listRDV =
@@ -389,16 +406,13 @@ class _NotificationMedecinState extends State<NotificationMedecin> {
 
                                             return Padding(
                                                 padding: const EdgeInsets.only(
-                                                  bottom: 40,
-                                                ),
+                                                    bottom: 40,
+                                                    left: 5,
+                                                    right: 5),
                                                 child: Container(
-                                                    width: 410,
-                                                    height: 200,
+                                                    width: 440,
+                                                    height: 220,
                                                     decoration: BoxDecoration(
-                                                      border: Border.all(
-                                                        color: Colors.redAccent,
-                                                        width: 1,
-                                                      ),
                                                       borderRadius:
                                                           BorderRadius.circular(
                                                               6),
@@ -409,7 +423,7 @@ class _NotificationMedecinState extends State<NotificationMedecin> {
                                                       child: Column(
                                                         children: [
                                                           const SizedBox(
-                                                            height: 20,
+                                                            height: 10,
                                                           ),
                                                           Row(
                                                             mainAxisAlignment:
@@ -420,7 +434,7 @@ class _NotificationMedecinState extends State<NotificationMedecin> {
                                                                 borderRadius:
                                                                     BorderRadius
                                                                         .circular(
-                                                                            6),
+                                                                            50),
                                                                 child:
                                                                     Container(
                                                                   width: 60,
@@ -429,11 +443,12 @@ class _NotificationMedecinState extends State<NotificationMedecin> {
                                                                       BoxDecoration(
                                                                     borderRadius:
                                                                         BorderRadius
-                                                                            .circular(6),
+                                                                            .circular(5),
                                                                   ),
-                                                                  child: CachedNetworkImage(
+                                                                  child:
+                                                                      CachedNetworkImage(
                                                                     imageUrl:
-                                                                        '$baseUrl${utilities!.ajouterPrefixe(listRDV.elementAt(index).medecin!.imageName!)}',
+                                                                        '$baseUrl${utilities!.ajouterPrefixe(listRDV.elementAt(index).patient!.imageName!)}',
                                                                     placeholder:
                                                                         (context,
                                                                                 url) =>
@@ -444,14 +459,14 @@ class _NotificationMedecinState extends State<NotificationMedecin> {
                                                                     errorWidget: (context,
                                                                             url,
                                                                             error) =>
-                                                                        Image
-                                                                            .asset(
-                                                                      'assets/images/medecin.png',
-                                                                      fit: BoxFit
-                                                                          .cover,
-                                                                      width: 50,
-                                                                      height:
-                                                                          50,
+                                                                        Icon(
+                                                                      Icons
+                                                                          .account_circle,
+                                                                      size: 60,
+                                                                      color: Colors
+                                                                          .black
+                                                                          .withOpacity(
+                                                                              0.6),
                                                                     ), // Affiche une icône d'erreur si le chargement échoue
                                                                   ),
                                                                 ),
@@ -459,7 +474,7 @@ class _NotificationMedecinState extends State<NotificationMedecin> {
                                                               Column(
                                                                 children: [
                                                                   Text(
-                                                                    '${listRDV.elementAt(index).medecin!.lastName[0]}.${abbreviateName(listRDV.elementAt(index).medecin!.firstName)}',
+                                                                    '${listRDV.elementAt(index).patient!.lastName[0]}.${abbreviateName(listRDV.elementAt(index).patient!.firstName)}',
                                                                     style: const TextStyle(
                                                                         color: Color.fromARGB(
                                                                             1000,
@@ -497,25 +512,31 @@ class _NotificationMedecinState extends State<NotificationMedecin> {
                                                                   Colors.grey,
                                                             ),
                                                           ),
-                                                          Expanded(
-                                                              child: Text(
-                                                                  'Vous avez un rendez-vous avec le patient ${listRDV.elementAt(index).patient!.lastName} ${abbreviateName(listRDV.elementAt(index).patient!.firstName)} :',
-                                                                  style: TextStyle(
-                                                                      color: Colors
-                                                                          .black
-                                                                          .withOpacity(
-                                                                              0.5)))),
+                                                          Row(children: [
+                                                            const SizedBox(width: 25),
+                                                            Expanded(
+                                                                child: Text(
+                                                                    'Vous avez un rendez-vous prévu avec un patient :',
+                                                                    style: TextStyle(
+                                                                        color: Colors
+                                                                            .black
+                                                                            .withOpacity(0.5)))),
+                                                            const SizedBox(width: 25),
+                                                          ]),
+                                                          const Spacer(),
                                                           Row(
                                                             mainAxisAlignment:
                                                                 MainAxisAlignment
                                                                     .center,
                                                             children: [
+                                                              const Spacer(),
                                                               Image.asset(
                                                                 'assets/images/date-limite.png',
                                                                 width: 20,
                                                                 height: 20,
                                                               ),
-                                                              const Spacer(),
+                                                              const SizedBox(
+                                                                  width: 10),
                                                               Text(
                                                                 '${formatTimeAppointment(listRDV.elementAt(index).startAt, listRDV.elementAt(index).timeStart, listRDV.elementAt(index).timeEnd)}',
                                                                 textAlign:
@@ -531,6 +552,9 @@ class _NotificationMedecinState extends State<NotificationMedecin> {
                                                               ),
                                                               const Spacer(),
                                                             ],
+                                                          ),
+                                                          const SizedBox(
+                                                            height: 10,
                                                           ),
                                                         ],
                                                       ),

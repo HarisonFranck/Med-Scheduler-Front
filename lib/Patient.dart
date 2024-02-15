@@ -12,6 +12,7 @@ class Patient {
   DateTime? updatedAt;
   String? imageName;
   String? city;
+  String? token;
 
   Patient({
     required this.id,
@@ -26,6 +27,7 @@ class Patient {
      this.updatedAt,
      this.imageName,
      this.city,
+    this.token
   });
 
   factory Patient.fromJson(Map<String, dynamic> json) {
@@ -42,6 +44,7 @@ class Patient {
       updatedAt: json['updatedAt']??DateTime.now(),
       imageName: json['imageName']??'',
       city: json['city']??'',
+      token: json['token']
     );
   }
 
@@ -59,6 +62,7 @@ class Patient {
       'updatedAt': (updatedAt!=null)?updatedAt!.toIso8601String():DateTime.now().toIso8601String(),
       'imageName': imageName,
       'city': city,
+      'token':token
     };
   }
 }

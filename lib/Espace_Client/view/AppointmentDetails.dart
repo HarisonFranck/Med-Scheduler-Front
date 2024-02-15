@@ -324,7 +324,7 @@ class _AppointmentDetailsState extends State<AppointmentDetails> {
                         child: Row(
                           children: [
                             const Padding(
-                              padding: EdgeInsets.only(left: 10),
+                              padding: EdgeInsets.only(left: 20),
                               child: Text(
                                 'Raison:',
                                 style: TextStyle(
@@ -333,7 +333,7 @@ class _AppointmentDetailsState extends State<AppointmentDetails> {
                                     fontWeight: FontWeight.w500),
                               ),
                             ),
-                            const Spacer(),
+                            const SizedBox(width: 40,),
                             Expanded(
                               child: Text(
                                 '${appointment.reason}',
@@ -357,7 +357,7 @@ class _AppointmentDetailsState extends State<AppointmentDetails> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             const Padding(
-                              padding: EdgeInsets.only(left: 10),
+                              padding: EdgeInsets.only(left: 20),
                               child: Text(
                                 'Le:',
                                 style: TextStyle(
@@ -366,7 +366,7 @@ class _AppointmentDetailsState extends State<AppointmentDetails> {
                                     fontWeight: FontWeight.w500),
                               ),
                             ),
-                            const Spacer(),
+                            const SizedBox(width: 70,),
                             Text(
                               '  ${formatDateTimeAppointment(appointment.startAt.toLocal(), appointment.timeEnd.toLocal())}',
                               style: const TextStyle(
@@ -387,7 +387,7 @@ class _AppointmentDetailsState extends State<AppointmentDetails> {
                         child: Row(
                           children: [
                             const Padding(
-                              padding: EdgeInsets.only(left: 10),
+                              padding: EdgeInsets.only(left: 20),
                               child: Text(
                                 'De:',
                                 style: TextStyle(
@@ -396,7 +396,7 @@ class _AppointmentDetailsState extends State<AppointmentDetails> {
                                     fontWeight: FontWeight.w500),
                               ),
                             ),
-                            const Spacer(),
+                            const SizedBox(width: 68,),
                             Text(
                               '${formatTimeAppointment(appointment.timeStart, appointment.timeEnd)}',
                               style: const TextStyle(
