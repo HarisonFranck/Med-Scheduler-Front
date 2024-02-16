@@ -5,11 +5,9 @@ import 'IndexAccueil.dart';
 import 'dart:io';
 import 'package:provider/provider.dart';
 import 'package:med_scheduler_front/AuthProvider.dart';
-import 'package:image_picker/image_picker.dart';
 import 'dart:async';
 import 'dart:typed_data';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:image/image.dart' as img;
 import 'package:uuid/uuid.dart';
 import 'package:med_scheduler_front/UrlBase.dart';
@@ -24,6 +22,8 @@ import 'package:image_cropper/image_cropper.dart';
 import 'package:med_scheduler_front/UtilisateurImage.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/services.dart';
+import 'package:med_scheduler_front/ConnectionError.dart';
 
 class PatientDetails extends StatefulWidget {
   _PatientDetailsState createState() => _PatientDetailsState();
@@ -129,9 +129,8 @@ class _PatientDetailsState extends State<PatientDetails> {
     );
 
     if (croppedFile != null) {
-      // Faites quelque chose avec le fichier rogné (par exemple, l'envoyer au serveur)
-      print('Chemin du fichier rogné : ${croppedFile.path}');
 
+      // Faites quelque chose avec le fichier rogné (par exemple, l'envoyer au serveur)
       File? newFile = File(croppedFile.path);
 
       UserUpdateImage(newFile, utilisateur);
@@ -142,16 +141,12 @@ class _PatientDetailsState extends State<PatientDetails> {
     authProvider = Provider.of<AuthProvider>(context, listen: false);
     token = authProvider.token;
 
-    print('TOKEN: $token');
-
     setState(() {
       isLoading = true;
     });
 
     final url = Uri.parse(
         "${baseUrl}api/image-profile/${utilities!.extractLastNumber(utilisateur.id)}");
-
-    print('URL PHOTO UPDATE: $url');
 
     try {
       // Limiter la taille du fichier à, par exemple, 2 Mo (ajustez selon vos besoins)
@@ -169,27 +164,15 @@ class _PatientDetailsState extends State<PatientDetails> {
 
         // Ajouter le fichier au champ de données multipartes
         var fileStream = http.ByteStream(file.openRead());
-        print('BYTE STREAM: ${fileStream.isBroadcast}');
         var length = await file.length();
         var multipartFile = http.MultipartFile('image', fileStream, length,
             filename: file.path.split('/').last);
         request.files.add(multipartFile);
 
-        print(
-            'REQUEST FILES: ${request.files.first.field}, ${request.files.first.filename}, ${request.files.first.contentType}');
-
-        // Logs supplémentaires
-        print('Request URL: ${request.url}');
-        print('Request Headers: ${request.headers}');
-        print('File Length: $length');
-        print('File Name: ${file.path.split('/').last}');
-
         var response = await request.send();
 
         // Lire la réponse
         var responseBody = await response.stream.bytesToString();
-        print('Response Status Code: ${response.statusCode}');
-        print('Response Body: $responseBody');
 
         if (response.statusCode == 200) {
           setState(() {
@@ -199,9 +182,7 @@ class _PatientDetailsState extends State<PatientDetails> {
           Map<String, dynamic> map = json.decode(responseBody);
 
           UtilisateurImage utilisateurImage = UtilisateurImage.fromJson(map);
-          print('IMAGE USER: ${utilisateurImage.imageName}');
           if (utilisateurImage.imageName != "") {
-            print('NEFA MAKATO');
             setState(() {
               utilisateur = Utilisateur(
                   id: utilisateur.id,
@@ -218,10 +199,7 @@ class _PatientDetailsState extends State<PatientDetails> {
                   city: utilisateur.city);
               authProviderUser.setUser(utilisateur);
             });
-            print('IMAGE USER: ${utilisateur.imageName}');
-          } else {
-            print('IMAGE USER NULL');
-          }
+          } else {}
 
           setState(() {});
           final Map<String, dynamic> jsonResponse = json.decode(responseBody);
@@ -252,13 +230,15 @@ class _PatientDetailsState extends State<PatientDetails> {
       setState(() {
         isLoading = false;
       });
-      if (e is http.ClientException) {
-        utilities!.ErrorConnexion();
-      } else {
+    if (e is http.ClientException) {
+
+    utilities!.handleConnectionError(ConnectionError("Une erreur de connexion s'est produite!"));
+
+    }else {
         // Gérer d'autres exceptions
         print('Une erreur inattendue s\'est produite: $e');
       }
-      throw Exception('-- CATCH Failed to add user. Error: $e');
+      throw Exception('-- CATCH Failed to update Image');
     }
   }
 
@@ -364,7 +344,6 @@ class _PatientDetailsState extends State<PatientDetails> {
         if (jsonResponse.containsKey('error')) {
           utilities!.error('Erreur de modification');
         } else {
-          print('REQU BODY: ${response.body}');
           authProviderUser.setUser(utilisateur);
           utilities!.ModificationUtilisateur();
           setState(() {
@@ -423,8 +402,7 @@ class _PatientDetailsState extends State<PatientDetails> {
               : null;
           nomController.text = utilisateur.firstName;
           prenomController.text = utilisateur.lastName;
-          phoneController.text =
-              utilities!.formatPhoneNumber(utilisateur.phone);
+          phoneController.text = utilisateur.phone;
           emailController.text = utilisateur.email;
           categorieController.text = (utilisateur.category != null)
               ? categorieSet(utilisateur.category!)
@@ -824,6 +802,9 @@ class _PatientDetailsState extends State<PatientDetails> {
                                     width:
                                         MediaQuery.of(context).size.width / 2.5,
                                     child: TextField(
+                                      inputFormatters: [
+                                        FilteringTextInputFormatter.digitsOnly
+                                      ],
                                       style: TextStyle(fontSize: 15),
                                       maxLength: 10,
                                       keyboardType: TextInputType.number,

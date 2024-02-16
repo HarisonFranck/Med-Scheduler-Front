@@ -33,48 +33,58 @@ class UserRepository {
   Future<List<CustomAppointment>> getAllAppointmentByPatient(
       Utilisateur user) async {
 
-    if(await utilities.isConnectionAvailable()){
+    try {
+      if (await utilities.isConnectionAvailable()) {
+        authProvider = Provider.of<AuthProvider>(context, listen: false);
+        token = authProvider.token;
 
-      authProvider = Provider.of<AuthProvider>(context, listen: false);
-      token = authProvider.token;
+        final url = Uri.parse(
+            "${baseUrl}api/patients/appointments/${utilities.extractLastNumber(
+                user.id)}");
 
-      final url = Uri.parse(
-          "${baseUrl}api/patients/appointments/${utilities.extractLastNumber(user.id)}");
+        final headers = {'Authorization': 'Bearer $token'};
 
-      final headers = {'Authorization': 'Bearer $token'};
-
-      final response = await http.get(url, headers: headers);
+        final response = await http.get(url, headers: headers);
 
 
-      if (response.statusCode == 200) {
-        final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
-        final datas = jsonData['hydra:member'] as List<dynamic>;
+        if (response.statusCode == 200) {
+          final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
+          final datas = jsonData['hydra:member'] as List<dynamic>;
 
-        final datasAppoints =
-        datas.map((e) => CustomAppointment.fromJson(e)).toList();
+          final datasAppoints =
+          datas.map((e) => CustomAppointment.fromJson(e)).toList();
 
-        return datasAppoints
-            .where((element) =>
-        (element.isDeleted == null || element.isDeleted == false))
-            .toList();
-      } else {
-        if (response.statusCode == 401) {
-          authProvider.logout();
-          Navigator.pushReplacement(
-              context, MaterialPageRoute(builder: (context) => const MyApp()));
+          return datasAppoints
+              .where((element) =>
+          (element.isDeleted == null || element.isDeleted == false))
+              .toList();
+        } else {
+          if (response.statusCode == 401) {
+            authProvider.logout();
+            Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const MyApp()));
+          }
+          // Gestion des erreurs HTTP
+          throw Exception(
+              '-- Erreur d\'obtention des données\n vérifier votre connexion internet.');
         }
-        // Gestion des erreurs HTTP
-        throw Exception(
-            '-- Erreur d\'obtention des données\n vérifier votre connexion internet.');
+      } else {
+        utilities.handleConnectionError(
+            ConnectionError("Une erreur de connexion s'est produite!"));
+
+        // Retourner une valeur par défaut en cas d'erreur
+        return <CustomAppointment>[];
       }
+    }catch(e){
+      if (e is http.ClientException) {
 
-    }else{
+        utilities.handleConnectionError(
+            ConnectionError("Une erreur de connexion s'est produite!"));
 
-      utilities.handleConnectionError(ConnectionError("Une erreur de connexion s'est produite!"));
-
-      // Retourner une valeur par défaut en cas d'erreur
+      }
+      print('Exception: $e');
       return <CustomAppointment>[];
-
     }
 
 
@@ -83,61 +93,81 @@ class UserRepository {
   Future<List<Medecin>> getAllMedecin(int page, String lastName, String center,
       String spec, String location) async {
 
-    if(await utilities.isConnectionAvailable()){
+    try {
+      if (await utilities.isConnectionAvailable()) {
+        authProvider = Provider.of<AuthProvider>(context, listen: false);
+        token = authProvider.token;
+
+        // Définir l'URL de base
+        Uri url = Uri.parse("${baseUrl}api/doctors?page=$page");
+
+        // Ajouter les paramètres en fonction des cas
+        if (lastName
+            .trim()
+            .isNotEmpty) {
+          if (center
+              .trim()
+              .isNotEmpty) {
+            url = Uri.parse("$url&lastName=$lastName&center=$center");
+          } else if (spec.isNotEmpty) {
+            url = Uri.parse("$url&lastName=$lastName&speciality=$spec");
+          } else if (location.isNotEmpty) {
+            url = Uri.parse("$url&lastName=$lastName&city=$location");
+          } else {
+            url = Uri.parse("$url&lastName=$lastName");
+          }
+        } else if (location
+            .trim()
+            .isNotEmpty) {
+          url = Uri.parse("$url&city=$location");
+        } else if (center
+            .trim()
+            .isNotEmpty) {
+          url = Uri.parse("$url&center=$center");
+        } else if (spec
+            .trim()
+            .isNotEmpty) {
+          url = Uri.parse("$url&speciality=$spec");
+        }
 
 
-      authProvider = Provider.of<AuthProvider>(context, listen: false);
-      token = authProvider.token;
+        final headers = {'Authorization': 'Bearer $token'};
 
-      // Définir l'URL de base
-      Uri url = Uri.parse("${baseUrl}api/doctors?page=$page");
+        final response = await http.get(url, headers: headers);
 
-      // Ajouter les paramètres en fonction des cas
-      if (lastName.trim().isNotEmpty) {
+        if (response.statusCode == 200) {
+          final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
+          final datas = jsonData['hydra:member'] as List<dynamic>;
 
-        if (center.trim().isNotEmpty) {
-          url = Uri.parse("$url&lastName=$lastName&center=$center");
-        } else if (spec.isNotEmpty) {
-          url = Uri.parse("$url&lastName=$lastName&speciality=$spec");
-        } else if (location.isNotEmpty) {
-          url = Uri.parse("$url&lastName=$lastName&city=$location");
+          List<Medecin> list = datas.map((e) => Medecin.fromJson(e)).toList();
+          return list.where((medecin) => (medecin.token!=null&&medecin.token!="")).toList();
         } else {
-          url = Uri.parse("$url&lastName=$lastName");
+          if (response.statusCode == 401) {
+            authProvider.logout();
+            Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const MyApp()));
+          }
+          // Gestion des erreurs HTTP
+          throw Exception(
+            '-- Erreur d\'obtention des données\n vérifier votre connexion internet. Code: ${response
+                .statusCode}',
+          );
         }
-      } else if (location.trim().isNotEmpty) {
-        url = Uri.parse("$url&city=$location");
-      } else if (center.trim().isNotEmpty) {
-        url = Uri.parse("$url&center=$center");
-      } else if (spec.trim().isNotEmpty) {
-        url = Uri.parse("$url&speciality=$spec");
-      }
-
-
-      final headers = {'Authorization': 'Bearer $token'};
-
-      final response = await http.get(url, headers: headers);
-
-      if (response.statusCode == 200) {
-        final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
-        final datas = jsonData['hydra:member'] as List<dynamic>;
-
-        return datas.map((e) => Medecin.fromJson(e)).toList();
       } else {
-        if (response.statusCode == 401) {
-          authProvider.logout();
-          Navigator.pushReplacement(
-              context, MaterialPageRoute(builder: (context) => const MyApp()));
-        }
-        // Gestion des erreurs HTTP
-        throw Exception(
-          '-- Erreur d\'obtention des données\n vérifier votre connexion internet. Code: ${response.statusCode}',
-        );
+        utilities.handleConnectionError(
+            ConnectionError("Une erreur de connexion s'est produite!"));
+        // Retourner une valeur par défaut en cas d'erreur
+        return <Medecin>[];
       }
+    }catch(e){
+      if (e is http.ClientException) {
 
-    }else{
+        utilities.handleConnectionError(
+            ConnectionError("Une erreur de connexion s'est produite!"));
 
-      utilities.handleConnectionError(ConnectionError("Une erreur de connexion s'est produite!"));
-      // Retourner une valeur par défaut en cas d'erreur
+      }
+      print('Exception: $e');
       return <Medecin>[];
     }
 
@@ -147,58 +177,69 @@ class UserRepository {
   Future<void> addAppointment(CustomAppointment appointment,
       CustomAppointment widgetAppointment) async {
 
-    if(await utilities.isConnectionAvailable()){
+    try {
+      if (await utilities.isConnectionAvailable()) {
+        authProvider = Provider.of<AuthProvider>(context, listen: false);
+        token = authProvider.token;
 
-      authProvider = Provider.of<AuthProvider>(context, listen: false);
-      token = authProvider.token;
+        final url = Uri.parse("${baseUrl}api/appointments");
 
-      final url = Uri.parse("${baseUrl}api/appointments");
-
-      final headers = {
-        'Content-Type': 'application/ld+json',
-        'Authorization': 'Bearer $token'
-      };
+        final headers = {
+          'Content-Type': 'application/ld+json',
+          'Authorization': 'Bearer $token'
+        };
 
 
-      String jsonUser = jsonEncode(appointment.toJson());
-    final response = await http.post(url, headers: headers, body: jsonUser);
+        String jsonUser = jsonEncode(appointment.toJson());
+        final response = await http.post(url, headers: headers, body: jsonUser);
 
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> jsonResponse = json.decode(response.body);
+        if (response.statusCode == 200) {
+          final Map<String, dynamic> jsonResponse = json.decode(response.body);
 
-        if (jsonResponse.containsKey('error')) {
-          utilities.error('Rendez-vous déja existant');
-        } else {
-          Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                  builder: (context) =>
-                      PriseDeRendezVous(patient: widgetAppointment.patient!),
-                  settings: RouteSettings(arguments: appointment.medecin)));
-        }
-      } else {
-        if (response.statusCode == 201) {
-          Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                  builder: (context) =>
-                      PriseDeRendezVous(patient: widgetAppointment.patient!),
-                  settings: RouteSettings(arguments: appointment.medecin)));
-        } else {
-          if (response.statusCode == 401) {
-            authProvider.logout();
-            Navigator.pushReplacement(context,
-                MaterialPageRoute(builder: (context) => const MyApp()));
+          if (jsonResponse.containsKey('error')) {
+            utilities.error('Rendez-vous déja existant');
           } else {
-            utilities.error(
-                'Il y a une erreur APPOINTMENT. HTTP Status Code: ${response.statusCode}');
+            Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                    builder: (context) =>
+                        PriseDeRendezVous(patient: widgetAppointment.patient!),
+                    settings: RouteSettings(arguments: appointment.medecin)));
+          }
+        } else {
+          if (response.statusCode == 201) {
+            Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                    builder: (context) =>
+                        PriseDeRendezVous(patient: widgetAppointment.patient!),
+                    settings: RouteSettings(arguments: appointment.medecin)));
+          } else {
+            if (response.statusCode == 401) {
+              authProvider.logout();
+              Navigator.pushReplacement(context,
+                  MaterialPageRoute(builder: (context) => const MyApp()));
+            } else {
+              utilities.error(
+                  'Il y a une erreur APPOINTMENT. HTTP Status Code: ${response
+                      .statusCode}');
+            }
           }
         }
+      } else {
+        utilities.handleConnectionError(
+            ConnectionError("Une erreur de connexion s'est produite!"));
+        throw Exception(
+            '-- Failed to load data.');
       }
-    }else{
-      utilities.handleConnectionError(ConnectionError("Une erreur de connexion s'est produite!"));
-      throw Exception(
-          '-- Failed to load data.');
+    }catch(e){
+      if (e is http.ClientException) {
+
+        utilities.handleConnectionError(
+            ConnectionError("Une erreur de connexion s'est produite!"));
+
+      }
+      print('Exception: $e');
     }
 
   }
@@ -206,180 +247,219 @@ class UserRepository {
   Future<void> addAppointmentUnavailable(CustomAppointment appointment,
       CustomAppointment widgetAppointment) async {
 
-    if(await utilities.isConnectionAvailable()){
-      authProvider = Provider.of<AuthProvider>(context, listen: false);
-      token = authProvider.token;
+    try {
+      if (await utilities.isConnectionAvailable()) {
+        authProvider = Provider.of<AuthProvider>(context, listen: false);
+        token = authProvider.token;
 
-      final url = Uri.parse("${baseUrl}api/unavailable_appointments");
-      //final headers = {'Content-Type': 'application/json'};
+        final url = Uri.parse("${baseUrl}api/unavailable_appointments");
+        //final headers = {'Content-Type': 'application/json'};
 
-      final headers = {
-        'Content-Type': 'application/ld+json',
-        'Authorization': 'Bearer $token'
-      };
+        final headers = {
+          'Content-Type': 'application/ld+json',
+          'Authorization': 'Bearer $token'
+        };
 
-      String jsonUser = jsonEncode(appointment.toJson());
-      final response = await http.post(url, headers: headers, body: jsonUser);
-      print(response.statusCode);
+        String jsonUser = jsonEncode(appointment.toJson());
+        final response = await http.post(url, headers: headers, body: jsonUser);
+        print(response.statusCode);
 
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> jsonResponse = json.decode(response.body);
+        if (response.statusCode == 200) {
+          final Map<String, dynamic> jsonResponse = json.decode(response.body);
 
-        if (jsonResponse.containsKey('error')) {
-          utilities.error('Rendez-vous déja existant');
+          if (jsonResponse.containsKey('error')) {
+            utilities.error('Rendez-vous déja existant');
+          } else {
+            Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                    builder: (context) =>
+                        PriseDeRendezVous(patient: widgetAppointment.patient!),
+                    settings: RouteSettings(arguments: appointment.medecin)));
+          }
         } else {
-          Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                  builder: (context) =>
-                      PriseDeRendezVous(patient: widgetAppointment.patient!),
-                  settings: RouteSettings(arguments: appointment.medecin)));
+          if (response.statusCode == 201) {
+            utilities.RdvValider();
+            Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                    builder: (context) =>
+                        PriseDeRendezVous(patient: widgetAppointment.patient!),
+                    settings: RouteSettings(arguments: appointment.medecin)));
+          } else {
+            if (response.statusCode == 401) {
+              authProvider.logout();
+              Navigator.pushReplacement(context,
+                  MaterialPageRoute(builder: (context) => const MyApp()));
+            }
+
+            // Gestion des erreurs HTTP
+            utilities.error(
+                'Il y a une erreur APPOINTMENT. HTTP Status Code: ${response
+                    .statusCode}');
+          }
         }
       } else {
-        if (response.statusCode == 201) {
-          utilities.RdvValider();
-          Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                  builder: (context) =>
-                      PriseDeRendezVous(patient: widgetAppointment.patient!),
-                  settings: RouteSettings(arguments: appointment.medecin)));
-        } else {
-          if (response.statusCode == 401) {
-            authProvider.logout();
-            Navigator.pushReplacement(context,
-                MaterialPageRoute(builder: (context) => const MyApp()));
-          }
-
-          // Gestion des erreurs HTTP
-          utilities.error(
-              'Il y a une erreur APPOINTMENT. HTTP Status Code: ${response.statusCode}');
-        }
+        utilities.handleConnectionError(
+            ConnectionError("Une erreur de connexion s'est produite!"));
+        throw Exception(
+            '-- Failed to load data.');
       }
+    }catch(e){
+      if (e is http.ClientException) {
 
-    }else{
+        utilities.handleConnectionError(
+            ConnectionError("Une erreur de connexion s'est produite!"));
 
-      utilities.handleConnectionError(ConnectionError("Une erreur de connexion s'est produite!"));
-      throw Exception(
-          '-- Failed to load data.');
+      }
+      print('Exception: $e');
     }
 
   }
 
   Future<void> patchUserPassword(int id, String newPassword) async {
 
-    if(await utilities.isConnectionAvailable()){
+    try {
+      if (await utilities.isConnectionAvailable()) {
+        final url = Uri.parse("${baseUrl}api/change-password/$id");
 
-      final url = Uri.parse("${baseUrl}api/change-password/$id");
 
+        final body = {"password": "$newPassword"};
 
-      final body = {"password": "$newPassword"};
+        final response = await http.patch(url, body: jsonEncode(body));
 
-      final response = await http.patch(url, body: jsonEncode(body));
+        if (response.statusCode == 200) {
+          utilities.modifPasswordValider();
 
-      if (response.statusCode == 200) {
-        utilities.modifPasswordValider();
+          Navigator.pushAndRemoveUntil(context,
+              MaterialPageRoute(builder: (context) => Login()), (
+                  route) => false);
+        } else {
+          // Gestion des erreurs HTTP
 
-        Navigator.pushAndRemoveUntil(context,
-            MaterialPageRoute(builder: (context) => Login()), (route) => false);
-      } else {
-        // Gestion des erreurs HTTP
-
-        if (response.statusCode == 401) {
-          authProvider.logout();
-          Navigator.pushReplacement(
-              context, MaterialPageRoute(builder: (context) => const MyApp()));
+          if (response.statusCode == 401) {
+            authProvider.logout();
+            Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const MyApp()));
+          }
+          throw Exception('ANOTHER ERROR');
         }
-        throw Exception('ANOTHER ERROR');
+      } else {
+        utilities.handleConnectionError(
+            ConnectionError("Une erreur de connexion s'est produite!"));
+        throw Exception(
+            '-- Failed to load data.');
       }
+    }catch(e){
+      if (e is http.ClientException) {
 
-    }else{
-      utilities.handleConnectionError(ConnectionError("Une erreur de connexion s'est produite!"));
-      throw Exception(
-          '-- Failed to load data.');
+        utilities.handleConnectionError(
+            ConnectionError("Une erreur de connexion s'est produite!"));
+
+      }
+      print('Exception: $e');
     }
-
 
 
   }
 
   Future<void> UserUpdate(Utilisateur utilisateur) async {
 
+    try {
+      if (await utilities.isConnectionAvailable()) {
+        final url = Uri.parse(
+            "${baseUrl}api/users/${utilities.extractLastNumber(
+                utilisateur.id)}");
 
-    if(await utilities.isConnectionAvailable()){
+        final headers = {'Content-Type': 'application/merge-patch+json'};
 
-      final url = Uri.parse(
-          "${baseUrl}api/users/${utilities.extractLastNumber(utilisateur.id)}");
+        String jsonUser = jsonEncode(utilisateur.toJson());
+        final response = await http.patch(
+            url, headers: headers, body: jsonUser);
 
-      final headers = {'Content-Type': 'application/merge-patch+json'};
+        if (response.statusCode == 200) {
+          final Map<String, dynamic> jsonResponse = json.decode(response.body);
 
-      String jsonUser = jsonEncode(utilisateur.toJson());
-    final response = await http.patch(url, headers: headers, body: jsonUser);
-
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> jsonResponse = json.decode(response.body);
-
-        if (jsonResponse.containsKey('error')) {
-          utilities.error('Erreur de modification');
+          if (jsonResponse.containsKey('error')) {
+            utilities.error('Erreur de modification');
+          } else {
+            utilities.ModificationUtilisateur();
+          }
         } else {
-          utilities.ModificationUtilisateur();
+          if (response.statusCode == 401) {
+            authProvider.logout();
+            Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const MyApp()));
+          }
+          // Gestion des erreurs HTTP
+          utilities.error(
+              'Il y a une erreur. HTTP Status Code: ${response.statusCode}');
+          throw Exception(
+              '-- Failed to add user. HTTP Status Code: ${response
+                  .statusCode}');
         }
       } else {
-        if (response.statusCode == 401) {
-          authProvider.logout();
-          Navigator.pushReplacement(
-              context, MaterialPageRoute(builder: (context) => const MyApp()));
-        }
-        // Gestion des erreurs HTTP
-        utilities.error(
-            'Il y a une erreur. HTTP Status Code: ${response.statusCode}');
+        utilities.handleConnectionError(
+            ConnectionError("Une erreur de connexion s'est produite!"));
         throw Exception(
-            '-- Failed to add user. HTTP Status Code: ${response.statusCode}');
+            '-- Failed to load data.');
       }
+    }catch(e){
 
-
-    }else{
-      utilities.handleConnectionError(ConnectionError("Une erreur de connexion s'est produite!"));
-      throw Exception(
-          '-- Failed to load data.');
     }
 
   }
 
   Future<Utilisateur> getUser(String id) async {
 
-    if(await utilities.isConnectionAvailable()){
+    try {
+      if (await utilities.isConnectionAvailable()) {
+        final url =
+        Uri.parse("${baseUrl}api/users/${utilities.extractLastNumber(id)}");
 
-      final url =
-      Uri.parse("${baseUrl}api/users/${utilities.extractLastNumber(id)}");
+        authProvider = Provider.of<AuthProvider>(context, listen: false);
+        token = authProvider.token;
 
-      authProvider = Provider.of<AuthProvider>(context, listen: false);
-      token = authProvider.token;
-
-      final headers = {'Authorization': 'Bearer $token'};
+        final headers = {'Authorization': 'Bearer $token'};
 
 
-      final response = await http.get(url, headers: headers);
+        final response = await http.get(url, headers: headers);
 
-      if (response.statusCode == 200) {
-        final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
+        if (response.statusCode == 200) {
+          final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
 
-        Utilisateur user = Utilisateur.fromJson(jsonData);
+          Utilisateur user = Utilisateur.fromJson(jsonData);
 
-        return user;
-      } else {
-        if (response.statusCode == 401) {
-          authProvider.logout();
-          Navigator.pushReplacement(
-              context, MaterialPageRoute(builder: (context) => const MyApp()));
+          return user;
+        } else {
+          if (response.statusCode == 401) {
+            authProvider.logout();
+            // ignore: use_build_context_synchronously
+            Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const MyApp()));
+          }
+          // Gestion des erreurs HTTP
+          throw Exception(
+              '-- Failed to load data. HTTP Status Code: ${response
+                  .statusCode}');
         }
-        // Gestion des erreurs HTTP
+      } else {
+        utilities.handleConnectionError(
+            ConnectionError("Une erreur de connexion s'est produite!"));
         throw Exception(
-            '-- Failed to load data. HTTP Status Code: ${response.statusCode}');
+            '-- Failed to load data.');
       }
+    }catch(e){
+      if (e is http.ClientException) {
 
-    }else{
-      utilities.handleConnectionError(ConnectionError("Une erreur de connexion s'est produite!"));
+        utilities.handleConnectionError(
+            ConnectionError("Une erreur de connexion s'est produite!"));
+
+      }
+      print('Exception: $e');
       throw Exception(
           '-- Failed to load data.');
     }
@@ -389,90 +469,118 @@ class UserRepository {
 
   Future<void> UserUpdateImage(File file,Utilisateur utilisateur) async {
 
-    if(await utilities.isConnectionAvailable()){
-      final url = Uri.parse(
-          "${baseUrl}api/image-profile/${utilities.extractLastNumber(utilisateur.id)}");
+    try {
+      if (await utilities.isConnectionAvailable()) {
+        final url = Uri.parse(
+            "${baseUrl}api/image-profile/${utilities.extractLastNumber(
+                utilisateur.id)}");
 
-      final headers = {'Content-Type': 'multipart/form-data'};
-
-
-      var request = http.MultipartRequest('POST', Uri.parse(url.path));
-
-      // Ajouter le fichier au champ de données multipartes
-      var fileStream = http.ByteStream(file.openRead());
-      var length = await file.length();
-      var multipartFile = http.MultipartFile('file', fileStream, length,
-          filename: file.path.split('/').last);
-      request.files.add(multipartFile);
-
-      var response = await http.Response.fromStream(await request.send());
+        final headers = {'Content-Type': 'multipart/form-data'};
 
 
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> jsonResponse = json.decode(response.body);
+        var request = http.MultipartRequest('POST', Uri.parse(url.path));
 
-        if (jsonResponse.containsKey('error')) {
-          utilities.error('Erreur de modification');
+        // Ajouter le fichier au champ de données multipartes
+        var fileStream = http.ByteStream(file.openRead());
+        var length = await file.length();
+        var multipartFile = http.MultipartFile('file', fileStream, length,
+            filename: file.path
+                .split('/')
+                .last);
+        request.files.add(multipartFile);
+
+        var response = await http.Response.fromStream(await request.send());
+
+
+        if (response.statusCode == 200) {
+          final Map<String, dynamic> jsonResponse = json.decode(response.body);
+
+          if (jsonResponse.containsKey('error')) {
+            utilities.error('Erreur de modification');
+          } else {
+            utilities.ModificationUtilisateur();
+          }
         } else {
-          utilities.ModificationUtilisateur();
+          if (response.statusCode == 401) {
+            authProvider.logout();
+            // ignore: use_build_context_synchronously
+            Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const MyApp()));
+          }
+          // Gestion des erreurs HTTP
+          utilities.error(
+              'Il y a une erreur de connexion\n Veuillez verifiez votre connexion!');
+          throw Exception('-- Erreur de connexion');
         }
       } else {
-
-        if (response.statusCode == 401) {
-          authProvider.logout();
-          Navigator.pushReplacement(
-              context, MaterialPageRoute(builder: (context) => const MyApp()));
-        }
-        // Gestion des erreurs HTTP
-        utilities.error(
-            'Il y a une erreur de connexion\n Veuillez verifiez votre connexion!');
-        throw Exception('-- Erreur de connexion');
+        utilities.handleConnectionError(
+            ConnectionError("Une erreur de connexion s'est produite!"));
+        throw Exception(
+            '-- Failed to load data.');
       }
-    }else{
-      utilities.handleConnectionError(ConnectionError("Une erreur de connexion s'est produite!"));
-      throw Exception(
-          '-- Failed to load data.');
+    }catch(e){
+      if (e is http.ClientException) {
+
+        utilities.handleConnectionError(
+            ConnectionError("Une erreur de connexion s'est produite!"));
+
+      }
+      print('Exception: $e');
     }
 
   }
 
 
   Future<List<CustomAppointment>> getAllUnavalaibleAppointment(Medecin medecinCliked) async {
-    if(await utilities.isConnectionAvailable()){
 
-      authProvider = Provider.of<AuthProvider>(context, listen: false);
-      token = authProvider.token;
+    try {
+      if (await utilities.isConnectionAvailable()) {
+        authProvider = Provider.of<AuthProvider>(context, listen: false);
+        token = authProvider.token;
 
-      final url = Uri.parse(
-          "${baseUrl}api/doctors/unavailable/appointments/${utilities.extractLastNumber(medecinCliked.id)}");
+        final url = Uri.parse(
+            "${baseUrl}api/doctors/unavailable/appointments/${utilities
+                .extractLastNumber(medecinCliked.id)}");
 
-      final headers = {'Authorization': 'Bearer $token'};
+        final headers = {'Authorization': 'Bearer $token'};
 
-      final response = await http.get(url, headers: headers);
+        final response = await http.get(url, headers: headers);
 
-      if (response.statusCode == 200) {
-        final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
-        final datas = jsonData['hydra:member'] as List<dynamic>;
+        if (response.statusCode == 200) {
+          final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
+          final datas = jsonData['hydra:member'] as List<dynamic>;
 
 
-        return datas.map((e) => CustomAppointment.fromJson(e)).toList();
-      } else {
-
-        if (response.statusCode == 401) {
-          authProvider.logout();
-          Navigator.pushAndRemoveUntil(
-            context, MaterialPageRoute(builder: (context) => const MyApp()),(route) => false,);
+          return datas.map((e) => CustomAppointment.fromJson(e)).toList();
+        } else {
+          if (response.statusCode == 401) {
+            authProvider.logout();
+            Navigator.pushAndRemoveUntil(
+              context, MaterialPageRoute(builder: (context) => const MyApp()), (
+                route) => false,);
+          }
+          // Gestion des erreurs HTTP
+          throw Exception(
+              '-- Failed to load data. HTTP Status Code: ${response
+                  .statusCode}');
         }
-      // Gestion des erreurs HTTP
+      } else {
+        utilities.handleConnectionError(
+            ConnectionError("Une erreur de connexion s'est produite!"));
         throw Exception(
-            '-- Failed to load data. HTTP Status Code: ${response.statusCode}');
+            '-- Failed to load data.');
       }
-    }else{
+    }catch(e){
+      if (e is http.ClientException) {
 
-      utilities.handleConnectionError(ConnectionError("Une erreur de connexion s'est produite!"));
+        utilities.handleConnectionError(
+            ConnectionError("Une erreur de connexion s'est produite!"));
+
+      }
+      print('Exception: $e');
       throw Exception(
           '-- Failed to load data.');
-
     }
   }
 
@@ -480,41 +588,54 @@ class UserRepository {
 
   Future<List<CustomAppointment>> getAllAppointmentByUserPatient(Patient patient) async {
 
-    if(await utilities.isConnectionAvailable()){
-      authProvider = Provider.of<AuthProvider>(context, listen: false);
-      token = authProvider.token;
+    try {
+      if (await utilities.isConnectionAvailable()) {
+        authProvider = Provider.of<AuthProvider>(context, listen: false);
+        token = authProvider.token;
 
 
-      final url = Uri.parse(
-          "${baseUrl}api/patients/appointments/${utilities.extractLastNumber(patient.id)}");
+        final url = Uri.parse(
+            "${baseUrl}api/patients/appointments/${utilities.extractLastNumber(
+                patient.id)}");
 
-      final headers = {'Authorization': 'Bearer $token'};
-      final response = await http.get(url, headers: headers);
+        final headers = {'Authorization': 'Bearer $token'};
+        final response = await http.get(url, headers: headers);
 
 
-      if (response.statusCode == 200) {
-        final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
-        final datas = jsonData['hydra:member'] as List<dynamic>;
+        if (response.statusCode == 200) {
+          final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
+          final datas = jsonData['hydra:member'] as List<dynamic>;
 
-        return datas.map((e) => CustomAppointment.fromJson(e)).toList();
-      } else {
-        if (response.statusCode == 401) {
-          authProvider.logout();
-          Navigator.pushAndRemoveUntil(
-            context, MaterialPageRoute(builder: (context) => const MyApp()),(route) => false,);
+          return datas.map((e) => CustomAppointment.fromJson(e)).toList();
+        } else {
+          if (response.statusCode == 401) {
+            authProvider.logout();
+            Navigator.pushAndRemoveUntil(
+              context, MaterialPageRoute(builder: (context) => const MyApp()), (
+                route) => false,);
+          }
+          // Gestion des erreurs HTTP
+          throw Exception(
+              '-- Failed to load data. HTTP Status Code: ${response
+                  .statusCode}');
         }
-        // Gestion des erreurs HTTP
+      } else {
+        utilities.handleConnectionError(
+            ConnectionError("Une erreur de connexion s'est produite!"));
         throw Exception(
-            '-- Failed to load data. HTTP Status Code: ${response.statusCode}');
+            '-- Failed to load data.');
       }
+    }catch(e){
+      if (e is http.ClientException) {
 
-    }else{
-      utilities.handleConnectionError(ConnectionError("Une erreur de connexion s'est produite!"));
+        utilities.handleConnectionError(
+            ConnectionError("Une erreur de connexion s'est produite!"));
+
+      }
+      print('Exception: $e');
       throw Exception(
           '-- Failed to load data.');
-
     }
-
 
   }
 
@@ -522,6 +643,8 @@ class UserRepository {
 
 
   Future<void> updatePatient(Utilisateur patient) async {
+
+    try{
 
     if(await utilities.isConnectionAvailable()){
 
@@ -571,6 +694,15 @@ class UserRepository {
     }else{
 
       utilities.handleConnectionError(ConnectionError("Une erreur de connexion s'est produite!"));
+    }
+    }catch(e){
+      if (e is http.ClientException) {
+
+        utilities.handleConnectionError(
+            ConnectionError("Une erreur de connexion s'est produite!"));
+
+      }
+      print('Exception: $e');
     }
 
   }

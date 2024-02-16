@@ -6,13 +6,12 @@ import 'Login.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:async';
-import 'package:med_scheduler_front/Utilisateur.dart';
 import 'package:med_scheduler_front/UrlBase.dart';
-import 'package:med_scheduler_front/main.dart';
 import 'Modification_MotdePasse.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:med_scheduler_front/UtilisateurNewPassword.dart';
-
+import 'package:med_scheduler_front/ConnectionError.dart';
+import 'package:med_scheduler_front/Utilitie/Utilities.dart';
 
 
 
@@ -28,6 +27,7 @@ class _EmailValidationState extends State<EmailValidation> {
 
   String baseUrl = UrlBase().baseUrl;
 
+  Utilities? utilities;
 
   TextEditingController emailController = TextEditingController();
 
@@ -40,6 +40,12 @@ class _EmailValidationState extends State<EmailValidation> {
   final _emailValidator = RegExp(r"^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$");
 
 
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    utilities = Utilities(context: context);
+  }
 
   /// Validation du format E-mail
   String? _validateEmail(String email) {
@@ -61,21 +67,11 @@ class _EmailValidationState extends State<EmailValidation> {
 
     final url = Uri.parse("${baseUrl}api/check-identifiant");
 
-    print('URL USER: $url');
-
-    final headers = {'Content-Type': 'application/json'};
-
-    print('EMAIL: $username');
 
     final body =  {"username": "$username"};
 
-    //final headers = {'Authorization': 'Bearer $token'};
-
-    print('BODY: $body');
-
     try {
       final response = await http.post(url, body: jsonEncode(body));
-      print(' --- ST CODE: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
@@ -88,8 +84,8 @@ class _EmailValidationState extends State<EmailValidation> {
           isLoading = false;
         });
 
-        print('UTILISATEUR: ${user.lastName}');
 
+        // ignore: use_build_context_synchronously
         Navigator.push(context, MaterialPageRoute(builder: (context)=>Modification_MotdePasse(),settings: RouteSettings(arguments: user)));
 
       } else {
@@ -119,6 +115,12 @@ class _EmailValidationState extends State<EmailValidation> {
       setState(() {
         isLoading = false;
       });
+      if (e is http.ClientException) {
+
+        utilities!.handleConnectionError(ConnectionError("Une erreur de connexion s'est produite!"));
+
+      }
+
       print('Error: $e \nStack trace: $stackTrace');
       throw Exception('-- Failed to load data. Error: $e');
     }

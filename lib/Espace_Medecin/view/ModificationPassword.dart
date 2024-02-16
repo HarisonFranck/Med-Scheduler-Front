@@ -11,6 +11,7 @@ import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:med_scheduler_front/main.dart';
+import 'package:med_scheduler_front/ConnectionError.dart';
 
 
 class ModificationPassword extends StatefulWidget {
@@ -70,16 +71,12 @@ Utilisateur? user;
 
     final url = Uri.parse("${baseUrl}api/change-password/$id");
 
-    print('URL USER: $url');
-
-    //final headers = {'Authorization': 'Bearer $token'};
 
     final body = {"password": "$newPassword"};
 
 
     try {
       final response = await http.patch(url, body: jsonEncode(body));
-      print(' --- ST CODE: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         utilities!.modifPasswordValider();
@@ -102,13 +99,15 @@ Utilisateur? user;
         }
         throw Exception('ANOTHER ERROR');
       }
-    } catch (e, stackTrace) {
+    } catch (e) {
     setState(() {
     isLoading = false;
     });
-      if (e is http.ClientException) {
-        utilities!.ErrorConnexion();
-      } else {
+    if (e is http.ClientException) {
+
+    utilities!.handleConnectionError(ConnectionError("Une erreur de connexion s'est produite!"));
+
+    }else {
         // Gérer d'autres exceptions
         print('Une erreur inattendue s\'est produite: $e');
       }

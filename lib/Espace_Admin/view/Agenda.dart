@@ -31,10 +31,13 @@ class AgendaState extends State<Agenda> {
   BaseRepository? baseRepository;
   Utilities? utilities;
 
+  double AppointWidth = 0.0;
+
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
+
     utilities = Utilities(context: context);
     baseRepository = BaseRepository(context: context, utilities: utilities!);
   }
@@ -76,7 +79,7 @@ class AgendaState extends State<Agenda> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     calculateBlackoutDates();
-    print('FETCH DEPENDECIES');
+    print('FETCH DEPENDENCIES');
     authProviderUser = Provider.of<AuthProviderUser>(context, listen: false);
     authProvider = Provider.of<AuthProvider>(context, listen: false);
     token = authProvider.token;
@@ -361,6 +364,9 @@ class AgendaState extends State<Agenda> {
 
   @override
   Widget build(BuildContext context) {
+    AppointWidth = MediaQuery.of(context).size.width / 1.40;
+    print('AppointWidth: $AppointWidth');
+
     return PopScope(
       canPop: false,
       child: Scaffold(
@@ -529,8 +535,6 @@ class AgendaState extends State<Agenda> {
                                               'APPOINTMENT : ${element.timeStart.hour}, ${element.reason} ');
                                         });
 
-                                        print('DT CLICKED: ${details.date}');
-
                                         setState(() {
                                           dtCliquer = details.date!;
                                         });
@@ -592,7 +596,10 @@ class AgendaState extends State<Agenda> {
                                           jourSundayDisable();
                                         }
                                       },
-                                      todayHighlightColor: Colors.redAccent,
+                                      todayHighlightColor:
+                                          (DateTime.now().hour > 15)
+                                              ? Colors.transparent
+                                              : Colors.redAccent,
                                       todayTextStyle: const TextStyle(
                                         fontWeight: FontWeight.w500,
                                         letterSpacing: 1.6,
@@ -606,6 +613,7 @@ class AgendaState extends State<Agenda> {
                                   ),
                                   Expanded(
                                       child: ListView(
+                                    physics: BouncingScrollPhysics(),
                                     children: [
                                       if (isAppointment) ...[
                                         for (int ap = 0;
@@ -648,8 +656,8 @@ class AgendaState extends State<Agenda> {
                                                   ),
                                                   minimumSize:
                                                       MaterialStateProperty.all(
-                                                          const Size(
-                                                              255.0, 40.0)),
+                                                          Size(AppointWidth,
+                                                              40.0)),
                                                 ),
                                                 onPressed: () {
                                                   Navigator.push(
@@ -677,6 +685,9 @@ class AgendaState extends State<Agenda> {
                                             ),
                                             Spacer(),
                                           ],
+                                        ),
+                                        SizedBox(
+                                          height: 20,
                                         )
                                       ],
                                       if (istoAddAppointment) ...[
@@ -709,8 +720,8 @@ class AgendaState extends State<Agenda> {
                                                   ),
                                                   minimumSize:
                                                       MaterialStateProperty.all(
-                                                          const Size(
-                                                              255.0, 40.0)),
+                                                          Size(AppointWidth,
+                                                              40.0)),
                                                 ),
                                                 onPressed: () {
                                                   Navigator.push(
@@ -867,7 +878,7 @@ class AgendaState extends State<Agenda> {
                   ),
                 ),
                 Container(
-                  width: MediaQuery.of(context).size.width / 1.40,
+                  width: AppointWidth,
                   height:
                       (appoint.isDeleted != null && appoint.isDeleted == true)
                           ? 75
@@ -965,8 +976,6 @@ class AgendaState extends State<Agenda> {
 
   Widget showAppointmentAfterFirst(
       CustomAppointment appoint, DateTime clickedDt) {
-    print('ISDELETED: ${appoint.isDeleted} ');
-
     return Column(
       children: [
         Row(
@@ -981,7 +990,7 @@ class AgendaState extends State<Agenda> {
                 child: Padding(
                   padding: const EdgeInsets.only(left: 0),
                   child: Container(
-                    width: MediaQuery.of(context).size.width / 1.40,
+                    width: AppointWidth,
                     height:
                         (appoint.isDeleted != null && appoint.isDeleted == true)
                             ? 75
@@ -1332,7 +1341,7 @@ class AgendaState extends State<Agenda> {
                         child: Row(
                           children: [
                             const Padding(
-                              padding: EdgeInsets.only(left: 10),
+                              padding: EdgeInsets.only(left: 20),
                               child: Text(
                                 'Raison:',
                                 style: TextStyle(
@@ -1341,7 +1350,9 @@ class AgendaState extends State<Agenda> {
                                     fontWeight: FontWeight.w500),
                               ),
                             ),
-                            const Spacer(),
+                            const SizedBox(
+                              width: 30,
+                            ),
                             Expanded(
                               child: Text(
                                 '${appointment.reason}',
@@ -1350,7 +1361,7 @@ class AgendaState extends State<Agenda> {
                                     fontSize: 14,
                                     fontWeight: FontWeight.w500),
                               ),
-                            )
+                            ),
                           ],
                         )),
                     Divider(
@@ -1365,7 +1376,7 @@ class AgendaState extends State<Agenda> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             const Padding(
-                              padding: EdgeInsets.only(left: 10),
+                              padding: EdgeInsets.only(left: 20),
                               child: Text(
                                 'Le:',
                                 style: TextStyle(
@@ -1374,7 +1385,9 @@ class AgendaState extends State<Agenda> {
                                     fontWeight: FontWeight.w500),
                               ),
                             ),
-                            const Spacer(),
+                            const SizedBox(
+                              width: 60,
+                            ),
                             Text(
                               '${DateTimeFormatAppointment(appointment.startAt, appointment.timeEnd)}',
                               style: const TextStyle(
@@ -1382,6 +1395,7 @@ class AgendaState extends State<Agenda> {
                                   fontSize: 14,
                                   fontWeight: FontWeight.w500),
                             ),
+                            Spacer()
                           ],
                         )),
                     Divider(
@@ -1395,7 +1409,7 @@ class AgendaState extends State<Agenda> {
                         child: Row(
                           children: [
                             const Padding(
-                              padding: EdgeInsets.only(left: 10),
+                              padding: EdgeInsets.only(left: 20),
                               child: Text(
                                 'De:',
                                 style: TextStyle(
@@ -1404,7 +1418,9 @@ class AgendaState extends State<Agenda> {
                                     fontWeight: FontWeight.w500),
                               ),
                             ),
-                            const Spacer(),
+                            const SizedBox(
+                              width: 58,
+                            ),
                             Text(
                               '${formatDateTimeAppointment(appointment.startAt.toLocal(), appointment.timeStart, appointment.timeEnd.toLocal())}',
                               style: const TextStyle(
@@ -1412,6 +1428,7 @@ class AgendaState extends State<Agenda> {
                                   fontSize: 14,
                                   fontWeight: FontWeight.w500),
                             ),
+                            Spacer()
                           ],
                         )),
                     Divider(

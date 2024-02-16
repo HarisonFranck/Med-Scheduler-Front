@@ -14,6 +14,7 @@ import 'package:med_scheduler_front/Espace_Client/view/AppointmentDetails.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:med_scheduler_front/Utilitie/Utilities.dart';
 import 'package:med_scheduler_front/Repository/BaseRepository.dart';
+import 'package:med_scheduler_front/ConnectionError.dart';
 
 
 class AppointmentDialog extends StatefulWidget {
@@ -141,6 +142,12 @@ class _AppointmentDialogState extends State<AppointmentDialog> {
       }
     } catch (e, stackTrace) {
       print('Error: $e \nStack trace: $stackTrace');
+      if (e is http.ClientException) {
+
+        utilities!.handleConnectionError(ConnectionError("Une erreur de connexion s'est produite!"));
+
+      }
+      print('Exception: $e');
       throw e;
     }
   }

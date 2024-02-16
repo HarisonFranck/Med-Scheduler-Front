@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:med_scheduler_front/ConnectionError.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
-
+import 'package:fluttertoast/fluttertoast.dart';
 
 class Utilities {
   final BuildContext context;
@@ -26,14 +26,14 @@ class Utilities {
 
   void error(String description) {
     AwesomeDialog(
-
       context: context,
       dialogBackgroundColor: Colors.redAccent,
       dialogType: DialogType.info,
       btnCancelColor: Colors.grey,
       animType: AnimType.rightSlide,
-      titleTextStyle: const TextStyle(letterSpacing: 2,color: Colors.white),
-      descTextStyle: TextStyle(letterSpacing: 2,color: Colors.white.withOpacity(0.8),fontSize: 16),
+      titleTextStyle: const TextStyle(letterSpacing: 2, color: Colors.white),
+      descTextStyle: TextStyle(
+          letterSpacing: 2, color: Colors.white.withOpacity(0.8), fontSize: 16),
       title: '$description',
       desc: '$description',
       btnCancelOnPress: () {},
@@ -226,8 +226,6 @@ class Utilities {
       ..showMaterialBanner(materialBanner);
   }
 
-
-
   void DeleteMedecin() {
     final materialBanner = MaterialBanner(
       /// need to set following properties for best effect of awesome_snackbar_content
@@ -251,8 +249,6 @@ class Utilities {
       ..showMaterialBanner(materialBanner);
   }
 
-
-
   void PasswordIsNotTheSame() {
     SnackBar snackBar = SnackBar(
       /// need to set following properties for best effect of awesome_snackbar_content
@@ -273,29 +269,23 @@ class Utilities {
     ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 
-
   void ErrorConnexion() {
-
     AwesomeDialog(
-
       context: context,
       dialogBackgroundColor: Colors.redAccent,
       dialogType: DialogType.info,
       btnCancelColor: Colors.grey,
       animType: AnimType.rightSlide,
-      titleTextStyle: const TextStyle(letterSpacing: 2,color: Colors.white),
-      descTextStyle: TextStyle(letterSpacing: 2,color: Colors.white.withOpacity(0.8),fontSize: 16),
+      titleTextStyle: const TextStyle(letterSpacing: 2, color: Colors.white),
+      descTextStyle: TextStyle(
+          letterSpacing: 2, color: Colors.white.withOpacity(0.8), fontSize: 16),
       title: 'Erreur de connexion',
-      desc: 'Il y a peut-etre une erreur de connexion.\n\n Verifier votre connexion',
+      desc:
+          'Il y a peut-etre une erreur de connexion.\n\n Verifier votre connexion',
       btnCancelOnPress: () {},
       btnOkOnPress: () {},
     ).show();
-
-
   }
-
-
-
 
   void RdvValider() {
     final materialBanner = MaterialBanner(
@@ -305,8 +295,7 @@ class Utilities {
       forceActionsBelow: true,
       content: AwesomeSnackbarContent(
         title: 'Succès!!',
-        message:
-        'Rendez-vous enregistré',
+        message: 'Rendez-vous enregistré',
 
         /// change contentType to ContentType.success, ContentType.warning or ContentType.help for variants
         contentType: ContentType.success,
@@ -316,10 +305,10 @@ class Utilities {
       actions: const [SizedBox.shrink()],
     );
 
-    ScaffoldMessenger.of(context)..hideCurrentMaterialBanner()..showMaterialBanner(materialBanner);
+    ScaffoldMessenger.of(context)
+      ..hideCurrentMaterialBanner()
+      ..showMaterialBanner(materialBanner);
   }
-
-
 
   void modifPasswordValider() {
     final materialBanner = MaterialBanner(
@@ -343,9 +332,6 @@ class Utilities {
       ..hideCurrentMaterialBanner()
       ..showMaterialBanner(materialBanner);
   }
-
-
-
 
   void ModificationUtilisateur() {
     final materialBanner = MaterialBanner(
@@ -389,7 +375,6 @@ class Utilities {
     ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 
-
   void loginFailed() {
     SnackBar snackBar = SnackBar(
       /// need to set following properties for best effect of awesome_snackbar_content
@@ -409,8 +394,6 @@ class Utilities {
 
     ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
-
-
 
   void emailInvalide() {
     SnackBar snackBar = SnackBar(
@@ -450,8 +433,6 @@ class Utilities {
     ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 
-
-
   String extractApiPath(String fullPath) {
     const String apiPrefix = '/med_scheduler_api/public';
     if (fullPath.startsWith(apiPrefix)) {
@@ -462,12 +443,10 @@ class Utilities {
     }
   }
 
-
   String extraireNomFichier(String url) {
     // Extraire le nom du fichier de l'URL
     return url.substring(url.lastIndexOf('/') + 1);
   }
-
 
   String ajouterPrefixe(String chemin) {
     // Vérifier si le préfixe est déjà présent
@@ -481,7 +460,7 @@ class Utilities {
   void handleConnectionError(error) {
     if (!connectionErrorHandled) {
       if (error is ConnectionError) {
-          ErrorConnexion();
+        ErrorConnexion();
       } else {
         print("Une erreur s'est produite\n Verifier votre connexion internet!");
       }
@@ -493,8 +472,6 @@ class Utilities {
     var connectivityResult = await Connectivity().checkConnectivity();
     return connectivityResult != ConnectivityResult.none;
   }
-
-
 
   void appointmentAlreadyExist() {
     SnackBar snackBar = SnackBar(
@@ -532,8 +509,12 @@ class Utilities {
     return formattedPhoneNumber;
   }
 
-
-
-
-
+  void errorDoctorEmptyCenterOrSpeciality(String msg) {
+    Fluttertoast.showToast(
+        msg: msg,
+        gravity: ToastGravity.TOP,
+        backgroundColor: Colors.redAccent,
+        textColor: Colors.white,
+        toastLength: Toast.LENGTH_LONG);
+  }
 }

@@ -10,6 +10,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:med_scheduler_front/main.dart';
 import 'package:med_scheduler_front/Repository/UserRepository.dart';
+import 'package:med_scheduler_front/ConnectionError.dart';
 
 class Modification_MotdePasse extends StatefulWidget {
   @override
@@ -43,8 +44,6 @@ class _Modification_MotdePasseState extends State<Modification_MotdePasse> {
   bool obscurepwd = true;
   bool obscureconfirmpwd = true;
 
-  FocusNode _focusNodemail = FocusNode();
-
   final GlobalKey<ScaffoldState> scafkey = GlobalKey<ScaffoldState>();
 
   Future<void> patchUserPassword(int id, String newPassword) async {
@@ -54,15 +53,11 @@ class _Modification_MotdePasseState extends State<Modification_MotdePasse> {
 
     final url = Uri.parse("${baseUrl}api/change-password/$id");
 
-    print('URL USER: $url');
-
-    //final headers = {'Authorization': 'Bearer $token'};
 
     final body = {"password": "$newPassword"};
 
     try {
       final response = await http.patch(url, body: jsonEncode(body));
-      print(' --- ST CODE: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         utilities!.modifPasswordValider();
@@ -89,9 +84,11 @@ class _Modification_MotdePasseState extends State<Modification_MotdePasse> {
       setState(() {
         isLoading = false;
       });
-      if (e is http.ClientException) {
-        utilities!.ErrorConnexion();
-      } else {
+    if (e is http.ClientException) {
+
+    utilities!.handleConnectionError(ConnectionError("Une erreur de connexion s'est produite!"));
+
+    }else {
         // Gérer d'autres exceptions
         print('Une erreur inattendue s\'est produite: $e');
       }
