@@ -42,7 +42,7 @@ class AgendaState extends State<Agenda> {
   late String token;
 
 
-  String firebaseTokenMed = "";
+  String firebaseTokenMedecin = "";
 
   MedecinRepository? medecinRepository;
   BaseRepository? baseRepository;
@@ -126,11 +126,11 @@ class AgendaState extends State<Agenda> {
                   await deviceCalendarPlugin.createOrUpdateEvent(event);
             }
 
-            print('-- FINISHED --');
           }
         });
       }
     } catch (e, stackTrace) {
+
       print(' -- ERROR E: $e \n -- STACK: $stackTrace');
     }
   }
@@ -195,12 +195,16 @@ class AgendaState extends State<Agenda> {
    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
     await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-      firebaseTokenMed = await FirebaseApi().initFireBase();
+      firebaseTokenMedecin = await FirebaseApi().initFireBase();
 
-    sharedPreferences.setString('firebaseTokenMed', firebaseTokenMed);
+    sharedPreferences.setString('FirebaseTokenMedecin', firebaseTokenMedecin);
 
     await FirebaseApi().initPushForegroundNotif();
     await FirebaseApi().initLocalNotif();
+    if(firebaseTokenMedecin!=null&&firebaseTokenMedecin!=""){
+      setState(() {});
+      didChangeDependencies();
+    }
   }
 
 
@@ -210,13 +214,14 @@ class AgendaState extends State<Agenda> {
     super.initState();
     WidgetsFlutterBinding.ensureInitialized();
 
-    //InitFireBase();
+
 
     utilities = Utilities(context: context);
     medecinRepository =
         MedecinRepository(context: context, utilities: utilities!);
     baseRepository = BaseRepository(context: context, utilities: utilities!);
 
+    InitFireBase();
 
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       // Traitez le message ici
@@ -246,11 +251,11 @@ class AgendaState extends State<Agenda> {
       dialogType: DialogType.info,
       animType: AnimType.rightSlide,
       titleTextStyle: const TextStyle(letterSpacing: 2,color: Color.fromARGB(1000, 60, 70, 120)),
-      descTextStyle: TextStyle(letterSpacing: 2,color: Color.fromARGB(1000, 60, 70, 120).withOpacity(0.8),fontSize: 15),
+      descTextStyle: TextStyle(letterSpacing: 2,color: const Color.fromARGB(1000, 60, 70, 120).withOpacity(0.8),fontSize: 15),
       title: 'Nouveau rendez-vous',
       desc: 'Un patient a pris un rendez-vous avec vous.\nIl est donc necessaire d\'actualiser votre agenda',
       btnOkText: 'Actualiser',
-      btnOkColor: Color.fromARGB(1000, 60, 70, 120),
+      btnOkColor: const Color.fromARGB(1000, 60, 70, 120),
       btnCancel: null,
       // Passez la fonction callback au bouton "Ok" onPress
       btnOkOnPress: updateState,
@@ -304,7 +309,7 @@ class AgendaState extends State<Agenda> {
     calculateBlackoutDates();
 
     authProvider = Provider.of<AuthProvider>(context, listen: false);
-    user = Provider.of<AuthProviderUser>(context).utilisateur;
+    user = Provider.of<AuthProviderUser>(context,listen: false).utilisateur;
     widgetMedecin = Medecin(
         id: user!.id,
         roles: user!.roles,
@@ -322,40 +327,37 @@ class AgendaState extends State<Agenda> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
 
-
-      await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-
-      firebaseTokenMed = await FirebaseApi().initFireBase();
-
-
-
-      await FirebaseApi().initPushForegroundNotif();
-      await FirebaseApi().initLocalNotif();
+      SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+      String? tokenFirebaseMedecin = sharedPreferences.getString('FirebaseTokenMedecin');
+      if(tokenFirebaseMedecin!=null&&tokenFirebaseMedecin!=""){
 
         Specialite specialite = await medecinRepository!.getSpecialite(user!.speciality!.id);
       Centre center = await medecinRepository!.getCenter(user!.center!.id);
 
 
 
-        Utilisateur medecinWithToken = Utilisateur(id: user!.id,imageName: (user!.imageName!=null&&user!.imageName!="")?utilities!.extraireNomFichier(
-            user!.imageName!):'',category: user!.category,password: user!.password, roles: user!.roles, speciality: specialite, lastName: user!.lastName, firstName: user!.firstName, userType: user!.userType, phone: user!.phone, email: user!.email, address: user!.address, center: center, createdAt: user!.createdAt, city: user!.city, token:firebaseTokenMed);
+      Utilisateur medecinWithToken = Utilisateur(id: user!.id,imageName: (user!.imageName!=null&&user!.imageName!="")?utilities!.extraireNomFichier(
+      user!.imageName!):'',category: user!.category,password: user!.password, roles: user!.roles, speciality: specialite, lastName: user!.lastName, firstName: user!.firstName, userType: user!.userType, phone: user!.phone, email: user!.email, address: user!.address, center: center, createdAt: user!.createdAt, city: user!.city, token:tokenFirebaseMedecin);
 
-        medecinRepository!.updateMedecin(medecinWithToken);
+      medecinRepository!.updateMedecin(medecinWithToken);
 
 
       listAppointment =
-          await medecinRepository!.getAllAppointmentMedecin(widgetMedecin!);
+      await medecinRepository!.getAllAppointmentMedecin(widgetMedecin!);
       listUnavalaibleAppointment =
-          await baseRepository!.getAllUnavalaibleAppointment(widgetMedecin!);
+      await baseRepository!.getAllUnavalaibleAppointment(widgetMedecin!);
       if (listAppointment.isEmpty) {
-        setState(() {
-          dataLoaded = true;
-        });
+      setState(() {
+      dataLoaded = true;
+      });
       }
       initializeCalendar();
       setState(() {
-        dataLoaded = true;
+      dataLoaded = true;
       });
+      }else{
+        InitFireBase();
+      }
     });
   }
 
@@ -368,7 +370,7 @@ class AgendaState extends State<Agenda> {
       return val;
     } else {
       // Aucun nombre trouvé dans la chaîne
-      throw FormatException("Aucun nombre trouvé dans la chaîne.");
+      throw const FormatException("Aucun nombre trouvé dans la chaîne.");
     }
   }
 
@@ -589,7 +591,7 @@ class AgendaState extends State<Agenda> {
 
     for (DateTime date = startDate;
         date.isBefore(endDate);
-        date = date.add(Duration(days: 1))) {
+        date = date.add(const Duration(days: 1))) {
       if (date.weekday == DateTime.sunday) {
         sundays.add(date);
       }
@@ -630,12 +632,16 @@ class AgendaState extends State<Agenda> {
   List<CustomAppointment> AlltheAppoint = [];
   DateTime dtCliquer = DateTime.now();
 
+  double appointWidth = 0.0;
+
   @override
   Widget build(BuildContext context) {
+
+    appointWidth = MediaQuery.of(context).size.width / 1.40;
     return PopScope(
       canPop: false,
       child: Scaffold(
-          backgroundColor: Color.fromARGB(1000, 238, 239, 244),
+          backgroundColor: const Color.fromARGB(1000, 238, 239, 244),
           body: ListView(children: [
             Row(
               children: [
@@ -677,7 +683,7 @@ class AgendaState extends State<Agenda> {
                           imageUrl:
                               '$baseUrl${utilities!.ajouterPrefixe(user!.imageName!)}',
                           placeholder: (context, url) =>
-                              CircularProgressIndicator(
+                              const CircularProgressIndicator(
                             color: Colors.redAccent,
                           ), // Affiche un indicateur de chargement en attendant l'image
                           errorWidget: (context, url, error) => Image.asset(
@@ -739,8 +745,7 @@ class AgendaState extends State<Agenda> {
                                                   DateTime.now().day)) {
                                             jourDisable();
                                           } else {
-                                            //Navigator.push(context, MaterialPageRoute(builder: (context)=>AppointmentDialog(medecin: medecinClicked!),settings: RouteSettings(arguments: details.date)));
-                                            List<CustomAppointment> list =
+                                           List<CustomAppointment> list =
                                                 listAppointment
                                                     .where((element) =>
                                                         DateFormat('yyyy-MM-dd')
@@ -783,7 +788,7 @@ class AgendaState extends State<Agenda> {
                                           jourSundayDisable();
                                         }
                                       },
-                                      todayHighlightColor: Colors.redAccent,
+                                      todayHighlightColor:(DateTime.now().hour>15)?Colors.transparent:Colors.redAccent,
                                       todayTextStyle: const TextStyle(
                                         fontWeight: FontWeight.w500,
                                         letterSpacing: 1.6,
@@ -792,7 +797,7 @@ class AgendaState extends State<Agenda> {
                                       blackoutDates: blackoutDates,
                                     ),
                                   ),
-                                  SizedBox(
+                                  const SizedBox(
                                     height: 20,
                                   ),
                                   Expanded(
@@ -839,8 +844,7 @@ class AgendaState extends State<Agenda> {
                                                   ),
                                                   minimumSize:
                                                       MaterialStateProperty.all(
-                                                          const Size(
-                                                              255.0, 40.0)),
+                                                           Size(appointWidth, 40.0)),
                                                 ),
                                                 onPressed: () {
                                                   Navigator.push(
@@ -897,8 +901,7 @@ class AgendaState extends State<Agenda> {
                                                   ),
                                                   minimumSize:
                                                       MaterialStateProperty.all(
-                                                          const Size(
-                                                              255.0, 40.0)),
+                                                  Size(appointWidth, 40.0)),
                                                 ),
                                                 onPressed: () {
                                                   Navigator.push(
@@ -925,7 +928,8 @@ class AgendaState extends State<Agenda> {
                                               ),
                                             ),
                                           ],
-                                        )
+                                        ),
+                                      SizedBox(height: 20,)
                                       ] else if (!isAppointment &&
                                           !istoAddAppointment) ...[
                                         showNothing()
@@ -993,7 +997,7 @@ class AgendaState extends State<Agenda> {
             child: Row(
               children: [
                 Padding(
-                  padding: EdgeInsets.only(left: 20, top: 20),
+                  padding: const EdgeInsets.only(left: 20, top: 20),
                   child: Text(
                     'Veuillez choisir une date',
                     style: TextStyle(
@@ -1006,7 +1010,7 @@ class AgendaState extends State<Agenda> {
               ],
             )),
         Padding(
-          padding: EdgeInsets.only(top: 5),
+          padding: const EdgeInsets.only(top: 5),
           child: Divider(
             thickness: 2,
             color: Colors.grey.withOpacity(0.5),
@@ -1019,7 +1023,6 @@ class AgendaState extends State<Agenda> {
   }
 
   Widget showAppointment(CustomAppointment appoint, DateTime clickedDt) {
-    print('ISDELETED: ${appoint.isDeleted} ');
 
     return Column(
       children: [
@@ -1069,7 +1072,7 @@ class AgendaState extends State<Agenda> {
                     borderRadius: BorderRadius.circular(6),
                     color:
                         (appoint.isDeleted != null && appoint.isDeleted == true)
-                            ? Color.fromARGB(1000, 238, 239, 244)
+                            ? const Color.fromARGB(1000, 238, 239, 244)
                             : Colors.redAccent.withOpacity(
                                 0.7), // utilisez la couleur de l'appointment
                   ),
@@ -1249,7 +1252,7 @@ class AgendaState extends State<Agenda> {
                     ),
                   ),
                 )),
-            Spacer(),
+            const Spacer(),
           ],
         ),
         Padding(
@@ -1460,7 +1463,7 @@ class AgendaState extends State<Agenda> {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(6),
             ),
-            contentPadding: EdgeInsets.all(0),
+            contentPadding: const EdgeInsets.all(0),
             content: ClipRRect(
               borderRadius: BorderRadius.circular(6),
               child: Container(
@@ -1472,7 +1475,7 @@ class AgendaState extends State<Agenda> {
                       children: [
                         Padding(
                           padding:
-                              EdgeInsets.only(top: 20, left: 20, bottom: 50),
+                              const EdgeInsets.only(top: 20, left: 20, bottom: 50),
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(60),
                             child: Container(
@@ -1502,7 +1505,7 @@ class AgendaState extends State<Agenda> {
                             children: [
                               Text(
                                 '${abbreviateName(appointment.patient!.lastName)} \n ${abbreviateName(appointment.patient!.firstName)}',
-                                style: TextStyle(fontSize: 20),
+                                style: const TextStyle(fontSize: 20),
                                 textAlign: TextAlign.start,
                                 maxLines:
                                     2, // Nombre maximal de lignes avant de tronquer
@@ -1516,7 +1519,7 @@ class AgendaState extends State<Agenda> {
                         )
                       ],
                     ),
-                    Padding(
+                    const Padding(
                         padding:
                             EdgeInsets.only(top: 20, right: 20, bottom: 20),
                         child: Row(
@@ -1538,11 +1541,11 @@ class AgendaState extends State<Agenda> {
                           ],
                         )),
                     Padding(
-                        padding: EdgeInsets.only(top: 20, right: 20),
+                        padding: const EdgeInsets.only(top: 20, right: 20),
                         child: Row(
                           children: [
-                            Padding(
-                              padding: EdgeInsets.only(left: 10),
+                            const Padding(
+                              padding: EdgeInsets.only(left: 20),
                               child: Text(
                                 'Raison:',
                                 style: TextStyle(
@@ -1551,16 +1554,17 @@ class AgendaState extends State<Agenda> {
                                     fontWeight: FontWeight.w500),
                               ),
                             ),
-                            Spacer(),
+                            const SizedBox(width: 30,),
                             Expanded(
                               child: Text(
                                 '${appointment.reason}',
-                                style: TextStyle(
+                                style: const TextStyle(
                                     color: Color.fromARGB(230, 20, 20, 90),
                                     fontSize: 14,
                                     fontWeight: FontWeight.w500),
                               ),
-                            )
+                            ),
+
                           ],
                         )),
                     Divider(
@@ -1570,12 +1574,12 @@ class AgendaState extends State<Agenda> {
                       endIndent: 10,
                     ),
                     Padding(
-                        padding: EdgeInsets.only(top: 30, right: 20),
+                        padding: const EdgeInsets.only(top: 30, right: 20),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Padding(
-                              padding: EdgeInsets.only(left: 10),
+                            const Padding(
+                              padding: EdgeInsets.only(left: 20),
                               child: Text(
                                 'Le:',
                                 style: TextStyle(
@@ -1584,14 +1588,15 @@ class AgendaState extends State<Agenda> {
                                     fontWeight: FontWeight.w500),
                               ),
                             ),
-                            Spacer(),
+                            const SizedBox(width: 60,),
                             Text(
                               '${DateTimeFormatAppointment(appointment.startAt, appointment.timeEnd)}',
-                              style: TextStyle(
+                              style: const TextStyle(
                                   color: Color.fromARGB(230, 20, 20, 90),
                                   fontSize: 14,
                                   fontWeight: FontWeight.w500),
                             ),
+        const Spacer()
                           ],
                         )),
                     Divider(
@@ -1601,11 +1606,11 @@ class AgendaState extends State<Agenda> {
                       endIndent: 10,
                     ),
                     Padding(
-                        padding: EdgeInsets.only(top: 20, right: 20),
+                        padding: const EdgeInsets.only(top: 20, right: 20),
                         child: Row(
                           children: [
-                            Padding(
-                              padding: EdgeInsets.only(left: 10),
+                            const Padding(
+                              padding: EdgeInsets.only(left: 20),
                               child: Text(
                                 'De:',
                                 style: TextStyle(
@@ -1614,10 +1619,10 @@ class AgendaState extends State<Agenda> {
                                     fontWeight: FontWeight.w500),
                               ),
                             ),
-                            Spacer(),
+                            const SizedBox(width: 58,),
                             Text(
                               ' ${formatDateTimeAppointment(appointment.startAt.toLocal(), appointment.timeStart, appointment.timeEnd.toLocal())}',
-                              style: TextStyle(
+                              style: const TextStyle(
                                   color: Color.fromARGB(230, 20, 20, 90),
                                   fontSize: 14,
                                   fontWeight: FontWeight.w500),
@@ -1799,7 +1804,7 @@ class AgendaState extends State<Agenda> {
   }
 
   void RdvDesactiver() {
-    SnackBar snackBar = SnackBar(
+    SnackBar snackBar = const SnackBar(
       content: Flex(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         direction: Axis.horizontal,
@@ -1832,7 +1837,7 @@ class AgendaState extends State<Agenda> {
       elevation: 0,
       backgroundColor: Colors.transparent,
       forceActionsBelow: true,
-      surfaceTintColor: Color.fromARGB(230, 20, 20, 90),
+      surfaceTintColor: const Color.fromARGB(230, 20, 20, 90),
       content: AwesomeSnackbarContent(
         title: 'Aide!!',
         message: 'Cette  n\'est plus disponible.',
@@ -1856,7 +1861,7 @@ class AgendaState extends State<Agenda> {
       elevation: 0,
       backgroundColor: Colors.transparent,
       forceActionsBelow: true,
-      surfaceTintColor: Color.fromARGB(230, 20, 20, 90),
+      surfaceTintColor: const Color.fromARGB(230, 20, 20, 90),
       content: AwesomeSnackbarContent(
         title: 'Aide!!',
         message: 'Dimanche n\'est pas disponible.',

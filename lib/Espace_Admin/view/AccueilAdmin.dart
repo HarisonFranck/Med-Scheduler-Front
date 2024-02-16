@@ -22,10 +22,6 @@ import 'dart:convert';
 import 'package:med_scheduler_front/ConnectionError.dart';
 
 class AccueilAdmin extends StatefulWidget {
-  //final Utilisateur user;
-
-  //AccueilAdmin({required this.user});
-
   @override
   _AccueilAdminState createState() => _AccueilAdminState();
 }
@@ -311,7 +307,6 @@ class _AccueilAdminState extends State<AccueilAdmin> {
                               List<Specialite> specs = specsSnapshot.data!;
 
                               if (specs.isEmpty) {
-                                print('NOTHING');
                                 return Padding(
                                     padding: const EdgeInsets.only(
                                         right: 18,
@@ -325,7 +320,7 @@ class _AccueilAdminState extends State<AccueilAdmin> {
                                         child: Card(
                                           elevation: 0.5,
                                           color: Colors.white,
-                                          child: ListView(
+                                          child: Column(
                                             children: [
                                               Padding(
                                                 padding: const EdgeInsets.only(
@@ -489,7 +484,6 @@ class _AccueilAdminState extends State<AccueilAdmin> {
                               List<Centre> centers = centersSnapshot.data!;
 
                               if (centers.isEmpty) {
-                                print('NOTHING');
                                 return Padding(
                                     padding: const EdgeInsets.only(
                                         right: 18,
@@ -503,7 +497,7 @@ class _AccueilAdminState extends State<AccueilAdmin> {
                                         child: Card(
                                           elevation: 0.5,
                                           color: Colors.white,
-                                          child: ListView(
+                                          child: Column(
                                             children: [
                                               Padding(
                                                 padding: const EdgeInsets.only(
@@ -655,7 +649,6 @@ class _AccueilAdminState extends State<AccueilAdmin> {
                               List<Medecin> medecins = medecinsSnapshot.data!;
 
                               if (medecins.isEmpty) {
-                                print('NOTHING');
                                 return Padding(
                                     padding: const EdgeInsets.only(
                                         right: 18,
@@ -669,7 +662,7 @@ class _AccueilAdminState extends State<AccueilAdmin> {
                                         child: Card(
                                           elevation: 0.5,
                                           color: Colors.white,
-                                          child: ListView(
+                                          child: Column(
                                             children: [
                                               Padding(
                                                 padding: const EdgeInsets.only(
@@ -703,6 +696,7 @@ class _AccueilAdminState extends State<AccueilAdmin> {
                               }
 
                               return ListView.builder(
+                                physics: BouncingScrollPhysics(),
                                 itemCount: medecins.length,
                                 itemBuilder: (context, index) {
                                   Medecin medecin = medecins[index];
@@ -1041,7 +1035,7 @@ class _AccueilAdminState extends State<AccueilAdmin> {
                                   createdAt: DateTime.now(),
                                   description: descCenter,
                                 );
-                                adminRepository!.updateCenter(centre);
+                                updateCenter(centre);
                                 didChangeDependencies();
                                 Navigator.pop(context);
                                 didChangeDependencies();
@@ -1163,7 +1157,7 @@ class _AccueilAdminState extends State<AccueilAdmin> {
                                   createdAt: DateTime.now(),
                                   description: descCenter,
                                 );
-                                adminRepository!.addCenter(centre);
+                                addCenter(centre);
                                 didChangeDependencies();
                                 Navigator.pop(context);
                                 didChangeDependencies();
@@ -1264,8 +1258,8 @@ class _AccueilAdminState extends State<AccueilAdmin> {
                 Navigator.pop(context);
                 didChangeDependencies();
                 setState(() {
-                getAllAsync();
-                isLoading = false;
+                  getAllAsync();
+                  isLoading = false;
                 });
               },
             )
@@ -1333,7 +1327,6 @@ class _AccueilAdminState extends State<AccueilAdmin> {
                         GestureDetector(
                           onTap: () {
                             if (_formKeyAddSpec.currentState!.validate()) {
-                              print('ADD SPEC');
                               String nomSpec = specController.text;
                               String descSpec = specDescController.text;
                               if (nomSpec.isNotEmpty) {
@@ -1345,7 +1338,7 @@ class _AccueilAdminState extends State<AccueilAdmin> {
                                   users: [],
                                   createdAt: DateTime.now(),
                                 );
-                                adminRepository!.addSpecialite(newSpecialite);
+                                addSpecialite(newSpecialite);
                                 didChangeDependencies();
                                 Navigator.pop(context);
                                 didChangeDependencies();
@@ -1474,8 +1467,7 @@ class _AccueilAdminState extends State<AccueilAdmin> {
                                   description: descSpec,
                                   updatedAt: DateTime.now(),
                                 );
-                                adminRepository!
-                                    .updateSpecialite(newSpecialite);
+                                updateSpecialite(newSpecialite);
                                 didChangeDependencies();
                                 Navigator.pop(context);
                                 didChangeDependencies();
@@ -1576,8 +1568,8 @@ class _AccueilAdminState extends State<AccueilAdmin> {
                 Navigator.pop(context);
                 didChangeDependencies();
                 setState(() {
-                getAllAsync();
-                isLoading = false;
+                  getAllAsync();
+                  isLoading = false;
                 });
               },
             )
@@ -1691,58 +1683,65 @@ class _AccueilAdminState extends State<AccueilAdmin> {
       isLoading = true;
     });
 
-    if (await utilities!.isConnectionAvailable()) {
-      authProvider = Provider.of<AuthProvider>(context, listen: false);
-      token = authProvider.token;
+    try {
+      if (await utilities!.isConnectionAvailable()) {
+        authProvider = Provider.of<AuthProvider>(context, listen: false);
+        token = authProvider.token;
 
-      final url = Uri.parse("${baseUrl}api/users");
-      //final headers = {'Content-Type': 'application/json'};
+        final url = Uri.parse("${baseUrl}api/users");
+        //final headers = {'Content-Type': 'application/json'};
 
-      final headers = {
-        'Content-Type': 'application/ld+json',
-        'Authorization': 'Bearer $token'
-      };
+        final headers = {
+          'Content-Type': 'application/ld+json',
+          'Authorization': 'Bearer $token'
+        };
 
-      String jsonSpec = jsonEncode(medecin.toJson());
-      print('Request Body: $jsonSpec');
-      final response = await http.post(url, headers: headers, body: jsonSpec);
-      print(response.statusCode);
+        String jsonSpec = jsonEncode(medecin.toJson());
 
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> jsonResponse = json.decode(response.body);
-        utilities!.CreationUtilisateur();
-        setState(() {
-          getAllAsync();
-          isLoading = false;
-        });
+        final response = await http.post(url, headers: headers, body: jsonSpec);
+        print(response.statusCode);
 
-        if (jsonResponse.containsKey('error')) {
-          utilities!.error('Medecin déja existant');
-        }
-      } else {
-        if (response.statusCode == 201) {
+        if (response.statusCode == 200) {
+          final Map<String, dynamic> jsonResponse = json.decode(response.body);
           utilities!.CreationUtilisateur();
           setState(() {
             getAllAsync();
             isLoading = false;
           });
-        } else {
-          setState(() {
-            isLoading = false;
-          });
-          print('REQU BODY: ${response.body}');
-          // Gestion des erreurs HTTP
-          utilities!
-              .error('Il y a une erreur.\n Veuillez ressayer ulterieurement.');
-        }
-      }
-    } else {
-      setState(() {
-        isLoading = false;
-      });
 
-      utilities!.handleConnectionError(
-          ConnectionError("Une erreur de connexion s'est produite!"));
+          if (jsonResponse.containsKey('error')) {
+            utilities!.error('Medecin déja existant');
+          }
+        } else {
+          if (response.statusCode == 201) {
+            utilities!.CreationUtilisateur();
+            setState(() {
+              getAllAsync();
+              isLoading = false;
+            });
+          } else {
+            setState(() {
+              isLoading = false;
+            });
+            // Gestion des erreurs HTTP
+            utilities!.error(
+                'Il y a une erreur.\n Veuillez ressayer ulterieurement.');
+          }
+        }
+      } else {
+        setState(() {
+          isLoading = false;
+        });
+
+        utilities!.handleConnectionError(
+            ConnectionError("Une erreur de connexion s'est produite!"));
+      }
+    } catch (e) {
+      if (e is http.ClientException) {
+        utilities!.handleConnectionError(
+            ConnectionError("Une erreur de connexion s'est produite!"));
+      }
+      print('Exception: $e');
     }
   }
 
@@ -1910,32 +1909,43 @@ class _AccueilAdminState extends State<AccueilAdmin> {
                               String? mail =
                                   _validateEmail(emailController.text);
 
-                              if (mail == null) {
-                                Utilisateur user = Utilisateur(
-                                    id: '',
-                                    lastName: nomController.text.trim(),
-                                    roles: ['ROLE_USER'],
-                                    firstName: prenomController.text.trim(),
-                                    password: "doctor",
-                                    userType: 'Doctor',
-                                    speciality: spec!,
-                                    center: center!,
-                                    phone: phoneController.text.trim(),
-                                    email: emailController.text.trim(),
-                                    imageName: "",
-                                    address: addresseController.text.trim(),
-                                    category: null,
-                                    createdAt: DateTime.now(),
-                                    city: villeController.text.trim());
-                                addMedecin(user);
-                                didChangeDependencies();
-                                Navigator.of(context).pop();
-                                didChangeDependencies();
-                                ReInitDataMedecin();
+                              if (spec != null) {
+                                if (center != null) {
+                                  if (mail == null) {
+                                    Utilisateur user = Utilisateur(
+                                        id: '',
+                                        lastName: nomController.text.trim(),
+                                        roles: ['ROLE_USER'],
+                                        firstName: prenomController.text.trim(),
+                                        password: "doctor",
+                                        userType: 'Doctor',
+                                        speciality: spec!,
+                                        center: center!,
+                                        phone: phoneController.text.trim(),
+                                        email: emailController.text.trim(),
+                                        imageName: "",
+                                        address: addresseController.text.trim(),
+                                        category: null,
+                                        createdAt: DateTime.now(),
+                                        city: villeController.text.trim());
+                                    addMedecin(user);
+                                    didChangeDependencies();
+                                    Navigator.of(context).pop();
+                                    didChangeDependencies();
+                                    ReInitDataMedecin();
+                                  } else {
+                                    // Gérez le cas où l'e-mail n'est pas valide
+                                    emailInvalide();
+                                  }
+                                } else {
+                                  utilities!.errorDoctorEmptyCenterOrSpeciality(
+                                      "veuillez sélectionner un centre.");
+                                }
                               } else {
-                                // Gérez le cas où l'e-mail n'est pas valide
-                                emailInvalide();
+                                utilities!.errorDoctorEmptyCenterOrSpeciality(
+                                    "veuillez sélectionner une spécialité.");
                               }
+
                               didChangeDependencies();
                             }
                           },
@@ -1992,11 +2002,7 @@ class _AccueilAdminState extends State<AccueilAdmin> {
   Specialite? modifSpec;
   Centre? modifCenter;
 
-// ... (importations et autres méthodes)
-
   void modifierMedecin(Medecin medecin) {
-    final _formKey = GlobalKey<FormState>();
-
     modifNomController.text = medecin.lastName;
     modifPrenomController.text = medecin.firstName;
     modifEmailController.text = medecin.email;
@@ -2175,37 +2181,52 @@ class _AccueilAdminState extends State<AccueilAdmin> {
                               String? mail =
                                   _validateEmail(modifEmailController.text);
 
-                              if (mail == null) {
-                                Utilisateur user = Utilisateur(
-
-                                    id: medecin.id,
-                                    lastName: modifNomController.text.trim(),
-                                    roles: ['ROLE_USER'],
-                                    firstName:
-                                        modifPrenomController.text.trim(),
-                                    password: "doctor",
-                                    userType: 'Doctor',
-                                    speciality: modifSpec!,
-                                    center: modifCenter!,
-                                    phone: modifPhoneController.text.trim(),
-                                    email: modifEmailController.text.trim(),
-                                    imageName: (medecin.imageName!=null&&medecin.imageName!="")?utilities!.extraireNomFichier(medecin.imageName!):'',
-                                    address:
-                                        modifAddresseController.text.trim(),
-                                    category: null,
-                                    updatedAt: DateTime.now(),
-                                    city: modifVilleController.text.trim());
-                                adminRepository!.updateMedecin(user);
-                                didChangeDependencies();
-                                Navigator.of(context).pop();
-                                didChangeDependencies();
-                                setState(() {
-                                  getAllAsync();
-                                });
+                              if (modifSpec != null) {
+                                if (modifCenter != null) {
+                                  if (mail == null) {
+                                    Utilisateur user = Utilisateur(
+                                        id: medecin.id,
+                                        lastName:
+                                            modifNomController.text.trim(),
+                                        roles: ['ROLE_USER'],
+                                        firstName:
+                                            modifPrenomController.text.trim(),
+                                        password: "doctor",
+                                        userType: 'Doctor',
+                                        speciality: modifSpec!,
+                                        center: modifCenter!,
+                                        phone: modifPhoneController.text.trim(),
+                                        email: modifEmailController.text.trim(),
+                                        imageName: (medecin.imageName != null &&
+                                                medecin.imageName != "")
+                                            ? utilities!.extraireNomFichier(
+                                                medecin.imageName!)
+                                            : '',
+                                        address:
+                                            modifAddresseController.text.trim(),
+                                        category: null,
+                                        updatedAt: DateTime.now(),
+                                        city: modifVilleController.text.trim());
+                                    adminRepository!.updateMedecin(user);
+                                    didChangeDependencies();
+                                    Navigator.of(context).pop();
+                                    didChangeDependencies();
+                                    setState(() {
+                                      getAllAsync();
+                                    });
+                                  } else {
+                                    // Gérez le cas où l'e-mail n'est pas valide
+                                    emailInvalide();
+                                  }
+                                } else {
+                                  utilities!.errorDoctorEmptyCenterOrSpeciality(
+                                      "veuillez sélectionner un centre.");
+                                }
                               } else {
-                                // Gérez le cas où l'e-mail n'est pas valide
-                                emailInvalide();
+                                utilities!.errorDoctorEmptyCenterOrSpeciality(
+                                    "veuillez sélectionner une spécialité.");
                               }
+
                               didChangeDependencies();
                             }
                           },
@@ -2420,5 +2441,283 @@ class _AccueilAdminState extends State<AccueilAdmin> {
         validator: validator,
       ),
     );
+  }
+
+  Future<void> addCenter(Centre centre) async {
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      if (await utilities!.isConnectionAvailable()) {
+        authProvider = Provider.of<AuthProvider>(context, listen: false);
+        token = authProvider.token;
+        final url = Uri.parse("${baseUrl}api/centers");
+        //final headers = {'Content-Type': 'application/json'};
+
+        final headers = {
+          'Content-Type': 'application/ld+json',
+          'Authorization': 'Bearer $token'
+        };
+
+        String jsonSpec = jsonEncode(centre.toJson());
+
+        final response = await http.post(url, headers: headers, body: jsonSpec);
+        print(response.statusCode);
+
+        if (response.statusCode == 200) {
+          final Map<String, dynamic> jsonResponse = json.decode(response.body);
+
+          if (jsonResponse.containsKey('error')) {
+            utilities!.error('Centre déja existant');
+          }
+        } else {
+          if (response.statusCode == 201) {
+            setState(() {
+              isLoading = false;
+              getAllAsync();
+            });
+            utilities!.CreationCentre();
+          } else {
+            setState(() {
+              isLoading = false;
+              getAllAsync();
+            });
+            // Gestion des erreurs HTTP
+            utilities!.error(
+                'Il y a une erreur.\n Veuillez ressayer ulterieurement.');
+          }
+        }
+      } else {
+        setState(() {
+          isLoading = false;
+          getAllAsync();
+        });
+        utilities!.handleConnectionError(
+            ConnectionError("Une erreur de connexion s'est produite!"));
+      }
+    } catch (e) {
+      setState(() {
+        isLoading = false;
+        getAllAsync();
+      });
+      if (e is http.ClientException) {
+        utilities!.handleConnectionError(
+            ConnectionError("Une erreur de connexion s'est produite!"));
+      }
+      print('Exception: $e');
+    }
+  }
+
+  /// Update Center
+
+  Future<void> updateCenter(Centre centre) async {
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      if (await utilities!.isConnectionAvailable()) {
+        authProvider = Provider.of<AuthProvider>(context, listen: false);
+        token = authProvider.token;
+
+        final url = Uri.parse(
+            "${baseUrl}api/centers/${utilities!.extractLastNumber(centre.id)}");
+        //final headers = {'Content-Type': 'application/json'};
+
+        final headers = {
+          'Content-Type': 'application/merge-patch+json',
+          'Authorization': 'Bearer $token'
+        };
+
+        String jsonSpec = jsonEncode(centre.toJson());
+
+        final response =
+            await http.patch(url, headers: headers, body: jsonSpec);
+        print(response.statusCode);
+
+        if (response.statusCode == 200) {
+          final Map<String, dynamic> jsonResponse = json.decode(response.body);
+
+          if (jsonResponse.containsKey('error')) {
+            setState(() {
+              isLoading = false;
+              getAllAsync();
+            });
+            utilities!.error('Centre déja existant');
+          } else {
+            setState(() {
+              isLoading = false;
+              getAllAsync();
+            });
+            utilities!.UpdateCenter();
+          }
+        } else {
+          setState(() {
+            isLoading = false;
+            getAllAsync();
+          });
+          // Gestion des erreurs HTTP
+          utilities!
+              .error('Il y a une erreur.\n Veuillez ressayer ulterieurement.');
+          throw Exception(
+              '-- Failed to add user. HTTP Status Code: ${response.statusCode}');
+        }
+      } else {
+        utilities!.handleConnectionError(
+            ConnectionError("Une erreur de connexion s'est produite!"));
+      }
+    } catch (e) {
+      setState(() {
+        isLoading = false;
+        getAllAsync();
+      });
+      if (e is http.ClientException) {
+        utilities!.handleConnectionError(
+            ConnectionError("Une erreur de connexion s'est produite!"));
+      }
+      print('Exception: $e');
+    }
+  }
+
+  Future<void> addSpecialite(Specialite specialite) async {
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      if (await utilities!.isConnectionAvailable()) {
+        authProvider = Provider.of<AuthProvider>(context, listen: false);
+        token = authProvider.token;
+
+        final url = Uri.parse("${baseUrl}api/specialities");
+        //final headers = {'Content-Type': 'application/json'};
+
+        final headers = {
+          'Content-Type': 'application/ld+json',
+          'Authorization': 'Bearer $token'
+        };
+
+        String jsonSpec = jsonEncode(specialite.toJson());
+
+        final response = await http.post(url, headers: headers, body: jsonSpec);
+        print(response.statusCode);
+
+        if (response.statusCode == 200) {
+          final Map<String, dynamic> jsonResponse = json.decode(response.body);
+
+          if (jsonResponse.containsKey('error')) {
+            setState(() {
+              isLoading = false;
+              getAllAsync();
+            });
+            utilities!.error('Specialite déja existant');
+          }
+        } else {
+          if (response.statusCode == 201) {
+            setState(() {
+              isLoading = false;
+              getAllAsync();
+            });
+            utilities!.CreationSpecialite();
+          } else {
+            // Gestion des erreurs HTTP
+            utilities!.error(
+                'Il y a une erreur.\n Veuillez ressayer ulterieurement.');
+          }
+        }
+      } else {
+        setState(() {
+          isLoading = false;
+          getAllAsync();
+        });
+        utilities!.handleConnectionError(
+            ConnectionError("Une erreur de connexion s'est produite!"));
+      }
+    } catch (e) {
+      setState(() {
+        isLoading = false;
+        getAllAsync();
+      });
+      if (e is http.ClientException) {
+        utilities!.handleConnectionError(
+            ConnectionError("Une erreur de connexion s'est produite!"));
+      }
+      print('Exception: $e');
+    }
+  }
+
+  /// Update Specialite
+
+  Future<void> updateSpecialite(Specialite specialite) async {
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      if (await utilities!.isConnectionAvailable()) {
+        authProvider = Provider.of<AuthProvider>(context, listen: false);
+        token = authProvider.token;
+
+        final url = Uri.parse(
+            "${baseUrl}api/specialities/${utilities!.extractLastNumber(specialite.id)}");
+        //final headers = {'Content-Type': 'application/json'};
+
+        final headers = {
+          'Content-Type': 'application/merge-patch+json',
+          'Authorization': 'Bearer $token'
+        };
+
+        String jsonSpec = jsonEncode(specialite.toJson());
+
+        final response =
+            await http.patch(url, headers: headers, body: jsonSpec);
+        print(response.statusCode);
+
+        if (response.statusCode == 200) {
+          final Map<String, dynamic> jsonResponse = json.decode(response.body);
+
+          if (jsonResponse.containsKey('error')) {
+            setState(() {
+              isLoading = false;
+              getAllAsync();
+            });
+            utilities!.error('Specialite déja existant');
+          } else {
+            setState(() {
+              isLoading = false;
+              getAllAsync();
+            });
+            utilities!.UpdateSpecialite();
+          }
+        } else {
+          setState(() {
+            isLoading = false;
+            getAllAsync();
+          });
+          // Gestion des erreurs HTTP
+          utilities!
+              .error('Il y a une erreur.\n Veuillez ressayer ulterieurement.');
+          throw Exception('-- Erreur reseau');
+        }
+      } else {
+        setState(() {
+          isLoading = false;
+          getAllAsync();
+        });
+        utilities!.handleConnectionError(
+            ConnectionError("Une erreur de connexion s'est produite!"));
+      }
+    } catch (e) {
+      setState(() {
+        isLoading = false;
+        getAllAsync();
+      });
+      if (e is http.ClientException) {
+        utilities!.handleConnectionError(
+            ConnectionError("Une erreur de connexion s'est produite!"));
+      }
+      print('Exception: $e');
+    }
   }
 }

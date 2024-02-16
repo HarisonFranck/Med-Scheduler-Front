@@ -39,7 +39,7 @@ class _MedecinDetailsState extends State<MedecinDetails> {
   void initState() {
     super.initState();
     utilities = Utilities(context: context);
-    print('INIT ZAO');
+
     utilisateur = widget.user;
 
     profilImage =

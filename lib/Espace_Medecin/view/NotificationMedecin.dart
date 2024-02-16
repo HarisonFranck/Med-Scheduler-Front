@@ -317,20 +317,21 @@ class _NotificationMedecinState extends State<NotificationMedecin> {
                                         crossAxisAlignment: CrossAxisAlignment.center,
                                         children: [
                                           Padding(
-                                            padding: EdgeInsets.only(top: 30),
-                                            child: Icon(
-                                              Icons.update,
-                                              size: 30,
-                                              color: Color.fromARGB(230, 20, 20, 90),
+                                            padding: EdgeInsets.only(top: 30,bottom: 10),
+                                            child: Text(
+                                              'Aucune notification récente.',
+                                              textAlign: TextAlign.center,
+                                              style: TextStyle(
+                                                  letterSpacing: 2,
+                                                  color: Colors.black,
+                                                  fontSize: 15),
                                             ),
                                           ),
-                                          Text(
-                                            'Aucune notification récente.',
-                                            textAlign: TextAlign.center,
-                                            style: TextStyle(
-                                                letterSpacing: 2,
-                                                color: Colors.black,
-                                                fontSize: 15),
+                                          Icon(
+                                            Icons.update,
+                                            size: 30,
+                                            color: Color.fromARGB(
+                                                230, 20, 20, 90),
                                           ),
                                         ],
                                       ),

@@ -265,7 +265,7 @@ class _MedecinDetailsState extends State<MedecinDetails> {
               : null;
           nomController.text = utilisateur.firstName;
           prenomController.text = utilisateur.lastName;
-          phoneController.text = utilities!.formatPhoneNumber(utilisateur.phone);
+          phoneController.text = utilisateur.phone;
           emailController.text = utilisateur.email;
           centreController.text =
               (utilisateur.center != null) ? utilisateur.center!.label : '';
@@ -525,7 +525,6 @@ class _MedecinDetailsState extends State<MedecinDetails> {
                                       style: TextStyle(
                                           fontSize: 15
                                       ),
-                                      maxLength: 10,
                                       keyboardType: TextInputType.number,
                                       decoration: const InputDecoration(
                                         focusedBorder: UnderlineInputBorder(

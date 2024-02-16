@@ -14,6 +14,7 @@ import 'dart:convert';
 import 'package:med_scheduler_front/main.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:med_scheduler_front/ConnectionError.dart';
 
 class ConfirmAppointment extends StatefulWidget {
   final CustomAppointment appointment;
@@ -43,7 +44,6 @@ class _ConfirmAppointmentState extends State<ConfirmAppointment> {
     token = authProvider.token;
 
     final url = Uri.parse("${baseUrl}api/appointments");
-    //final headers = {'Content-Type': 'application/json'};
 
     final headers = {
       'Content-Type': 'application/ld+json',
@@ -51,14 +51,12 @@ class _ConfirmAppointmentState extends State<ConfirmAppointment> {
     };
 
     try {
+
       String jsonUser = jsonEncode(appointment.toJson());
-      print('Request Body: $jsonUser');
       final response = await http.post(url, headers: headers, body: jsonUser);
-      print('ADD APPOINT ERROR CODE: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonResponse = json.decode(response.body);
-        print('ERRRR: $jsonResponse');
 
         CustomAppointment newUnavailableAppointment = CustomAppointment(
             id: '',
@@ -72,11 +70,9 @@ class _ConfirmAppointmentState extends State<ConfirmAppointment> {
             reason: raison.text,
             createdAt: DateTime.now());
 
-        print('-- DOC TOKEN :${appointment.medecin!.token}');
 
         if(appointment.medecin!.token!=null&&appointment.medecin!.token!=""){
-          print('--- SEND NOTIF TO MED ---');
-          userRepository!.sendPushMessage(recipientToken: appointment.medecin!.token!);
+         userRepository!.sendPushMessage(recipientToken: appointment.medecin!.token!);
         }else{
           print('---- TOKEN NULL ----');
     }
@@ -85,6 +81,7 @@ class _ConfirmAppointmentState extends State<ConfirmAppointment> {
 
         if (jsonResponse.containsKey('error')) {
           utilities!.appointmentAlreadyExist();
+          // ignore: use_build_context_synchronously
           Navigator.pushReplacement(
               context,
               MaterialPageRoute(
@@ -95,6 +92,7 @@ class _ConfirmAppointmentState extends State<ConfirmAppointment> {
       } else {
         if (response.statusCode == 422) {
           utilities!.appointmentAlreadyExist();
+          // ignore: use_build_context_synchronously
           Navigator.pushReplacement(
               context,
               MaterialPageRoute(
@@ -113,6 +111,7 @@ class _ConfirmAppointmentState extends State<ConfirmAppointment> {
           });
           if (response.statusCode == 401) {
             authProvider.logout();
+            // ignore: use_build_context_synchronously
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(builder: (context) => const MyApp()),
@@ -128,13 +127,15 @@ class _ConfirmAppointmentState extends State<ConfirmAppointment> {
           //error('Il y a une erreur APPOINTMENT. HTTP Status Code: ${response.statusCode}');
         }
       }
-    } catch (e, stackTrace) {
+    } catch (e) {
       setState(() {
         isLoading = false;
       });
-      if (e is http.ClientException) {
-        utilities!.ErrorConnexion();
-      } else {
+    if (e is http.ClientException) {
+
+    utilities!.handleConnectionError(ConnectionError("Une erreur de connexion s'est produite!"));
+
+    }else {
         // Gérer d'autres exceptions
         print('Une erreur inattendue s\'est produite: $e');
       }
@@ -151,7 +152,6 @@ class _ConfirmAppointmentState extends State<ConfirmAppointment> {
     token = authProvider.token;
 
     final url = Uri.parse("${baseUrl}api/unavailable_appointments");
-    //final headers = {'Content-Type': 'application/json'};
 
     final headers = {
       'Content-Type': 'application/ld+json',
@@ -160,16 +160,14 @@ class _ConfirmAppointmentState extends State<ConfirmAppointment> {
 
     try {
       String jsonUser = jsonEncode(appointment.toJson());
-      print('Request Body: $jsonUser');
-      final response = await http.post(url, headers: headers, body: jsonUser);
-      print(response.statusCode);
+     final response = await http.post(url, headers: headers, body: jsonUser);
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonResponse = json.decode(response.body);
-        print('ERRRR: $jsonResponse');
-        setState(() {
+       setState(() {
           isLoading = false;
         });
+        // ignore: use_build_context_synchronously
         Navigator.pushReplacement(
             context,
             MaterialPageRoute(
@@ -186,6 +184,7 @@ class _ConfirmAppointmentState extends State<ConfirmAppointment> {
           setState(() {
             isLoading = false;
           });
+          // ignore: use_build_context_synchronously
           Navigator.pushReplacement(
               context,
               MaterialPageRoute(
@@ -199,6 +198,7 @@ class _ConfirmAppointmentState extends State<ConfirmAppointment> {
         });
         if (response.statusCode == 201) {
           utilities!.RdvValider();
+          // ignore: use_build_context_synchronously
           Navigator.pushReplacement(
               context,
               MaterialPageRoute(
@@ -211,6 +211,7 @@ class _ConfirmAppointmentState extends State<ConfirmAppointment> {
           });
           if (response.statusCode == 401) {
             authProvider.logout();
+            // ignore: use_build_context_synchronously
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(builder: (context) => const MyApp()),
@@ -218,13 +219,15 @@ class _ConfirmAppointmentState extends State<ConfirmAppointment> {
           }
         }
       }
-    } catch (e, stackTrace) {
+    } catch (e) {
       setState(() {
         isLoading = false;
       });
-      if (e is http.ClientException) {
-        utilities!.ErrorConnexion();
-      } else {
+    if (e is http.ClientException) {
+
+    utilities!.handleConnectionError(ConnectionError("Une erreur de connexion s'est produite!"));
+
+    }else {
         // Gérer d'autres exceptions
         print('Une erreur inattendue s\'est produite: $e');
       }

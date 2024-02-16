@@ -44,7 +44,6 @@ class _AccueilPatientState extends State<AccueilPatient> {
 
   String FireBaseTokenPatient = "";
 
-  String fireBaseTokenPatient = "";
 
   Utilisateur? user;
 
@@ -174,8 +173,13 @@ class _AccueilPatientState extends State<AccueilPatient> {
     super.dispose();
   }
 
-  InitFireBase() async {
+ /* Future<void> _initializeApp() async {
+    await InitFireBase();
+    setState(() {}); // Redessine le widget après la fin de InitFireBase
+    didChangeDependencies(); // Appelle didChangeDependencies après la fin de InitFireBase
+  }*/
 
+  InitFireBase() async {
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
     await Firebase.initializeApp(
         options: DefaultFirebaseOptions.currentPlatform);
@@ -186,6 +190,10 @@ class _AccueilPatientState extends State<AccueilPatient> {
 
     await FirebaseApi().initPushForegroundNotif();
     await FirebaseApi().initLocalNotif();
+    if(FireBaseTokenPatient!=""&&FireBaseTokenPatient!=null){
+      setState(() {});
+      didChangeDependencies();
+    }
   }
 
   @override
@@ -195,7 +203,9 @@ class _AccueilPatientState extends State<AccueilPatient> {
     userRepository = UserRepository(context: context, utilities: utilities!);
 
     WidgetsFlutterBinding.ensureInitialized();
-    //InitFireBase();
+
+
+    InitFireBase();
   }
 
   List<CustomAppointment> listAppointment = [];
@@ -327,53 +337,57 @@ class _AccueilPatientState extends State<AccueilPatient> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    authProvider = Provider.of<AuthProvider>(context);
+    authProvider = Provider.of<AuthProvider>(context,listen: false);
     token = authProvider.token;
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      await Firebase.initializeApp(
-          options: DefaultFirebaseOptions.currentPlatform);
-
-      FireBaseTokenPatient = await FirebaseApi().initFireBase();
-
-      await FirebaseApi().initPushForegroundNotif();
-      await FirebaseApi().initLocalNotif();
 
       await getAllAsync();
-      Map<String, dynamic> payload = Jwt.parseJwt(token);
-      idUser = payload['id'] ?? '';
-      dataLoaded = true;
 
-      Utilisateur patientWithToken = Utilisateur(
-          id: user!.id,
-          imageName: (user!.imageName != null && user!.imageName != "")
-              ? utilities!.extraireNomFichier(user!.imageName!)
-              : '',
-          lastName: user!.lastName,
-          firstName: user!.firstName,
-          userType: user!.userType,
-          phone: user!.phone,
-          password: user!.password,
-          email: user!.email,
-          category: user!.category,
-          address: user!.address,
-          roles: user!.roles,
-          city: user!.city,
-          token: FireBaseTokenPatient);
+      SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
 
-     userRepository!.updatePatient(patientWithToken);
+      String? tokenFromFireBase = sharedPreferences.getString('FireBaseTokenPatient');
+      if(tokenFromFireBase!=null&&tokenFromFireBase!=""){
+        Map<String, dynamic> payload = Jwt.parseJwt(token);
+        idUser = payload['id'] ?? '';
+        dataLoaded = true;
+
+        Utilisateur patientWithToken = Utilisateur(
+            id: user!.id,
+            imageName: (user!.imageName != null && user!.imageName != "")
+                ? utilities!.extraireNomFichier(user!.imageName!)
+          : '',
+      lastName: user!.lastName,
+      firstName: user!.firstName,
+      userType: user!.userType,
+      phone: user!.phone,
+      password: user!.password,
+      email: user!.email,
+      category: user!.category,
+      address: user!.address,
+      roles: user!.roles,
+      city: user!.city,
+      token: tokenFromFireBase);
+
+      userRepository!.updatePatient(patientWithToken);
 
       patient = Patient(
-          token: patientWithToken.token,
-          id: user!.id,
-          type: user!.userType,
-          lastName: user!.lastName,
-          firstName: user!.firstName);
+      token: patientWithToken.token,
+      id: user!.id,
+      type: user!.userType,
+      lastName: user!.lastName,
+      firstName: user!.firstName);
+      }else{
+        InitFireBase();
+      }
+
+
     });
     baseRepository = BaseRepository(context: context, utilities: utilities!);
-    user = Provider.of<AuthProviderUser>(context).utilisateur;
+    user = Provider.of<AuthProviderUser>(context,listen: false).utilisateur;
     initializeCalendar();
     if (mounted) {
       getAll();
+      print('LOADED: $dataLoaded');
     }
   }
 
@@ -615,14 +629,8 @@ class _AccueilPatientState extends State<AccueilPatient> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Center(
-                        child: Icon(
-                          Icons.update,
-                          size: 30,
-                          color: Colors.white,
-                        ),
-                      ),
-                      Text(
+
+                      Padding(padding: EdgeInsets.only(bottom: 10),child: Text(
                         'Aucun rendez-vous pour cette semaine',
                         textAlign: TextAlign.center,
                         style: TextStyle(
@@ -631,121 +639,139 @@ class _AccueilPatientState extends State<AccueilPatient> {
                             fontSize: 15,
                             letterSpacing: 2),
                       ),
+                      ),
+                      Center(
+                        child: Icon(
+                          Icons.update,
+                          size: 30,
+                          color: Colors.white,
+                        ),
+                      ),
                     ],
                   ),
                 ),
               ],
             ),
-
             Spacer()
           ])));
 
-  Widget BuildCard(CustomAppointment appointment) => Container(
-      margin: const EdgeInsets.symmetric(horizontal: 6),
-      child: Card(
-          color: const Color.fromARGB(1000, 60, 70, 120),
-          child: Column(children: [
-            SizedBox(
-              height: 10,
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(50),
-                  child: Container(
-                    width: 60,
-                    height: 60,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(60),
-                    ),
-                    child: CachedNetworkImage(
-                      imageUrl:
-                          '$baseUrl${utilities!.ajouterPrefixe(appointment.medecin!.imageName!)}',
-                      placeholder: (context, url) =>
-                          const CircularProgressIndicator(
-                        color: Colors.redAccent,
-                      ), // Affiche un indicateur de chargement en attendant l'image
-                      errorWidget: (context, url, error) => Image.asset(
-                        'assets/images/medecin.png',
-                        fit: BoxFit.cover,
-                        width: 50,
-                        height: 50,
-                      ), // Affiche une icône d'erreur si le chargement échoue
-                    ),
+  Widget BuildCard(CustomAppointment appointment) => GestureDetector(
+        onTap: () {
+          Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => AppointmentDetails(),
+                  settings: RouteSettings(arguments: appointment)));
+        },
+        child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 6),
+            child: Card(
+                color: const Color.fromARGB(1000, 60, 70, 120),
+                child: Column(children: [
+                  SizedBox(
+                    height: 10,
                   ),
-                ),
-                Flexible(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      Text(
-                        'Dr ${appointment.medecin!.lastName[0]}.${abbreviateName(appointment.medecin!.firstName)}',
-                        overflow: TextOverflow.fade,
-                        style: const TextStyle(
-                            color: Colors.white, fontWeight: FontWeight.w500),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(50),
+                        child: Container(
+                          width: 60,
+                          height: 60,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(60),
+                          ),
+                          child: CachedNetworkImage(
+                            imageUrl:
+                                '$baseUrl${utilities!.ajouterPrefixe(appointment.medecin!.imageName!)}',
+                            placeholder: (context, url) =>
+                                const CircularProgressIndicator(
+                              color: Colors.redAccent,
+                            ), // Affiche un indicateur de chargement en attendant l'image
+                            errorWidget: (context, url, error) => Image.asset(
+                              'assets/images/medecin.png',
+                              fit: BoxFit.cover,
+                              width: 50,
+                              height: 50,
+                            ), // Affiche une icône d'erreur si le chargement échoue
+                          ),
+                        ),
                       ),
-                      Text(
-                        '${abreviateRaison(appointment.reason)}',
-                        style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w300,
-                            fontSize: 15),
+                      Flexible(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Dr ${appointment.medecin!.lastName[0]}.${abbreviateName(appointment.medecin!.firstName)}',
+                              overflow: TextOverflow.fade,
+                              style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w500),
+                            ),
+                            Text(
+                              '${abreviateRaison(appointment.reason)}',
+                              style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w300,
+                                  fontSize: 15),
+                            )
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () {
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => AppointmentDetails(),
+                                  settings:
+                                      RouteSettings(arguments: appointment)));
+                        },
+                        icon: const Icon(
+                          Icons.keyboard_arrow_right_sharp,
+                          size: 50,
+                          color: Colors.white,
+                        ),
                       )
                     ],
                   ),
-                ),
-                IconButton(
-                  onPressed: () {
-                    Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => AppointmentDetails(),
-                            settings: RouteSettings(arguments: appointment)));
-                  },
-                  icon: const Icon(
-                    Icons.keyboard_arrow_right_sharp,
-                    size: 50,
-                    color: Colors.white,
+                  const Opacity(
+                    opacity: 0.4,
+                    child: Divider(
+                      thickness: 1,
+                      indent: 20,
+                      endIndent: 20,
+                      color: Colors.white70,
+                    ),
                   ),
-                )
-              ],
-            ),
-            const Opacity(
-              opacity: 0.4,
-              child: Divider(
-                thickness: 1,
-                indent: 20,
-                endIndent: 20,
-                color: Colors.white70,
-              ),
-            ),
-            Row(
-              children: [
-                Padding(
-                  padding: EdgeInsets.only(left: 20),
-                  child: Image.asset(
-                    'assets/images/date-limite.png',
-                    width: 30,
+                  Row(
+                    children: [
+                      Padding(
+                        padding: EdgeInsets.only(left: 20),
+                        child: Image.asset(
+                          'assets/images/date-limite.png',
+                          width: 30,
+                        ),
+                      ),
+                      Spacer()
+                    ],
                   ),
-                ),
-                Spacer()
-              ],
-            ),
-            Row(
-              children: [
-                Padding(
-                  padding: EdgeInsets.only(left: 20, top: 5),
-                  child: Text(
-                    '${formatDateTimeAppointment(appointment.startAt, appointment.timeStart, appointment.timeEnd)} ',
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(color: Colors.white),
-                  ),
-                ),
-                Spacer()
-              ],
-            )
-          ])));
+                  Row(
+                    children: [
+                      Padding(
+                        padding: EdgeInsets.only(left: 20, top: 5),
+                        child: Text(
+                          '${formatDateTimeAppointment(appointment.startAt, appointment.timeStart, appointment.timeEnd)} ',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(color: Colors.white),
+                        ),
+                      ),
+                      Spacer()
+                    ],
+                  )
+                ]))),
+      );
 
   bool isCenter = false;
   bool isSpecialite = false;
@@ -1390,6 +1416,7 @@ class _AccueilPatientState extends State<AccueilPatient> {
                                     return false;
                                   },
                                   child: ListView.builder(
+                                  physics: BouncingScrollPhysics(),
                                     controller: scrollController,
                                     itemCount:
                                         medecins.length + (isLoading ? 1 : 0),

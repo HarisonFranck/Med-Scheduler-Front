@@ -43,11 +43,8 @@ class _NotificationPatientState extends State<NotificationPatient> {
 
   Future<List<CustomAppointment>> filterAppointments(
       Future<List<CustomAppointment>> appointmentsFuture) async {
-    print('FILTER');
-    List<CustomAppointment> allAppointments = await appointmentsFuture;
 
-    print('ALL APPOINTS: ${allAppointments.length}');
-    print('DATE: ${DateFormat('yyyy-MM-dd').format(DateTime(1970, 1, 26))}');
+    List<CustomAppointment> allAppointments = await appointmentsFuture;
 
     // Filtrer les rendez-vous avec startAt égal à DateTime.now()
     List<CustomAppointment> filteredAppointments = allAppointments
@@ -55,7 +52,6 @@ class _NotificationPatientState extends State<NotificationPatient> {
             DateFormat('yyyy-MM-dd').format(appointment.startAt) ==
             DateFormat('yyyy-MM-dd').format(DateTime.now()))
         .toList();
-    print('SIZE FILTER: ${filteredAppointments.length}');
 
     return filteredAppointments;
   }
@@ -344,22 +340,23 @@ class _NotificationPatientState extends State<NotificationPatient> {
                                           crossAxisAlignment:
                                           CrossAxisAlignment.center,
                                           children: [
+
                                             Padding(
-                                              padding: EdgeInsets.only(top: 30),
-                                              child: Icon(
-                                                Icons.update,
-                                                size: 30,
-                                                color: Color.fromARGB(
-                                                    230, 20, 20, 90),
+                                              padding: EdgeInsets.only(top: 30,bottom: 10),
+                                              child: Text(
+                                                'Aucune notification récente.',
+                                                textAlign: TextAlign.center,
+                                                style: TextStyle(
+                                                    letterSpacing: 2,
+                                                    color: Colors.black,
+                                                    fontSize: 15),
                                               ),
                                             ),
-                                            Text(
-                                              'Aucune notification récente.',
-                                              textAlign: TextAlign.center,
-                                              style: TextStyle(
-                                                  letterSpacing: 2,
-                                                  color: Colors.black,
-                                                  fontSize: 15),
+                                            Icon(
+                                              Icons.update,
+                                              size: 30,
+                                              color: Color.fromARGB(
+                                                  230, 20, 20, 90),
                                             ),
                                           ],
                                         ),

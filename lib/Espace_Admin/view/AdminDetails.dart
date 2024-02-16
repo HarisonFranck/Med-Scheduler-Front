@@ -4,11 +4,9 @@ import 'package:med_scheduler_front/main.dart';
 import 'dart:io';
 import 'package:provider/provider.dart';
 import 'package:med_scheduler_front/AuthProvider.dart';
-import 'package:image_picker/image_picker.dart';
 import 'dart:async';
 import 'dart:typed_data';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:image/image.dart' as img;
 import 'package:uuid/uuid.dart';
 import 'package:med_scheduler_front/UrlBase.dart';
@@ -24,6 +22,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:med_scheduler_front/UtilisateurImage.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:image_cropper/image_cropper.dart';
+import 'package:flutter/services.dart';
 
 class AdminDetails extends StatefulWidget {
   _AdminDetailsState createState() => _AdminDetailsState();
@@ -442,7 +441,7 @@ class _AdminDetailsState extends State<AdminDetails> {
             : null;
         nomController.text = utilisateur.firstName;
         prenomController.text = utilisateur.lastName;
-        phoneController.text = utilities!.formatPhoneNumber(utilisateur.phone);
+        phoneController.text = utilisateur.phone;
         emailController.text = utilisateur.email;
         categorieController.text = (utilisateur.category != null)
             ? categorieSet(utilisateur.category!)
@@ -679,9 +678,7 @@ class _AdminDetailsState extends State<AdminDetails> {
                                     width:
                                         MediaQuery.of(context).size.width / 2.5,
                                     child: TextField(
-                                      style: TextStyle(
-                                          fontSize: 15
-                                      ),
+                                      style: TextStyle(fontSize: 15),
                                       decoration: const InputDecoration(
                                         focusedBorder: UnderlineInputBorder(
                                           borderSide: BorderSide(
@@ -709,9 +706,7 @@ class _AdminDetailsState extends State<AdminDetails> {
                                     width:
                                         MediaQuery.of(context).size.width / 2.5,
                                     child: TextField(
-                                      style: TextStyle(
-                                          fontSize: 15
-                                      ),
+                                      style: TextStyle(fontSize: 15),
                                       decoration: const InputDecoration(
                                         focusedBorder: UnderlineInputBorder(
                                           borderSide: BorderSide(
@@ -736,12 +731,10 @@ class _AdminDetailsState extends State<AdminDetails> {
                                 Padding(
                                   padding: const EdgeInsets.only(left: 55),
                                   child: Container(
-                                    width: MediaQuery.of(context).size.width /
-                                        2.5,
+                                    width:
+                                        MediaQuery.of(context).size.width / 2.5,
                                     child: TextField(
-                                      style: TextStyle(
-                                          fontSize: 15
-                                      ),
+                                      style: TextStyle(fontSize: 15),
                                       decoration: const InputDecoration(
                                         focusedBorder: UnderlineInputBorder(
                                           borderSide: BorderSide(
@@ -843,12 +836,13 @@ class _AdminDetailsState extends State<AdminDetails> {
                                 Padding(
                                   padding: const EdgeInsets.only(left: 18),
                                   child: Container(
-                                    width: MediaQuery.of(context).size.width /
-                                        2.5,
+                                    width:
+                                        MediaQuery.of(context).size.width / 2.5,
                                     child: TextField(
-                                        style: TextStyle(
-                                        fontSize: 15
-                                        ),
+                                      inputFormatters: [
+                                        FilteringTextInputFormatter.digitsOnly
+                                      ],
+                                      style: TextStyle(fontSize: 15),
                                       maxLength: 10,
                                       keyboardType: TextInputType.number,
                                       decoration: const InputDecoration(
@@ -910,7 +904,10 @@ class _AdminDetailsState extends State<AdminDetails> {
                                           phone: phone,
                                           password: utilisateur.password,
                                           email: utilisateur.email,
-                                          imageName: (user!.imageName!=null)?utilities!.extraireNomFichier(user!.imageName!):null,
+                                          imageName: (user!.imageName != null)
+                                              ? utilities!.extraireNomFichier(
+                                                  user!.imageName!)
+                                              : null,
                                           category: utilisateur.category,
                                           address: utilisateur.address,
                                           roles: utilisateur.roles,

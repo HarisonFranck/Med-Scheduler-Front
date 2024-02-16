@@ -955,8 +955,11 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
   CustomAppointment? theAppoint;
   DateTime dtCliquer = DateTime.now();
 
+  double AppointWidth = 0.0;
+
   @override
   Widget build(BuildContext context) {
+    AppointWidth = MediaQuery.of(context).size.width / 1.40;
     return PopScope(
       canPop: false,
       child: Scaffold(
@@ -1122,7 +1125,6 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
 
                                         bool isAllDisabled =
                                             dateIsAllDisabled(details.date!);
-                                        print('IS ALL: $isAllDisabled');
 
                                         if (dt == false) {
                                           isAllDisabled
@@ -1356,7 +1358,7 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
               ),
             ),
             Container(
-              width: MediaQuery.of(context).size.width / 1.40,
+              width: AppointWidth,
               height: (appoint.isDeleted != null && appoint.isDeleted == true)
                   ? 95
                   : 55,

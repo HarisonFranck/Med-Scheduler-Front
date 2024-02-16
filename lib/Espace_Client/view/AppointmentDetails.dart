@@ -11,18 +11,15 @@ class AppointmentDetails extends StatefulWidget {
 }
 
 class _AppointmentDetailsState extends State<AppointmentDetails> {
-
   Utilities? utilities;
 
   String baseUrl = UrlBase().baseUrl;
-
 
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
     utilities = Utilities(context: context);
-
   }
 
   String abbreviateName(String fullName) {
@@ -333,7 +330,9 @@ class _AppointmentDetailsState extends State<AppointmentDetails> {
                                     fontWeight: FontWeight.w500),
                               ),
                             ),
-                            const SizedBox(width: 40,),
+                            const SizedBox(
+                              width: 40,
+                            ),
                             Expanded(
                               child: Text(
                                 '${appointment.reason}',
@@ -366,7 +365,9 @@ class _AppointmentDetailsState extends State<AppointmentDetails> {
                                     fontWeight: FontWeight.w500),
                               ),
                             ),
-                            const SizedBox(width: 70,),
+                            const SizedBox(
+                              width: 70,
+                            ),
                             Text(
                               '  ${formatDateTimeAppointment(appointment.startAt.toLocal(), appointment.timeEnd.toLocal())}',
                               style: const TextStyle(
@@ -396,7 +397,9 @@ class _AppointmentDetailsState extends State<AppointmentDetails> {
                                     fontWeight: FontWeight.w500),
                               ),
                             ),
-                            const SizedBox(width: 68,),
+                            const SizedBox(
+                              width: 68,
+                            ),
                             Text(
                               '${formatTimeAppointment(appointment.timeStart, appointment.timeEnd)}',
                               style: const TextStyle(
@@ -404,6 +407,7 @@ class _AppointmentDetailsState extends State<AppointmentDetails> {
                                   fontSize: 14,
                                   fontWeight: FontWeight.w500),
                             ),
+                            Spacer()
                           ],
                         )),
                     Divider(
