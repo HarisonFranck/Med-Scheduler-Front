@@ -901,8 +901,6 @@ class _AppointmentDialogState extends State<AppointmentDialog> {
                                               } else {
                                                 print('FALSE PRISE');
 
-                                                //CustomAppointment newAppoint = CustomAppointment(id: appointment.id,patient: appointment.patient, type: appointment.type, startAt: appointment.startAt, timeStart: appointment.timeStart, timeEnd: appointment.timeEnd, reason: appointment.reason, createdAt: appointment.createdAt,appType: "Desactiver");
-
 
                                                 print('APPOINT FINDED: ${unavAppointFinded.patient!.id}');
 
@@ -1050,6 +1048,10 @@ class _AppointmentDialogState extends State<AppointmentDialog> {
 
         baseRepository!.createUnavalaibleAppointment(
             appoint);
+        if(appointment.patient!.token!=null){
+
+        baseRepository!.sendNotificationDisableAppointment(doctorName: appointment.medecin!.lastName,recipientToken: appointment.patient!.token!);
+        }
         didChangeDependencies();
       },
     ).show();
@@ -1110,6 +1112,10 @@ class _AppointmentDialogState extends State<AppointmentDialog> {
         baseRepository!.patchAppointment(appointPatch);
 
         baseRepository!.createUnavalaibleAppointment(appoint);
+        if(appointment.patient!.token!=null){
+        baseRepository!.sendNotificationDisableAppointment(doctorName: appointment.medecin!.lastName,recipientToken: appointment.patient!.token!);
+        }
+
         didChangeDependencies();
       },
     ).show();

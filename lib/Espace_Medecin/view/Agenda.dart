@@ -30,8 +30,6 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:med_scheduler_front/FirebaseApi.dart';
 import 'package:awesome_dialog/awesome_dialog.dart';
 
-
-
 class Agenda extends StatefulWidget {
   @override
   AgendaState createState() => AgendaState();
@@ -41,7 +39,6 @@ class AgendaState extends State<Agenda> {
   late AuthProvider authProvider;
   late String token;
 
-
   String firebaseTokenMedecin = "";
 
   MedecinRepository? medecinRepository;
@@ -50,9 +47,6 @@ class AgendaState extends State<Agenda> {
 
   Utilisateur? user;
   Medecin? widgetMedecin;
-
-
-
 
   Future<void> initializeCalendar() async {
     tz.initializeTimeZones();
@@ -125,12 +119,10 @@ class AgendaState extends State<Agenda> {
               final result =
                   await deviceCalendarPlugin.createOrUpdateEvent(event);
             }
-
           }
         });
       }
     } catch (e, stackTrace) {
-
       print(' -- ERROR E: $e \n -- STACK: $stackTrace');
     }
   }
@@ -190,31 +182,28 @@ class AgendaState extends State<Agenda> {
     return isIt;
   }
 
+  InitFireBase() async {
+    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+    await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform);
 
-  InitFireBase()async{
-   SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
-    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-
-      firebaseTokenMedecin = await FirebaseApi().initFireBase();
+    firebaseTokenMedecin = await FirebaseApi().initFireBase();
 
     sharedPreferences.setString('FirebaseTokenMedecin', firebaseTokenMedecin);
 
     await FirebaseApi().initPushForegroundNotif();
     await FirebaseApi().initLocalNotif();
-    if(firebaseTokenMedecin!=null&&firebaseTokenMedecin!=""){
+    if (firebaseTokenMedecin != null && firebaseTokenMedecin != "") {
       setState(() {});
       didChangeDependencies();
     }
   }
-
 
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
     WidgetsFlutterBinding.ensureInitialized();
-
-
 
     utilities = Utilities(context: context);
     medecinRepository =
@@ -226,23 +215,17 @@ class AgendaState extends State<Agenda> {
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       // Traitez le message ici
       newAppointmentRequestRefresh();
-      setState(() {
-
-      });
-
+      setState(() {});
     });
-
-
   }
-
 
   void newAppointmentRequestRefresh() {
     // Définissez la fonction callback pour mettre à jour le state
     void updateState() {
-
       didChangeDependencies();
-      setState(()async {
-        listAppointment = await medecinRepository!.getAllAppointmentMedecin(widgetMedecin!);
+      setState(() async {
+        listAppointment =
+            await medecinRepository!.getAllAppointmentMedecin(widgetMedecin!);
       });
     }
 
@@ -250,10 +233,15 @@ class AgendaState extends State<Agenda> {
       context: context,
       dialogType: DialogType.info,
       animType: AnimType.rightSlide,
-      titleTextStyle: const TextStyle(letterSpacing: 2,color: Color.fromARGB(1000, 60, 70, 120)),
-      descTextStyle: TextStyle(letterSpacing: 2,color: const Color.fromARGB(1000, 60, 70, 120).withOpacity(0.8),fontSize: 15),
+      titleTextStyle: const TextStyle(
+          letterSpacing: 2, color: Color.fromARGB(1000, 60, 70, 120)),
+      descTextStyle: TextStyle(
+          letterSpacing: 2,
+          color: const Color.fromARGB(1000, 60, 70, 120).withOpacity(0.8),
+          fontSize: 15),
       title: 'Nouveau rendez-vous',
-      desc: 'Un patient a pris un rendez-vous avec vous.\nIl est donc necessaire d\'actualiser votre agenda',
+      desc:
+          'Un patient a pris un rendez-vous avec vous.\nIl est donc necessaire d\'actualiser votre agenda',
       btnOkText: 'Actualiser',
       btnOkColor: const Color.fromARGB(1000, 60, 70, 120),
       btnCancel: null,
@@ -261,7 +249,6 @@ class AgendaState extends State<Agenda> {
       btnOkOnPress: updateState,
     ).show();
   }
-
 
   List<CustomAppointment> listAppointment = [];
   List<CustomAppointment> listUnavalaibleAppointment = [];
@@ -299,9 +286,6 @@ class AgendaState extends State<Agenda> {
     return filteredList;
   }
 
-
-
-
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -309,7 +293,7 @@ class AgendaState extends State<Agenda> {
     calculateBlackoutDates();
 
     authProvider = Provider.of<AuthProvider>(context, listen: false);
-    user = Provider.of<AuthProviderUser>(context,listen: false).utilisateur;
+    user = Provider.of<AuthProviderUser>(context, listen: false).utilisateur;
     widgetMedecin = Medecin(
         id: user!.id,
         roles: user!.roles,
@@ -326,36 +310,51 @@ class AgendaState extends State<Agenda> {
     token = authProvider.token;
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
+      SharedPreferences sharedPreferences =
+          await SharedPreferences.getInstance();
+      String? tokenFirebaseMedecin =
+          sharedPreferences.getString('FirebaseTokenMedecin');
+      if (tokenFirebaseMedecin != null && tokenFirebaseMedecin != "") {
+        Specialite specialite =
+            await medecinRepository!.getSpecialite(user!.speciality!.id);
+        Centre center = await medecinRepository!.getCenter(user!.center!.id);
 
-      SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
-      String? tokenFirebaseMedecin = sharedPreferences.getString('FirebaseTokenMedecin');
-      if(tokenFirebaseMedecin!=null&&tokenFirebaseMedecin!=""){
+        Utilisateur medecinWithToken = Utilisateur(
+            id: user!.id,
+            imageName: (user!.imageName != null && user!.imageName != "")
+                ? utilities!.extraireNomFichier(user!.imageName!)
+                : '',
+            category: user!.category,
+            password: user!.password,
+            roles: user!.roles,
+            speciality: specialite,
+            lastName: user!.lastName,
+            firstName: user!.firstName,
+            userType: user!.userType,
+            phone: user!.phone,
+            email: user!.email,
+            address: user!.address,
+            center: center,
+            createdAt: user!.createdAt,
+            city: user!.city,
+            token: tokenFirebaseMedecin);
 
-        Specialite specialite = await medecinRepository!.getSpecialite(user!.speciality!.id);
-      Centre center = await medecinRepository!.getCenter(user!.center!.id);
+        medecinRepository!.updateMedecin(medecinWithToken);
 
-
-
-      Utilisateur medecinWithToken = Utilisateur(id: user!.id,imageName: (user!.imageName!=null&&user!.imageName!="")?utilities!.extraireNomFichier(
-      user!.imageName!):'',category: user!.category,password: user!.password, roles: user!.roles, speciality: specialite, lastName: user!.lastName, firstName: user!.firstName, userType: user!.userType, phone: user!.phone, email: user!.email, address: user!.address, center: center, createdAt: user!.createdAt, city: user!.city, token:tokenFirebaseMedecin);
-
-      medecinRepository!.updateMedecin(medecinWithToken);
-
-
-      listAppointment =
-      await medecinRepository!.getAllAppointmentMedecin(widgetMedecin!);
-      listUnavalaibleAppointment =
-      await baseRepository!.getAllUnavalaibleAppointment(widgetMedecin!);
-      if (listAppointment.isEmpty) {
-      setState(() {
-      dataLoaded = true;
-      });
-      }
-      initializeCalendar();
-      setState(() {
-      dataLoaded = true;
-      });
-      }else{
+        listAppointment =
+            await medecinRepository!.getAllAppointmentMedecin(widgetMedecin!);
+        listUnavalaibleAppointment =
+            await baseRepository!.getAllUnavalaibleAppointment(widgetMedecin!);
+        if (listAppointment.isEmpty) {
+          setState(() {
+            dataLoaded = true;
+          });
+        }
+        initializeCalendar();
+        setState(() {
+          dataLoaded = true;
+        });
+      } else {
         InitFireBase();
       }
     });
@@ -636,7 +635,6 @@ class AgendaState extends State<Agenda> {
 
   @override
   Widget build(BuildContext context) {
-
     appointWidth = MediaQuery.of(context).size.width / 1.40;
     return PopScope(
       canPop: false,
@@ -745,7 +743,7 @@ class AgendaState extends State<Agenda> {
                                                   DateTime.now().day)) {
                                             jourDisable();
                                           } else {
-                                           List<CustomAppointment> list =
+                                            List<CustomAppointment> list =
                                                 listAppointment
                                                     .where((element) =>
                                                         DateFormat('yyyy-MM-dd')
@@ -788,7 +786,10 @@ class AgendaState extends State<Agenda> {
                                           jourSundayDisable();
                                         }
                                       },
-                                      todayHighlightColor:(DateTime.now().hour>15)?Colors.transparent:Colors.redAccent,
+                                      todayHighlightColor:
+                                          (DateTime.now().hour > 15)
+                                              ? Colors.transparent
+                                              : Colors.redAccent,
                                       todayTextStyle: const TextStyle(
                                         fontWeight: FontWeight.w500,
                                         letterSpacing: 1.6,
@@ -844,7 +845,8 @@ class AgendaState extends State<Agenda> {
                                                   ),
                                                   minimumSize:
                                                       MaterialStateProperty.all(
-                                                           Size(appointWidth, 40.0)),
+                                                          Size(appointWidth,
+                                                              40.0)),
                                                 ),
                                                 onPressed: () {
                                                   Navigator.push(
@@ -901,7 +903,8 @@ class AgendaState extends State<Agenda> {
                                                   ),
                                                   minimumSize:
                                                       MaterialStateProperty.all(
-                                                  Size(appointWidth, 40.0)),
+                                                          Size(appointWidth,
+                                                              40.0)),
                                                 ),
                                                 onPressed: () {
                                                   Navigator.push(
@@ -929,7 +932,9 @@ class AgendaState extends State<Agenda> {
                                             ),
                                           ],
                                         ),
-                                      SizedBox(height: 20,)
+                                        SizedBox(
+                                          height: 20,
+                                        )
                                       ] else if (!isAppointment &&
                                           !istoAddAppointment) ...[
                                         showNothing()
@@ -1023,7 +1028,6 @@ class AgendaState extends State<Agenda> {
   }
 
   Widget showAppointment(CustomAppointment appoint, DateTime clickedDt) {
-
     return Column(
       children: [
         GestureDetector(
@@ -1158,7 +1162,6 @@ class AgendaState extends State<Agenda> {
 
   Widget showAppointmentAfterFirst(
       CustomAppointment appoint, DateTime clickedDt) {
-
     return Column(
       children: [
         Row(
@@ -1185,7 +1188,7 @@ class AgendaState extends State<Agenda> {
                       borderRadius: BorderRadius.circular(6),
                       color: (appoint.isDeleted != null &&
                               appoint.isDeleted == true)
-                          ? Colors.black.withOpacity(0.3)
+                          ? const Color.fromARGB(1000, 238, 239, 244)
                           : Colors.redAccent.withOpacity(
                               0.7), // utilisez la couleur de l'appointment
                     ),
@@ -1219,11 +1222,14 @@ class AgendaState extends State<Agenda> {
                               child: Text(
                                 textAlign: TextAlign.start,
                                 '${formatDateTimeAppointment(appoint.startAt, appoint.timeStart, appoint.timeEnd)}',
-                                style: const TextStyle(
+                                style: TextStyle(
                                     fontWeight: FontWeight.w500,
                                     fontSize: 12,
                                     letterSpacing: 2,
-                                    color: Colors.white),
+                                    color: (appoint.isDeleted != null &&
+                                            appoint.isDeleted == true)
+                                        ? Colors.black.withOpacity(0.4)
+                                        : Colors.white),
                               ),
                             ),
                           ],
@@ -1474,8 +1480,8 @@ class AgendaState extends State<Agenda> {
                     Row(
                       children: [
                         Padding(
-                          padding:
-                              const EdgeInsets.only(top: 20, left: 20, bottom: 50),
+                          padding: const EdgeInsets.only(
+                              top: 20, left: 20, bottom: 50),
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(60),
                             child: Container(
@@ -1554,7 +1560,9 @@ class AgendaState extends State<Agenda> {
                                     fontWeight: FontWeight.w500),
                               ),
                             ),
-                            const SizedBox(width: 30,),
+                            const SizedBox(
+                              width: 30,
+                            ),
                             Expanded(
                               child: Text(
                                 '${appointment.reason}',
@@ -1564,7 +1572,6 @@ class AgendaState extends State<Agenda> {
                                     fontWeight: FontWeight.w500),
                               ),
                             ),
-
                           ],
                         )),
                     Divider(
@@ -1588,7 +1595,9 @@ class AgendaState extends State<Agenda> {
                                     fontWeight: FontWeight.w500),
                               ),
                             ),
-                            const SizedBox(width: 60,),
+                            const SizedBox(
+                              width: 60,
+                            ),
                             Text(
                               '${DateTimeFormatAppointment(appointment.startAt, appointment.timeEnd)}',
                               style: const TextStyle(
@@ -1596,7 +1605,7 @@ class AgendaState extends State<Agenda> {
                                   fontSize: 14,
                                   fontWeight: FontWeight.w500),
                             ),
-        const Spacer()
+                            const Spacer()
                           ],
                         )),
                     Divider(
@@ -1619,7 +1628,9 @@ class AgendaState extends State<Agenda> {
                                     fontWeight: FontWeight.w500),
                               ),
                             ),
-                            const SizedBox(width: 58,),
+                            const SizedBox(
+                              width: 58,
+                            ),
                             Text(
                               ' ${formatDateTimeAppointment(appointment.startAt.toLocal(), appointment.timeStart, appointment.timeEnd.toLocal())}',
                               style: const TextStyle(

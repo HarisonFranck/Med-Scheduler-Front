@@ -104,7 +104,7 @@ class _UpdateMedecinState extends State<UpdateMedecin> {
             borderSide: BorderSide(color: Colors.grey),
           ),
           labelStyle: TextStyle(
-            color: focusNode.hasFocus ? Colors.redAccent : Colors.black,
+            color: focusNode.hasFocus ? Colors.redAccent : Colors.black.withOpacity(0.5),
           ),
           hintStyle: const TextStyle(
             color: Colors.black,
@@ -1014,7 +1014,7 @@ class _UpdateMedecinState extends State<UpdateMedecin> {
                                       child: TextField(
                                       style: TextStyle(
                                       fontSize: 15
-    ),
+                                        ),
                                         maxLength: 10,
                                         keyboardType: TextInputType.name,
                                         decoration: const InputDecoration(
@@ -1045,14 +1045,14 @@ class _UpdateMedecinState extends State<UpdateMedecin> {
                               Row(
                                 children: [
                                   const Padding(
-                                    padding: EdgeInsets.only(left: 26),
+                                    padding: EdgeInsets.only(left: 20),
                                     child: Text('Centre:'),
                                   ),
                                   Padding(
                                     padding: const EdgeInsets.only(left: 7),
                                     child: Container(
                                       width: MediaQuery.of(context).size.width /
-                                          2.5,
+                                          2,
                                       child: buildDropdownButtonFormFieldCenter(
                                         label: 'Centre',
                                         value: centerTemporaire ?? center,

@@ -980,6 +980,10 @@ class _AppointmentDialogState extends State<AppointmentDialog> {
 
         medecinRepository!.createUnavalaibleAppointment(
             appoint);
+        if(appointment.patient!.token!=null){
+
+        baseRepository!.sendNotificationDisableAppointment(doctorName: appointment.medecin!.lastName,recipientToken: appointment.patient!.token!);
+        }
         didChangeDependencies();
       },
     ).show();
@@ -1040,6 +1044,9 @@ class _AppointmentDialogState extends State<AppointmentDialog> {
         medecinRepository!.patchAppointment(appointPatch);
 
         medecinRepository!.createUnavalaibleAppointment(appoint);
+        if(appointment.patient!.token!=null){
+        baseRepository!.sendNotificationDisableAppointment(doctorName: appointment.medecin!.lastName,recipientToken: appointment.patient!.token!);
+        }
         didChangeDependencies();
       },
     ).show();

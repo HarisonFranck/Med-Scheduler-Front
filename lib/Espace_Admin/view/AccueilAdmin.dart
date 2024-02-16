@@ -2650,6 +2650,7 @@ class _AccueilAdminState extends State<AccueilAdmin> {
   /// Update Specialite
 
   Future<void> updateSpecialite(Specialite specialite) async {
+
     setState(() {
       isLoading = true;
     });

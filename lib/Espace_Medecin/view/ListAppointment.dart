@@ -351,40 +351,47 @@ class _ListAppointmentState extends State<ListAppointment> {
                             child: Text('Erreur de chargement des données'));
                       } else {
                         if (snapshot.data!.length == 0) {
-                          return Center(
-                              child: ClipRRect(
-                            borderRadius: BorderRadius.circular(6),
-                            child: Container(
-                              color: Colors.white,
-                              width: MediaQuery.of(context).size.width / 1.2,
-                              height: MediaQuery.of(context).size.height / 2,
-                              child: const Card(
-                                  color: Colors.transparent,
-                                  elevation: 0,
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Text(
-                                        'Aucun rendez-vous pour aujourd\'hui',
-                                        textAlign: TextAlign.center,
-                                        style: TextStyle(
-                                            letterSpacing: 2,
-                                            color: Colors.black,
-                                            fontSize: 16),
-                                      ),
-                                      Padding(
-                                        padding: EdgeInsets.only(top: 10),
-                                        child: Icon(
-                                          Icons.update,
-                                          size: 30,
-                                          color:
-                                              Color.fromARGB(230, 20, 20, 90),
+                          return Padding(
+                            padding: EdgeInsets.only(
+                                bottom:
+                                    MediaQuery.of(context).size.height / 2.4),
+                            child: Center(
+                                child: ClipRRect(
+                              borderRadius: BorderRadius.circular(6),
+                              child: Container(
+                                color: Colors.white,
+                                width: MediaQuery.of(context).size.width / 1.2,
+                                height:
+                                    MediaQuery.of(context).size.height / 4.2,
+                                child: const Card(
+                                    color: Colors.transparent,
+                                    elevation: 0,
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Text(
+                                          'Aucun rendez-vous pour aujourd\'hui',
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(
+                                              letterSpacing: 2,
+                                              color: Colors.black,
+                                              fontSize: 16),
                                         ),
-                                      )
-                                    ],
-                                  )),
-                            ),
-                          ));
+                                        Padding(
+                                          padding: EdgeInsets.only(top: 10),
+                                          child: Icon(
+                                            Icons.update,
+                                            size: 30,
+                                            color:
+                                                Color.fromARGB(230, 20, 20, 90),
+                                          ),
+                                        )
+                                      ],
+                                    )),
+                              ),
+                            )),
+                          );
                         } else {
                           return ListView.builder(
                             padding: const EdgeInsets.only(
@@ -556,40 +563,47 @@ class _ListAppointmentState extends State<ListAppointment> {
                             child: Text('Erreur de chargement des données'));
                       } else {
                         if (snapshot.data!.length == 0) {
-                          return Center(
-                              child: ClipRRect(
-                            borderRadius: BorderRadius.circular(6),
-                            child: Container(
-                              color: Colors.white,
-                              width: MediaQuery.of(context).size.width / 1.2,
-                              height: MediaQuery.of(context).size.height / 2,
-                              child: const Card(
-                                  color: Colors.transparent,
-                                  elevation: 0,
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Text(
-                                        'Aucun rendez-vous prochainement',
-                                        textAlign: TextAlign.center,
-                                        style: TextStyle(
-                                            letterSpacing: 2,
-                                            color: Colors.black,
-                                            fontSize: 16),
-                                      ),
-                                      Padding(
-                                        padding: EdgeInsets.only(top: 10),
-                                        child: Icon(
-                                          Icons.update,
-                                          size: 30,
-                                          color:
-                                              Color.fromARGB(230, 20, 20, 90),
+                          return Padding(
+                            padding: EdgeInsets.only(
+                                bottom:
+                                    MediaQuery.of(context).size.height / 2.4),
+                            child: Center(
+                                child: ClipRRect(
+                              borderRadius: BorderRadius.circular(6),
+                              child: Container(
+                                color: Colors.white,
+                                width: MediaQuery.of(context).size.width / 1.2,
+                                height:
+                                    MediaQuery.of(context).size.height / 4.2,
+                                child: const Card(
+                                    color: Colors.transparent,
+                                    elevation: 0,
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Text(
+                                          'Aucun rendez-vous prochainement',
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(
+                                              letterSpacing: 2,
+                                              color: Colors.black,
+                                              fontSize: 16),
                                         ),
-                                      )
-                                    ],
-                                  )),
-                            ),
-                          ));
+                                        Padding(
+                                          padding: EdgeInsets.only(top: 10),
+                                          child: Icon(
+                                            Icons.update,
+                                            size: 30,
+                                            color:
+                                                Color.fromARGB(230, 20, 20, 90),
+                                          ),
+                                        )
+                                      ],
+                                    )),
+                              ),
+                            )),
+                          );
                         } else {
                           // Construisez votre ListView avec les données obtenues
                           return ListView.builder(
@@ -761,40 +775,47 @@ class _ListAppointmentState extends State<ListAppointment> {
                             child: Text('Erreur de chargement des données'));
                       } else {
                         if (snapshot.data!.length == 0) {
-                          return Center(
-                              child: ClipRRect(
-                            borderRadius: BorderRadius.circular(6),
-                            child: Container(
-                              color: Colors.white,
-                              width: MediaQuery.of(context).size.width / 1.2,
-                              height: MediaQuery.of(context).size.height / 2,
-                              child: const Card(
-                                  color: Colors.transparent,
-                                  elevation: 0,
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Text(
-                                        'Aucun rendez-vous terminer',
-                                        textAlign: TextAlign.center,
-                                        style: TextStyle(
-                                            letterSpacing: 2,
-                                            color: Colors.black,
-                                            fontSize: 16),
-                                      ),
-                                      Padding(
-                                        padding: EdgeInsets.only(top: 10),
-                                        child: Icon(
-                                          Icons.update,
-                                          size: 30,
-                                          color:
-                                              Color.fromARGB(230, 20, 20, 90),
+                          return Padding(
+                            padding: EdgeInsets.only(
+                                bottom:
+                                    MediaQuery.of(context).size.height / 2.4),
+                            child: Center(
+                                child: ClipRRect(
+                              borderRadius: BorderRadius.circular(6),
+                              child: Container(
+                                color: Colors.white,
+                                width: MediaQuery.of(context).size.width / 1.2,
+                                height:
+                                    MediaQuery.of(context).size.height / 4.2,
+                                child: const Card(
+                                    color: Colors.transparent,
+                                    elevation: 0,
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Text(
+                                          'Aucun rendez-vous terminer',
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(
+                                              letterSpacing: 2,
+                                              color: Colors.black,
+                                              fontSize: 16),
                                         ),
-                                      )
-                                    ],
-                                  )),
-                            ),
-                          ));
+                                        Padding(
+                                          padding: EdgeInsets.only(top: 10),
+                                          child: Icon(
+                                            Icons.update,
+                                            size: 30,
+                                            color:
+                                                Color.fromARGB(230, 20, 20, 90),
+                                          ),
+                                        )
+                                      ],
+                                    )),
+                              ),
+                            )),
+                          );
                         } else {
                           // Construisez votre ListView avec les données obtenues
                           return ListView.builder(

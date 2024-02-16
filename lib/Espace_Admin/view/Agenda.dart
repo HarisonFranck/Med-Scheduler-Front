@@ -1002,7 +1002,7 @@ class AgendaState extends State<Agenda> {
                       borderRadius: BorderRadius.circular(6),
                       color: (appoint.isDeleted != null &&
                               appoint.isDeleted == true)
-                          ? Colors.black.withOpacity(0.3)
+                          ? Color.fromARGB(1000, 238, 239, 244)
                           : Colors.redAccent.withOpacity(
                               0.7), // utilisez la couleur de l'appointment
                     ),
@@ -1036,11 +1036,14 @@ class AgendaState extends State<Agenda> {
                               child: Text(
                                 textAlign: TextAlign.start,
                                 '${formatDateTimeAppointment(appoint.startAt, appoint.timeStart, appoint.timeEnd)}',
-                                style: const TextStyle(
+                                style: TextStyle(
                                     fontWeight: FontWeight.w500,
                                     fontSize: 12,
                                     letterSpacing: 2,
-                                    color: Colors.white),
+                                    color: (appoint.isDeleted != null &&
+                                            appoint.isDeleted == true)
+                                        ? Colors.black.withOpacity(0.4)
+                                        : Colors.white),
                               ),
                             ),
                           ],

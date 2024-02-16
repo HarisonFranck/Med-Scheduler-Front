@@ -29,6 +29,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:med_scheduler_front/firebase_options.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:med_scheduler_front/FirebaseApi.dart';
+import 'package:awesome_dialog/awesome_dialog.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 class AccueilPatient extends StatefulWidget {
   @override
