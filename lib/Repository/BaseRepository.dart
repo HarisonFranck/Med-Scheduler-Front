@@ -18,6 +18,9 @@ import 'package:med_scheduler_front/Espace_Medecin/view/IndexAcceuilMedecin.dart
 import 'package:jwt_decode/jwt_decode.dart';
 import 'package:med_scheduler_front/Categorie.dart';
 import 'package:med_scheduler_front/ConnectionError.dart';
+import 'package:googleapis_auth/auth_io.dart' as auth;
+import 'package:flutter/services.dart';
+import 'dart:developer' as devtools show log;
 
 class BaseRepository{
 
@@ -838,6 +841,47 @@ class BaseRepository{
       print('Exception: $e');
       return <Categorie>[];
     }
+  }
+
+  Future<bool> sendNotificationDisableAppointment({
+    required String doctorName,
+    required String recipientToken}) async {
+
+
+    final jsonCredentials = await rootBundle
+        .loadString('assets/data/med-scheduler-front-d86b24fcb422.json');
+    final creds = auth.ServiceAccountCredentials.fromJson(jsonCredentials);
+
+    final client = await auth.clientViaServiceAccount(
+      creds,
+      ['https://www.googleapis.com/auth/cloud-platform'],
+    );
+
+    final notificationData = {
+      'message': {
+        'token': recipientToken,
+        'notification': {'title': 'Rendez-vous annulé', 'body': 'Votre rendez-vous avec le Dr.$doctorName a eté annulé.\n veuillez le contacter pour plus d\'information.'}
+      },
+    };
+
+    const String senderId = '469458129138';
+    final response = await client.post(
+      Uri.parse('https://fcm.googleapis.com/v1/projects/$senderId/messages:send'),
+      headers: {
+        'content-type': 'application/json',
+      },
+      body: jsonEncode(notificationData),
+    );
+
+    client.close();
+    if (response.statusCode == 200) {
+      return true; // Success!
+    }
+
+    devtools.log(
+        'Notification Sending to Patient Error Response status: ${response.statusCode}');
+    devtools.log('Notification Patient Response body: ${response.body}');
+    return false;
   }
 
 }

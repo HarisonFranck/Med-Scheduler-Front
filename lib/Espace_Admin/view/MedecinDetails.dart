@@ -87,7 +87,7 @@ class _MedecinDetailsState extends State<MedecinDetails> {
                           ],
                         ),
                         onTap: () {
-                          authProviderUser.logout();
+
                           Navigator.pushReplacement(
                               context,
                               MaterialPageRoute(

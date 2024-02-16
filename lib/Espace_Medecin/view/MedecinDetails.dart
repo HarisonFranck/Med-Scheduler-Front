@@ -250,7 +250,7 @@ class _MedecinDetailsState extends State<MedecinDetails> {
     super.didChangeDependencies();
     print('DID ZAO');
     authProviderUser = Provider.of<AuthProviderUser>(context, listen: false);
-    user = Provider.of<AuthProviderUser>(context).utilisateur;
+    user = Provider.of<AuthProviderUser>(context,listen: false).utilisateur;
 
     authProvider = Provider.of<AuthProvider>(context, listen: false);
     token = authProvider.token;
@@ -356,6 +356,7 @@ class _MedecinDetailsState extends State<MedecinDetails> {
                               ],
                             ),
                             onTap: () {
+                              authProviderUser.logout();
                               Navigator.pushReplacement(
                                   context,
                                   MaterialPageRoute(

@@ -21,6 +21,8 @@ import 'package:med_scheduler_front/Repository/UserRepository.dart';
 import 'package:med_scheduler_front/Utilitie/Utilities.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'MedecinDetails.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+
 
 class PriseDeRendezVous extends StatefulWidget {
   final Patient patient;
@@ -334,6 +336,30 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
     utilities = Utilities(context: context);
     userRepository = UserRepository(context: context, utilities: utilities!);
 
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      setState(() {
+        dataLoaded = false;
+        newAppointmentRequestRefresh();
+      });
+
+      didChangeDependencies();
+      // Traitez le message ici
+
+      setState(() {
+        dataLoaded = true;
+      });
+
+    });
+  }
+
+  void newAppointmentRequestRefresh() {
+    // Définissez la fonction callback pour mettre à jour le state
+    void updateState() {
+      didChangeDependencies();
+      setState(() async {
+        listAppointment = await InitierAppointment(medecinCliked!);
+      });
+    }
   }
 
   Medecin? medecin;
@@ -475,8 +501,6 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
 
   void AjouterRDV(BuildContext context, DateTime dtClicker, Medecin medecin,
       Patient patient, List<CustomAppointment> appoints) {
-
-
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -527,7 +551,6 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
                         .length
                     : 0,
                 itemBuilder: (context, i) {
-
                   CustomAppointment appointment = getAvailableAppointments(
                           dtClicker,
                           appoints,
@@ -924,22 +947,20 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
     }
   }
 
-
   String desc = '';
 
-  String showDesc(String desc){
+  String showDesc(String desc) {
     List<String> listDesc = desc.split(" ");
 
-    if(listDesc.length>3){
+    if (listDesc.length > 3) {
       return '${listDesc[0]} ${listDesc[1]} ${listDesc[2]}...';
-    }else if(listDesc.length==1){
+    } else if (listDesc.length == 1) {
       return listDesc.first;
-    }else if(listDesc.length==0){
+    } else if (listDesc.length == 0) {
       return "";
-    }else{
+    } else {
       return listDesc[0];
     }
-
   }
 
   bool dateIsAllDisabled(DateTime date) {
@@ -1008,92 +1029,96 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
             Padding(
                 padding: const EdgeInsets.only(right: 18, left: 18),
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(23),
-                  child: GestureDetector(
-                    onTap: (){
-                      print('${medecinCliked!.lastName}');
-                      Navigator.push(context, MaterialPageRoute(builder: (context)=>MedecinDetails(user: medecinCliked!)));
-                    },
-                    child:  Container(
-                      height: 100,
-                      child: Card(
-                        elevation: 0.5,
-                        color: Colors.white,
-                        child: Column(
+                    borderRadius: BorderRadius.circular(23),
+                    child: GestureDetector(
+                      onTap: () {
+                        print('${medecinCliked!.lastName}');
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) =>
+                                    MedecinDetails(user: medecinCliked!)));
+                      },
+                      child: Container(
+                        height: 100,
+                        child: Card(
+                          elevation: 0.5,
+                          color: Colors.white,
+                          child: Column(
                             children: [
-                            const Spacer(),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                          const SizedBox(
-                          width: 20,
-                        ),
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(50),
-                          child: Container(
-                            width: 60,
-                            height: 60,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(60),
-                            ),
-                            child: CachedNetworkImage(
-                                imageUrl:
-                                '$baseUrl${utilities!.ajouterPrefixe(medecinCliked!.imageName!)}',
-                            placeholder: (context, url) =>
-                            const CircularProgressIndicator(
-                              color: Colors.redAccent,
-                            ), // Affiche un indicateur de chargement en attendant l'image
-                            errorWidget: (context, url, error) =>
-                                Image.asset(
-                                  'assets/images/medecin.png',
-                                  fit: BoxFit.cover,
-                                  width: 50,
-                                  height: 50,
-                                ), // Affiche une icône d'erreur si le chargement échoue
+                              const Spacer(),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceEvenly,
+                                children: [
+                                  const SizedBox(
+                                    width: 20,
+                                  ),
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(50),
+                                    child: Container(
+                                      width: 60,
+                                      height: 60,
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(60),
+                                      ),
+                                      child: CachedNetworkImage(
+                                        imageUrl:
+                                            '$baseUrl${utilities!.ajouterPrefixe(medecinCliked!.imageName!)}',
+                                        placeholder: (context, url) =>
+                                            const CircularProgressIndicator(
+                                          color: Colors.redAccent,
+                                        ), // Affiche un indicateur de chargement en attendant l'image
+                                        errorWidget: (context, url, error) =>
+                                            Image.asset(
+                                          'assets/images/medecin.png',
+                                          fit: BoxFit.cover,
+                                          width: 50,
+                                          height: 50,
+                                        ), // Affiche une icône d'erreur si le chargement échoue
+                                      ),
+                                    ),
+                                  ),
+                                  Column(
+                                    children: [
+                                      Text(
+                                        ' Dr ${abbreviateName(medecinCliked!.lastName)}.${abbreviateName(medecinCliked!.firstName)}',
+                                        overflow: TextOverflow.fade,
+                                        style: const TextStyle(
+                                            color: Color.fromARGB(
+                                                1000, 60, 70, 120),
+                                            fontWeight: FontWeight.w500,
+                                            fontSize: 16,
+                                            letterSpacing: 2),
+                                      ),
+                                      Text(
+                                        '${(medecinCliked!.speciality != null) ? medecinCliked!.speciality!.label : ''}',
+                                        style: const TextStyle(
+                                            color: Color.fromARGB(
+                                                1000, 60, 70, 120),
+                                            fontWeight: FontWeight.w300,
+                                            letterSpacing: 2,
+                                            fontSize: 16),
+                                      )
+                                    ],
+                                  ),
+                                  const Spacer()
+                                ],
+                              ),
+                              const Opacity(
+                                opacity: 0.4,
+                                child: Divider(
+                                  thickness: 1,
+                                  indent: 20,
+                                  endIndent: 20,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
-                      Column(
-                        children: [
-                          Text(
-                            ' Dr ${abbreviateName(medecinCliked!.lastName)}.${abbreviateName(medecinCliked!.firstName)}',
-                            overflow: TextOverflow.fade,
-                            style: const TextStyle(
-                                color:
-                                Color.fromARGB(1000, 60, 70, 120),
-                                fontWeight: FontWeight.w500,
-                                fontSize: 16,
-                                letterSpacing: 2),
-                          ),
-                          Text(
-                            '${(medecinCliked!.speciality!=null)?medecinCliked!.speciality!.label:''}',
-                            style: const TextStyle(
-                                color:
-                                Color.fromARGB(1000, 60, 70, 120),
-                                fontWeight: FontWeight.w300,
-                                letterSpacing: 2,
-                                fontSize: 16),
-                          )
-                        ],
-                      ),
-                      const Spacer()
-                      ],
-                    ),
-                    const Opacity(
-                      opacity: 0.4,
-                      child: Divider(
-                        thickness: 1,
-                        indent: 20,
-                        endIndent: 20,
-                        color: Colors.grey,
-                      ),
-                    ),
-                    ],
-                  ),
-                ),
-            ),
-                  )
-                )),
+                    ))),
             Padding(
                 padding: const EdgeInsets.only(
                     top: 20, right: 10, left: 10, bottom: 30),
@@ -1118,7 +1143,10 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
                                       blackoutDatesTextStyle: TextStyle(
                                           color: Colors.grey.withOpacity(0.3)),
                                       view: CalendarView.month,
-                                      todayHighlightColor: (DateTime.now().hour>15)?Colors.transparent:Colors.redAccent,
+                                      todayHighlightColor:
+                                          (DateTime.now().hour > 15)
+                                              ? Colors.transparent
+                                              : Colors.redAccent,
                                       onTap: (CalendarTapDetails details) {
                                         bool dt = blackoutDates.any((element) =>
                                             element == details.date);
@@ -1135,14 +1163,11 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
                                         bool isBlackoutDate = isInBlackOutDay(
                                             blackoutDates, details.date!);
 
-
                                         setState(() {
                                           dtCliquer = details.date!;
                                         });
                                         if (isBlackoutDate) {
-
                                           setState(() {
-
                                             isAppointment = false;
                                             istoAddAppointment = false;
                                           });
@@ -1167,7 +1192,6 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
                                               theAppoint = appoint;
                                             });
                                           } else if (list.length > 1) {
-
                                           } else {
                                             String dtClick =
                                                 DateFormat('yyyy-MM-dd')
@@ -1299,7 +1323,6 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
       const Spacer(),
       GestureDetector(
         onTap: () {
-
           AjouterRDV(
               context, dt, medecinCliked!, widget.patient, listAppointment);
         },
@@ -1687,7 +1710,7 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
                         child: Row(
                           children: [
                             const Padding(
-                              padding: EdgeInsets.only(left: 10),
+                              padding: EdgeInsets.only(left: 20),
                               child: Text(
                                 'Raison:',
                                 style: TextStyle(
@@ -1696,7 +1719,9 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
                                     fontWeight: FontWeight.w500),
                               ),
                             ),
-                            const Spacer(),
+                            const SizedBox(
+                              width: 30,
+                            ),
                             Expanded(
                               child: Text(
                                 '${appointment.reason}',
@@ -1720,7 +1745,7 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             const Padding(
-                              padding: EdgeInsets.only(left: 10),
+                              padding: EdgeInsets.only(left: 20),
                               child: Text(
                                 'Le:',
                                 style: TextStyle(
@@ -1729,7 +1754,9 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
                                     fontWeight: FontWeight.w500),
                               ),
                             ),
-                            const Spacer(),
+                            const SizedBox(
+                              width: 60,
+                            ),
                             Text(
                               '${DateTimeFormatAppointment(appointment.startAt, appointment.timeEnd)}',
                               style: const TextStyle(
@@ -1737,6 +1764,7 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
                                   fontSize: 14,
                                   fontWeight: FontWeight.w500),
                             ),
+        Spacer()
                           ],
                         )),
                     Divider(
@@ -1750,7 +1778,7 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
                         child: Row(
                           children: [
                             const Padding(
-                              padding: EdgeInsets.only(left: 10),
+                              padding: EdgeInsets.only(left: 20),
                               child: Text(
                                 'De:',
                                 style: TextStyle(
@@ -1759,7 +1787,9 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
                                     fontWeight: FontWeight.w500),
                               ),
                             ),
-                            const Spacer(),
+                            const SizedBox(
+                              width: 58,
+                            ),
                             Text(
                               ' ${formatDateTimeAppointment(appointment.startAt.toLocal(), appointment.timeStart, appointment.timeEnd.toLocal())}',
                               style: const TextStyle(
