@@ -16,6 +16,7 @@ import 'package:med_scheduler_front/Repository/BaseRepository.dart';
 import 'package:med_scheduler_front/Utilitie/Utilities.dart';
 import 'package:med_scheduler_front/AuthProviderUser.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/services.dart';
 
 class Agenda extends StatefulWidget {
   AgendaState createState() => AgendaState();
@@ -558,10 +559,7 @@ class AgendaState extends State<Agenda> {
                                                             .format(
                                                                 details.date!))
                                                     .toList();
-                                            list.forEach((element) {
-                                              print(
-                                                  'List APPOINTS CLICKED: ${element.reason}');
-                                            });
+
 
                                             if (list.length >= 1) {
                                               CustomAppointment appoint =
@@ -575,9 +573,6 @@ class AgendaState extends State<Agenda> {
                                               String dtClick =
                                                   DateFormat('yyyy-MM-dd')
                                                       .format(details.date!);
-                                              String now =
-                                                  DateFormat('yyyy-MM-dd')
-                                                      .format(DateTime.now());
                                               DateTime dt =
                                                   DateTime.parse(dtClick);
                                               DateTime dtNow =
@@ -1354,7 +1349,7 @@ class AgendaState extends State<Agenda> {
                               ),
                             ),
                             const SizedBox(
-                              width: 30,
+                              width: 20,
                             ),
                             Expanded(
                               child: Text(
@@ -1389,7 +1384,7 @@ class AgendaState extends State<Agenda> {
                               ),
                             ),
                             const SizedBox(
-                              width: 60,
+                              width: 50,
                             ),
                             Text(
                               '${DateTimeFormatAppointment(appointment.startAt, appointment.timeEnd)}',
@@ -1422,7 +1417,7 @@ class AgendaState extends State<Agenda> {
                               ),
                             ),
                             const SizedBox(
-                              width: 58,
+                              width: 43,
                             ),
                             Text(
                               '${formatDateTimeAppointment(appointment.startAt.toLocal(), appointment.timeStart, appointment.timeEnd.toLocal())}',
@@ -1470,6 +1465,8 @@ class AgendaState extends State<Agenda> {
       },
     );
   }
+
+
 
   String DateTimeFormatAppointment(DateTime startDateTime, DateTime timeEnd) {
     // Liste des jours de la semaine

@@ -328,11 +328,27 @@ class _MedecinDetailsState extends State<MedecinDetails> {
     });
   }
 
+
+
+// Déterminez la longueur maximale parmi tous les textes devant
+  List<String> textBehind = [
+    'Nom:',
+    'Prenom:',
+    'Email:',
+    'Telephone:',
+    'Centre:'
+  ];
+
+// Définissez une marge de base pour tous les textes devant
+  double basePaddingLeft = 20.0;
+
+
+
   @override
   Widget build(BuildContext context) {
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
-    print('IMG: $baseUrl${user!.imageName}');
+
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
     return PopScope(
       canPop: false,
@@ -423,12 +439,12 @@ class _MedecinDetailsState extends State<MedecinDetails> {
                             ),
                             Row(
                               children: [
-                                const Padding(
-                                  padding: EdgeInsets.only(left: 20),
+                                Padding(
+                                  padding: EdgeInsets.only(left: 20,right: 60),
                                   child: Text('Nom:'),
                                 ),
                                 Padding(
-                                  padding: const EdgeInsets.only(left: 63),
+                                  padding: EdgeInsets.only(left: 0),
                                   child: Container(
                                     width:
                                         MediaQuery.of(context).size.width / 2.5,
@@ -454,11 +470,11 @@ class _MedecinDetailsState extends State<MedecinDetails> {
                             Row(
                               children: [
                                 const Padding(
-                                  padding: EdgeInsets.only(left: 20),
+                                  padding: EdgeInsets.only(left: 20,right: 37),
                                   child: Text('Prenom:'),
                                 ),
                                 Padding(
-                                  padding: const EdgeInsets.only(left: 40),
+                                  padding: EdgeInsets.only(left:  0),
                                   child: Container(
                                     width:
                                         MediaQuery.of(context).size.width / 2.5,
@@ -484,11 +500,11 @@ class _MedecinDetailsState extends State<MedecinDetails> {
                             Row(
                               children: [
                                 const Padding(
-                                  padding: EdgeInsets.only(left: 20),
+                                  padding: EdgeInsets.only(left: 20,right: 53),
                                   child: Text('Email:'),
                                 ),
                                 Padding(
-                                  padding: const EdgeInsets.only(left: 55),
+                                  padding: EdgeInsets.only(left: 0),
                                   child: Container(
                                     width: MediaQuery.of(context).size.width /
                                         2.5,
@@ -513,12 +529,12 @@ class _MedecinDetailsState extends State<MedecinDetails> {
                             ),
                             Row(
                               children: [
-                                const Padding(
-                                  padding: EdgeInsets.only(left: 20),
+                                Padding(
+                                  padding: EdgeInsets.only(left: 20,right: 16),
                                   child: Text('Telephone:'),
                                 ),
                                 Padding(
-                                  padding: const EdgeInsets.only(left: 20),
+                                  padding: EdgeInsets.only(left: 0),
                                   child: Container(
                                     width: MediaQuery.of(context).size.width /
                                         2.5,
@@ -544,12 +560,12 @@ class _MedecinDetailsState extends State<MedecinDetails> {
                             ),
                             Row(
                               children: [
-                                const Padding(
-                                  padding: EdgeInsets.only(left: 20),
+                                Padding(
+                                  padding: EdgeInsets.only(left: 20,right: 43),
                                   child: Text('Centre:',textAlign: TextAlign.start,),
                                 ),
                                 Padding(
-                                  padding: const EdgeInsets.only(left: 45),
+                                  padding: EdgeInsets.only(left:0),
                                   child: Container(
                                     width: MediaQuery.of(context).size.width /
                                         2.5,
@@ -616,7 +632,7 @@ class _MedecinDetailsState extends State<MedecinDetails> {
 
                             Padding(
                                 padding: const EdgeInsets.only(
-                                    top: 30, left: 10, bottom: 30),
+                                    top: 30, left: 30, bottom: 30),
                                 child: GestureDetector(
                                   onTap: () {
                                     authProvider.logout();

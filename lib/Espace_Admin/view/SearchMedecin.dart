@@ -26,25 +26,31 @@ class SearchMedecinState extends State<SearchMedecin> {
 
   bool dataLoaded = false;
 
-  Future<void> getAllAsync() async {
-    medecinsFuture = baseRepository!.getAllMedecin();
-  }
 
   @override
   void initState() {
     super.initState();
     utilities = Utilities(context: context);
     baseRepository = BaseRepository(context: context, utilities: utilities!);
-    print('-- INIT SEARCH  --');
+
     WidgetsFlutterBinding.ensureInitialized();
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      print('I GET OO');
+
       await getAllAsync();
       setState(() {
         dataLoaded = true;
-        print('LOADED OO');
       });
+    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    // TODO: implement didChangeDependencies
+    super.didChangeDependencies();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+
+      await getAllAsync();
     });
   }
 
@@ -95,11 +101,45 @@ class SearchMedecinState extends State<SearchMedecin> {
   FocusNode _focusNodeSearch = FocusNode();
   TextEditingController searchLastName = TextEditingController();
 
+
+  int currentPage = 1;
+
+  bool isLoading = false;
+
+  ScrollController scrollController = ScrollController();
+
+  Future<void> getAllAsync() async {
+    medecinsFuture = loadMoreData();
+  }
+
+
+  Future<List<Medecin>> loadMoreData() async {
+    print('LOAD MORE: $currentPage');
+    setState(() {
+      isLoading = true;
+    });
+    try {
+      List<Medecin> moreMedecins = await baseRepository!.getAllMedecinPerPage(currentPage);
+    if (moreMedecins.isNotEmpty) {
+    currentPage++;
+    }
+    print('LOAD MORE: $currentPage');
+    setState(() {
+    isLoading = false;
+    });
+    return moreMedecins;
+    } catch (e) {
+    // Gérez les erreurs de chargement de données supplémentaires ici
+    return []; // ou lancez une exception appropriée selon votre logique
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return PopScope(
       canPop: false,
       child: Scaffold(
+          backgroundColor: const Color.fromARGB(1000, 238, 239, 244),
           body: (dataLoaded)
               ? Column(
                   children: [
@@ -241,7 +281,22 @@ class SearchMedecinState extends State<SearchMedecin> {
                                     ));
                               }
 
-                              return ListView.builder(
+                              return NotificationListener<ScrollNotification>(
+                              onNotification: (ScrollNotification scrollInfo) {
+                            if (!isLoading &&
+                            scrollInfo.metrics.pixels == scrollInfo.metrics.maxScrollExtent) {
+                            if (scrollInfo is ScrollEndNotification &&
+                            scrollController.position.extentAfter ==
+                            0) {
+                            // L'utilisateur a atteint la fin de la liste, chargez plus de données
+                            loadMoreData();
+                            }
+                            }
+                            return false;
+                            },
+                                  child: ListView.builder(
+                            physics: BouncingScrollPhysics(),
+                                controller: scrollController,
                                 itemCount: medecins.length,
                                 itemBuilder: (context, index) {
                                   Medecin medecin = medecins[index];
@@ -459,7 +514,7 @@ class SearchMedecinState extends State<SearchMedecin> {
                                         ),
                                       ));
                                 },
-                              );
+                              ));
                             }
                           },
                         ))

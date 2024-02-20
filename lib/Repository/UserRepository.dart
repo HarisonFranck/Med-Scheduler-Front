@@ -101,6 +101,8 @@ class UserRepository {
         // Définir l'URL de base
         Uri url = Uri.parse("${baseUrl}api/doctors?page=$page");
 
+        print('URL MORE : $url ');
+
         // Ajouter les paramètres en fonction des cas
         if (lastName
             .trim()
@@ -138,9 +140,9 @@ class UserRepository {
         if (response.statusCode == 200) {
           final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
           final datas = jsonData['hydra:member'] as List<dynamic>;
-
-          List<Medecin> list = datas.map((e) => Medecin.fromJson(e)).toList();
-          return list.where((medecin) => (medecin.token!=null&&medecin.token!="")).toList();
+         return datas.map((e) => Medecin.fromJson(e)).toList();
+          //List<Medecin> list = datas.map((e) => Medecin.fromJson(e)).toList();
+          //return list.where((medecin) => (medecin.token!=null&&medecin.token!="")).toList();
         } else {
           if (response.statusCode == 401) {
             authProvider.logout();

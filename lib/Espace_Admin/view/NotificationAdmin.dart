@@ -173,14 +173,32 @@ class _NotificationAdminState extends State<NotificationAdmin> {
   }
 
   Future<List<CustomAppointment>> addAllAppointmentPage() async {
-    List<CustomAppointment> firstList =
-        await baseRepository!.getAllAppointmentPerPage(1);
-    for (int p = 1; p < 10; p++) {
-      firstList.addAll(await baseRepository!.getAllAppointmentPerPage(p));
-    }
-    return firstList;
+
+    return baseRepository!.getAllAppointmentPerPage(1);
+
+
   }
 
+  int currentPage = 1;
+
+  bool isLoading = false;
+
+  Future<List<CustomAppointment>> loadMoreData() async {
+    if (!isLoading) {
+      isLoading = true;
+    }
+    try {
+      List<CustomAppointment> moreAppoints =
+          await baseRepository!.getAllAppointmentPerPage(currentPage + 1);
+      if (moreAppoints.isNotEmpty) {
+        currentPage++;
+      }
+      return moreAppoints;
+    } catch (e) {
+      // Gérez les erreurs de chargement de données supplémentaires ici
+      return []; // ou lancez une exception appropriée selon votre logique
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -208,8 +226,7 @@ class _NotificationAdminState extends State<NotificationAdmin> {
                         Navigator.pushReplacement(
                             context,
                             MaterialPageRoute(
-                                builder: (context) =>
-                                    IndexAccueilAdmin()));
+                                builder: (context) => IndexAccueilAdmin()));
                       },
                     ),
                     const Spacer(),
@@ -234,7 +251,8 @@ class _NotificationAdminState extends State<NotificationAdmin> {
                 padding: const EdgeInsets.only(
                     top: 10, bottom: 20, right: 5, left: 5),
                 child: FutureBuilder<List<CustomAppointment>>(
-                  future: filterAppointments(addAllAppointmentPage()), // Appelez votre fonction de récupération de données ici
+                  future: filterAppointments(
+                      addAllAppointmentPage()), // Appelez votre fonction de récupération de données ici
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       // Affichez un indicateur de chargement pendant le chargement
@@ -313,10 +331,9 @@ class _NotificationAdminState extends State<NotificationAdmin> {
                                         crossAxisAlignment:
                                             CrossAxisAlignment.center,
                                         children: [
-
-
                                           Padding(
-                                            padding: EdgeInsets.only(top: 30,bottom: 10),
+                                            padding: EdgeInsets.only(
+                                                top: 30, bottom: 10),
                                             child: Text(
                                               'Aucune notification récente.',
                                               textAlign: TextAlign.center,
@@ -329,8 +346,8 @@ class _NotificationAdminState extends State<NotificationAdmin> {
                                           Icon(
                                             Icons.update,
                                             size: 30,
-                                            color: Color.fromARGB(
-                                                230, 20, 20, 90),
+                                            color:
+                                                Color.fromARGB(230, 20, 20, 90),
                                           ),
                                         ],
                                       ),
@@ -395,173 +412,186 @@ class _NotificationAdminState extends State<NotificationAdmin> {
                                           ),
                                         ),
                                         Expanded(
-                                            child: ListView.builder(
-                                          padding:
-                                              const EdgeInsets.only(top: 20),
-                                          itemCount: snapshot.data!.length,
-                                          itemBuilder: (context, index) {
-                                            List<CustomAppointment> listRDV =
-                                                snapshot.data!;
-                                            // Utilisez snapshot.data[index] pour accéder aux éléments de la liste
+                                            child: NotificationListener<
+                                                ScrollNotification>(
+                                          onNotification:
+                                              (ScrollNotification scrollInfo) {
+                                            if (!isLoading &&
+                                                scrollInfo.metrics.pixels ==
+                                                    scrollInfo.metrics
+                                                        .maxScrollExtent) {
+                                              // L'utilisateur a atteint la fin de la liste, chargez plus de données
+                                              loadMoreData();
+                                            }
+                                            return false;
+                                          },
+                                          child: ListView.builder(
+                                            padding:
+                                                const EdgeInsets.only(top: 20),
+                                            itemCount: snapshot.data!.length,
+                                            itemBuilder: (context, index) {
+                                              List<CustomAppointment> listRDV =
+                                                  snapshot.data!;
+                                              // Utilisez snapshot.data[index] pour accéder aux éléments de la liste
 
-                                            return Padding(
-                                                padding: const EdgeInsets.only(
-                                                    bottom: 15,
-                                                    left: 5,
-                                                    right: 5),
-                                                child: Container(
-                                                    width: 440,
-                                                    height: 220,
-                                                    decoration: BoxDecoration(
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              6),
-                                                    ),
-                                                    child: Card(
-                                                      elevation: 0,
-                                                      color: Colors.white,
-                                                      child: Column(
-                                                        children: [
-                                                          const SizedBox(
-                                                            height: 10,
-                                                          ),
-                                                          Row(
-                                                            mainAxisAlignment:
-                                                                MainAxisAlignment
-                                                                    .spaceEvenly,
-                                                            children: [
-                                                              ClipRRect(
-                                                                borderRadius:
-                                                                    BorderRadius
-                                                                        .circular(
-                                                                            50),
-                                                                child:
-                                                                    Container(
-                                                                  width: 60,
-                                                                  height: 60,
-                                                                  decoration:
-                                                                      BoxDecoration(
-                                                                    borderRadius:
-                                                                        BorderRadius
-                                                                            .circular(5),
-                                                                  ),
-                                                                  child:
-                                                                      CachedNetworkImage(
-                                                                    imageUrl:
-                                                                        '$baseUrl${utilities!.ajouterPrefixe(listRDV.elementAt(index).medecin!.imageName!)}',
-                                                                    placeholder:
-                                                                        (context,
-                                                                                url) =>
-                                                                            const CircularProgressIndicator(
-                                                                      color: Colors
-                                                                          .redAccent,
-                                                                    ), // Affiche un indicateur de chargement en attendant l'image
-                                                                    errorWidget: (context,
-                                                                            url,
-                                                                            error) =>
-                                                                        Icon(
-                                                                      Icons
-                                                                          .account_circle,
-                                                                      size: 60,
-                                                                      color: Colors
-                                                                          .black
-                                                                          .withOpacity(
-                                                                              0.6),
-                                                                    ), // Affiche une icône d'erreur si le chargement échoue
-                                                                  ),
-                                                                ),
-                                                              ),
-                                                              Column(
-                                                                children: [
-                                                                  Text(
-                                                                    '${listRDV.elementAt(index).medecin!.lastName[0]}.${abbreviateName(listRDV.elementAt(index).medecin!.firstName)}',
-                                                                    style: const TextStyle(
-                                                                        color: Color.fromARGB(
-                                                                            1000,
-                                                                            60,
-                                                                            70,
-                                                                            120),
-                                                                        fontWeight:
-                                                                            FontWeight.w500),
-                                                                  ),
-                                                                  Text(
-                                                                    '${abreviateRaison(listRDV.elementAt(index).reason)}',
-                                                                    style: const TextStyle(
-                                                                        color: Color.fromARGB(
-                                                                            1000,
-                                                                            60,
-                                                                            70,
-                                                                            120),
-                                                                        fontWeight:
-                                                                            FontWeight.w300),
-                                                                  )
-                                                                ],
-                                                              ),
-                                                              const SizedBox(
-                                                                width: 10,
-                                                              ),
-                                                            ],
-                                                          ),
-                                                          const Opacity(
-                                                            opacity: 0.4,
-                                                            child: Divider(
-                                                              thickness: 1,
-                                                              indent: 20,
-                                                              endIndent: 20,
-                                                              color:
-                                                                  Colors.grey,
-                                                            ),
-                                                          ),
-                                                          Row(children: [
+                                              return Padding(
+                                                  padding:
+                                                      const EdgeInsets.only(
+                                                          bottom: 15,
+                                                          left: 5,
+                                                          right: 5),
+                                                  child: Container(
+                                                      width: 440,
+                                                      height: 220,
+                                                      decoration: BoxDecoration(
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(6),
+                                                      ),
+                                                      child: Card(
+                                                        elevation: 0,
+                                                        color: Colors.white,
+                                                        child: Column(
+                                                          children: [
                                                             const SizedBox(
-                                                                width: 25),
-                                                            Expanded(
-                                                                child: Text(
-                                                                    'Le Dr.${listRDV.elementAt(index).medecin!.lastName} ${abbreviateName(listRDV.elementAt(index).medecin!.firstName)} a un rendez-vous prévu avec un patient :',
-                                                            style: TextStyle(
+                                                              height: 10,
+                                                            ),
+                                                            Row(
+                                                              mainAxisAlignment:
+                                                                  MainAxisAlignment
+                                                                      .spaceEvenly,
+                                                              children: [
+                                                                ClipRRect(
+                                                                  borderRadius:
+                                                                      BorderRadius
+                                                                          .circular(
+                                                                              50),
+                                                                  child:
+                                                                      Container(
+                                                                    width: 60,
+                                                                    height: 60,
+                                                                    decoration:
+                                                                        BoxDecoration(
+                                                                      borderRadius:
+                                                                          BorderRadius.circular(
+                                                                              5),
+                                                                    ),
+                                                                    child:
+                                                                        CachedNetworkImage(
+                                                                      imageUrl:
+                                                                          '$baseUrl${utilities!.ajouterPrefixe(listRDV.elementAt(index).medecin!.imageName!)}',
+                                                                      placeholder:
+                                                                          (context, url) =>
+                                                                              const CircularProgressIndicator(
+                                                                        color: Colors
+                                                                            .redAccent,
+                                                                      ), // Affiche un indicateur de chargement en attendant l'image
+                                                                      errorWidget: (context,
+                                                                              url,
+                                                                              error) =>
+                                                                          Icon(
+                                                                        Icons
+                                                                            .account_circle,
+                                                                        size:
+                                                                            60,
                                                                         color: Colors
                                                                             .black
-                                                                            .withOpacity(0.5)))),
-                                                            const SizedBox(
-                                                                width: 25),
-                                                          ]),
-                                                          const Spacer(),
-                                                          Row(
-                                                            mainAxisAlignment:
-                                                                MainAxisAlignment
-                                                                    .center,
-                                                            children: [
-                                                              const Spacer(),
-                                                              Image.asset(
-                                                                'assets/images/date-limite.png',
-                                                                width: 20,
-                                                                height: 20,
+                                                                            .withOpacity(0.6),
+                                                                      ), // Affiche une icône d'erreur si le chargement échoue
+                                                                    ),
+                                                                  ),
+                                                                ),
+                                                                Column(
+                                                                  children: [
+                                                                    Text(
+                                                                      '${listRDV.elementAt(index).medecin!.lastName[0]}.${abbreviateName(listRDV.elementAt(index).medecin!.firstName)}',
+                                                                      style: const TextStyle(
+                                                                          color: Color.fromARGB(
+                                                                              1000,
+                                                                              60,
+                                                                              70,
+                                                                              120),
+                                                                          fontWeight:
+                                                                              FontWeight.w500),
+                                                                    ),
+                                                                    Text(
+                                                                      '${abreviateRaison(listRDV.elementAt(index).reason)}',
+                                                                      style: const TextStyle(
+                                                                          color: Color.fromARGB(
+                                                                              1000,
+                                                                              60,
+                                                                              70,
+                                                                              120),
+                                                                          fontWeight:
+                                                                              FontWeight.w300),
+                                                                    )
+                                                                  ],
+                                                                ),
+                                                                const SizedBox(
+                                                                  width: 10,
+                                                                ),
+                                                              ],
+                                                            ),
+                                                            const Opacity(
+                                                              opacity: 0.4,
+                                                              child: Divider(
+                                                                thickness: 1,
+                                                                indent: 20,
+                                                                endIndent: 20,
+                                                                color:
+                                                                    Colors.grey,
                                                               ),
+                                                            ),
+                                                            Row(children: [
                                                               const SizedBox(
-                                                                  width: 10),
-                                                              Text(
-                                                                '${formatTimeAppointment(listRDV.elementAt(index).startAt, listRDV.elementAt(index).timeStart, listRDV.elementAt(index).timeEnd)}',
+                                                                  width: 25),
+                                                              Expanded(
+                                                                  child: Text(
+                                                                      'Le Dr.${listRDV.elementAt(index).medecin!.lastName} ${abbreviateName(listRDV.elementAt(index).medecin!.firstName)} a un rendez-vous prévu avec un patient :',
+                                                                      style: TextStyle(
+                                                                          color: Colors
+                                                                              .black
+                                                                              .withOpacity(0.5)))),
+                                                              const SizedBox(
+                                                                  width: 25),
+                                                            ]),
+                                                            const Spacer(),
+                                                            Row(
+                                                              mainAxisAlignment:
+                                                                  MainAxisAlignment
+                                                                      .center,
+                                                              children: [
+                                                                const Spacer(),
+                                                                Image.asset(
+                                                                  'assets/images/date-limite.png',
+                                                                  width: 20,
+                                                                  height: 20,
+                                                                ),
+                                                                const SizedBox(
+                                                                    width: 10),
+                                                                Text(
+                                                                  '${formatTimeAppointment(listRDV.elementAt(index).startAt, listRDV.elementAt(index).timeStart, listRDV.elementAt(index).timeEnd)}',
                                                                   textAlign:
-                                                                    TextAlign
-                                                                        .center,
-                                                                style: const TextStyle(
-                                                                    color: Color
-                                                                        .fromARGB(
-                                                                            1000,
-                                                                            60,
-                                                                            70,
-                                                                            120)),
-                                                              ),
-                                                              const Spacer(),
-                                                            ],
-                                                          ),
-                                                          const SizedBox(
-                                                            height: 10,
-                                                          ),
-                                                        ],
-                                                      ),
-                                                    )));
-                                          },
+                                                                      TextAlign
+                                                                          .center,
+                                                                  style: const TextStyle(
+                                                                      color: Color.fromARGB(
+                                                                          1000,
+                                                                          60,
+                                                                          70,
+                                                                          120)),
+                                                                ),
+                                                                const Spacer(),
+                                                              ],
+                                                            ),
+                                                            const SizedBox(
+                                                              height: 10,
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      )));
+                                            },
+                                          ),
                                         )),
                                       ]))),
                         );

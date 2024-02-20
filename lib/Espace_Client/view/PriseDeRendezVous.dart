@@ -23,7 +23,6 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'MedecinDetails.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 
-
 class PriseDeRendezVous extends StatefulWidget {
   final Patient patient;
 
@@ -348,7 +347,6 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
       setState(() {
         dataLoaded = true;
       });
-
     });
   }
 
@@ -1383,7 +1381,7 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
             Container(
               width: AppointWidth,
               height: (appoint.isDeleted != null && appoint.isDeleted == true)
-                  ? 95
+                  ? 125
                   : 55,
               // ajustez la taille du point en fonction de vos besoins
 
@@ -1439,26 +1437,89 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
                   ),
                   if (appoint.isDeleted != null &&
                       appoint.isDeleted == true) ...[
-                    const Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
+                    Column(
                       children: [
-                        Padding(
-                          padding: EdgeInsets.only(left: 10),
-                          child: Text(
-                            textAlign: TextAlign.start,
-                            maxLines: 3,
-                            softWrap: false,
-                            overflow: TextOverflow.ellipsis,
-                            'Rendez-vous annulé \nVeuillez contacter votre médecin',
-                            style: TextStyle(
-                                fontWeight: FontWeight.w500,
-                                fontSize: 12,
-                                letterSpacing: 2,
-                                color: Colors.redAccent),
-                          ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            Padding(
+                              padding: EdgeInsets.only(left: 10),
+                              child: Text(
+                                textAlign: TextAlign.start,
+                                maxLines: 3,
+                                softWrap: false,
+                                overflow: TextOverflow.fade,
+                                'Rendez-vous annulé \nVeuillez contacter votre médecin',
+                                style: TextStyle(
+                                    fontWeight: FontWeight.w500,
+                                    fontSize: 12,
+                                    letterSpacing: 2,
+                                    color: Colors.redAccent),
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 10),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            Padding(
+                              padding: EdgeInsets.only(left: 10),
+                              child: Text(
+                                textAlign: TextAlign.start,
+                                maxLines: 3,
+                                softWrap: false,
+                                overflow: TextOverflow.ellipsis,
+                                'Contact: ${medecinCliked!.phone}',
+                                style: TextStyle(
+                                    fontWeight: FontWeight.w500,
+                                    fontSize: 12,
+                                    letterSpacing: 2,
+                                    color: Colors.redAccent),
+                              ),
+                            ),
+                            SizedBox(
+                              width: 10,
+                            ),
+                            GestureDetector(
+                                onTap: () {
+                                  utilities!
+                                      .copyText(context, medecinCliked!.phone);
+                                },
+                                child: Container(
+    padding: EdgeInsets.only(left: 4,right: 4),
+                                  decoration: BoxDecoration(
+                                  color: Color.fromARGB(230, 20, 20, 90).withOpacity(0.2),
+                                      borderRadius: BorderRadius.circular(3),
+                                      border: Border.all(
+                                          color: Color.fromARGB(230, 20, 20, 90)
+                                              .withOpacity(0.4),
+                                          width: 1)),
+                                  child: Row(
+                                    children: [
+                                      Text(
+                                        'Copier',
+                                        style: TextStyle(
+                                            color:
+                                                Colors.black.withOpacity(0.5)),
+                                      ),
+                                      SizedBox(
+                                        width: 5,
+                                      ),
+                                      Icon(
+                                        size: 15,
+                                        Icons.copy,
+                                        color: Colors.black.withOpacity(0.5),
+                                      ),
+                                    ],
+                                  ),
+                                )),
+                                      Spacer()
+
+                          ],
                         ),
                       ],
-                    ),
+                    )
                   ]
                 ],
               ),
@@ -1720,7 +1781,7 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
                               ),
                             ),
                             const SizedBox(
-                              width: 30,
+                              width: 20,
                             ),
                             Expanded(
                               child: Text(
@@ -1755,7 +1816,7 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
                               ),
                             ),
                             const SizedBox(
-                              width: 60,
+                              width: 50,
                             ),
                             Text(
                               '${DateTimeFormatAppointment(appointment.startAt, appointment.timeEnd)}',
@@ -1764,7 +1825,7 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
                                   fontSize: 14,
                                   fontWeight: FontWeight.w500),
                             ),
-        Spacer()
+                            Spacer()
                           ],
                         )),
                     Divider(
@@ -1788,7 +1849,7 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
                               ),
                             ),
                             const SizedBox(
-                              width: 58,
+                              width: 43,
                             ),
                             Text(
                               ' ${formatDateTimeAppointment(appointment.startAt.toLocal(), appointment.timeStart, appointment.timeEnd.toLocal())}',
@@ -1797,6 +1858,7 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
                                   fontSize: 14,
                                   fontWeight: FontWeight.w500),
                             ),
+                            Spacer()
                           ],
                         )),
                     Divider(
