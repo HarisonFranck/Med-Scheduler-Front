@@ -4,6 +4,7 @@ import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:med_scheduler_front/ConnectionError.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:flutter/services.dart';
 
 class Utilities {
   final BuildContext context;
@@ -516,5 +517,12 @@ class Utilities {
         backgroundColor: Colors.redAccent,
         textColor: Colors.white,
         toastLength: Toast.LENGTH_LONG);
+  }
+
+   void copyText(BuildContext context, String text) {
+    Clipboard.setData(ClipboardData(text: text));
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text('numero copié dans le presse-papiers'),
+    ));
   }
 }

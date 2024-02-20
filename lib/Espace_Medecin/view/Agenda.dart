@@ -1561,7 +1561,7 @@ class AgendaState extends State<Agenda> {
                               ),
                             ),
                             const SizedBox(
-                              width: 30,
+                              width: 20,
                             ),
                             Expanded(
                               child: Text(
@@ -1596,7 +1596,7 @@ class AgendaState extends State<Agenda> {
                               ),
                             ),
                             const SizedBox(
-                              width: 60,
+                              width: 50,
                             ),
                             Text(
                               '${DateTimeFormatAppointment(appointment.startAt, appointment.timeEnd)}',
@@ -1629,7 +1629,7 @@ class AgendaState extends State<Agenda> {
                               ),
                             ),
                             const SizedBox(
-                              width: 58,
+                              width: 43,
                             ),
                             Text(
                               ' ${formatDateTimeAppointment(appointment.startAt.toLocal(), appointment.timeStart, appointment.timeEnd.toLocal())}',
@@ -1638,6 +1638,7 @@ class AgendaState extends State<Agenda> {
                                   fontSize: 14,
                                   fontWeight: FontWeight.w500),
                             ),
+        Spacer()
                           ],
                         )),
                     Divider(

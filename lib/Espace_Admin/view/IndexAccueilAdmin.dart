@@ -55,8 +55,6 @@ class _IndexAccueilAdminState extends State<IndexAccueilAdmin> {
     idUser = payload['id'];
     user = baseRepository!.getUser(idUser);
 
-    print('ID USER INDEXED: $idUser');
-
     userGetted();
 
 
@@ -66,8 +64,7 @@ class _IndexAccueilAdminState extends State<IndexAccueilAdmin> {
     if(utilisateur==null){
       utilisateur = await user;
       authProviderUser.setUser(utilisateur!);
-      print('USER OO: ${utilisateur!.lastName}');
-    }
+ }
     // Maintenant que l'utilisateur est récupéré, initialisez les pages
     initPages();
   }

@@ -70,9 +70,12 @@ class _AccueilPatientState extends State<AccueilPatient> {
   ScrollController scrollController = ScrollController();
 
   Future<List<Medecin>> loadMoreData() async {
+
+    print('PAGE MORE: $currentPage');
+
     try {
       List<Medecin> moreMedecins = await userRepository!.getAllMedecin(
-          currentPage + 1,
+          currentPage,
           searchLastName.text,
           searchCenter.text,
           searchSpecialite.text,
@@ -175,11 +178,6 @@ class _AccueilPatientState extends State<AccueilPatient> {
     super.dispose();
   }
 
- /* Future<void> _initializeApp() async {
-    await InitFireBase();
-    setState(() {}); // Redessine le widget après la fin de InitFireBase
-    didChangeDependencies(); // Appelle didChangeDependencies après la fin de InitFireBase
-  }*/
 
   InitFireBase() async {
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
@@ -1200,7 +1198,7 @@ class _AccueilPatientState extends State<AccueilPatient> {
                             ),
                             value: speciality,
                             onChanged: (Specialite? newval) {
-                              //print('SPEC CHANGE: ${speciality!.label}');
+
                               setState(() {
                                 searchCenter.text = "";
                                 speciality = newval!;

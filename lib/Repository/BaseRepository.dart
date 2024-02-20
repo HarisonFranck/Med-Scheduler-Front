@@ -299,6 +299,60 @@ class BaseRepository{
 
 
 
+  Future<List<Medecin>> getAllMedecinPerPage(int page) async {
+    try {
+      if (await utilities.isConnectionAvailable()) {
+        authProvider = Provider.of<AuthProvider>(context, listen: false);
+        token = authProvider.token;
+
+        // Définir l'URL de base
+        Uri url = Uri.parse("${baseUrl}api/doctors?page=$page");
+
+        final headers = {'Authorization': 'Bearer $token'};
+
+        final response = await http.get(url, headers: headers);
+
+        if (response.statusCode == 200) {
+          final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
+          final datas = jsonData['hydra:member'] as List<dynamic>;
+
+          return datas.map((e) => Medecin.fromJson(e)).toList();
+        } else {
+          if (response.statusCode == 401) {
+            authProvider.logout();
+            Navigator.pushReplacement(
+                context, MaterialPageRoute(builder: (context) => const MyApp()));
+          }
+          // Gestion des erreurs HTTP
+          throw Exception(
+            '-- Erreur d\'obtention des données\n vérifier votre connexion internet. Code: ${response.statusCode}',
+          );
+        }
+      } else {
+        utilities.handleConnectionError(
+            ConnectionError("Une erreur de connexion s'est produite!"));
+        // Retourner une valeur par défaut en cas d'erreur
+        return <Medecin>[];
+      }
+    }catch (e) {
+
+      if(e is http.ClientException){
+        utilities.handleConnectionError(
+            ConnectionError("Une erreur de connexion s'est produite!"));
+        // Retourner une valeur par défaut en cas d'erreur
+        return <Medecin>[];
+      }
+      // Retourner une valeur par défaut en cas d'erreur
+
+      print('Unexpected Error: $e');
+      // Gérer les autres erreurs ici
+      return <Medecin>[];
+    }
+
+  }
+
+
+
 
 
   Future<List<Centre>> getAllCenter() async {

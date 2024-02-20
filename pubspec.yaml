@@ -94,6 +94,7 @@ flutter:
   assets:
     - assets/images/
     - assets/data/
+    - assets/ca/
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
 

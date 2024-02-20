@@ -341,7 +341,9 @@ class _AppointmentDetailsState extends State<AppointmentDetails> {
                                     fontSize: 14,
                                     fontWeight: FontWeight.w500),
                               ),
-                            )
+                            ),
+    Spacer()
+
                           ],
                         )),
                     Divider(
@@ -366,7 +368,7 @@ class _AppointmentDetailsState extends State<AppointmentDetails> {
                               ),
                             ),
                             const SizedBox(
-                              width: 70,
+                              width: 65,
                             ),
                             Text(
                               '  ${formatDateTimeAppointment(appointment.startAt.toLocal(), appointment.timeEnd.toLocal())}',
@@ -375,6 +377,7 @@ class _AppointmentDetailsState extends State<AppointmentDetails> {
                                   fontSize: 14,
                                   fontWeight: FontWeight.w500),
                             ),
+    Spacer()
                           ],
                         )),
                     Divider(
