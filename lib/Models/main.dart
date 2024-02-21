@@ -3,7 +3,7 @@ import 'package:med_scheduler_front/Espace_Client/view/BienvenuePage.dart';
 import 'package:provider/provider.dart';
 import 'AuthProvider.dart';
 import 'package:timezone/data/latest.dart' as tz;
-import 'package:med_scheduler_front/AuthProviderUser.dart';
+import 'package:med_scheduler_front/Models/AuthProviderUser.dart';
 import 'AppLifecycleManager.dart';
 import 'dart:io';
 import 'dart:typed_data';

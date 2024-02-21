@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:med_scheduler_front/CustomAppointment.dart';
+import 'package:med_scheduler_front/Models/CustomAppointment.dart';
 import 'package:chips_choice/chips_choice.dart';
-import 'package:med_scheduler_front/Utilisateur.dart';
+import 'package:med_scheduler_front/Models/Utilisateur.dart';
 import 'package:provider/provider.dart';
-import 'package:med_scheduler_front/AuthProvider.dart';
+import 'package:med_scheduler_front/Models/AuthProvider.dart';
 import 'package:jwt_decode/jwt_decode.dart';
 import 'AppointmentDetails.dart';
-import 'package:med_scheduler_front/UrlBase.dart';
+import 'package:med_scheduler_front/Models/UrlBase.dart';
 import 'package:intl/intl.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:med_scheduler_front/Utilitie/Utilities.dart';
 import 'package:med_scheduler_front/Repository/MedecinRepository.dart';
 import 'package:med_scheduler_front/Repository/BaseRepository.dart';
-import 'package:med_scheduler_front/AuthProviderUser.dart';
+import 'package:med_scheduler_front/Models/AuthProviderUser.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
 class ListAppointment extends StatefulWidget {
@@ -393,6 +393,18 @@ class _ListAppointmentState extends State<ListAppointment> {
                             )),
                           );
                         } else {
+                          // Trier les appointments par startAt et timeStart
+                          snapshot.data!.sort((a, b) {
+                            // Compare les dates startAt
+                            int dateComparison = a.startAt.compareTo(b.startAt);
+                            if (dateComparison != 0) {
+                              return dateComparison;
+                            } else {
+                              // Si les dates sont égales, compare les heures timeStart
+                              return a.timeStart.compareTo(b.timeStart);
+                            }
+                          });
+
                           return ListView.builder(
                             padding: const EdgeInsets.only(
                                 top: 50, left: 20, right: 20),
@@ -605,6 +617,18 @@ class _ListAppointmentState extends State<ListAppointment> {
                             )),
                           );
                         } else {
+                          // Trier les appointments par startAt et timeStart
+                          snapshot.data!.sort((a, b) {
+                            // Compare les dates startAt
+                            int dateComparison = a.startAt.compareTo(b.startAt);
+                            if (dateComparison != 0) {
+                              return dateComparison;
+                            } else {
+                              // Si les dates sont égales, compare les heures timeStart
+                              return a.timeStart.compareTo(b.timeStart);
+                            }
+                          });
+
                           // Construisez votre ListView avec les données obtenues
                           return ListView.builder(
                             padding: const EdgeInsets.only(
@@ -817,6 +841,18 @@ class _ListAppointmentState extends State<ListAppointment> {
                             )),
                           );
                         } else {
+                          // Trier les appointments par startAt et timeStart
+                          snapshot.data!.sort((a, b) {
+                            // Compare les dates startAt
+                            int dateComparison = a.startAt.compareTo(b.startAt);
+                            if (dateComparison != 0) {
+                              return dateComparison;
+                            } else {
+                              // Si les dates sont égales, compare les heures timeStart
+                              return a.timeStart.compareTo(b.timeStart);
+                            }
+                          });
+
                           // Construisez votre ListView avec les données obtenues
                           return ListView.builder(
                             padding: const EdgeInsets.only(

@@ -1,21 +1,21 @@
 import 'package:flutter/material.dart';
-import 'package:med_scheduler_front/Medecin.dart';
+import 'package:med_scheduler_front/Models/Medecin.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'dart:math';
 import 'package:icons_plus/icons_plus.dart';
 import 'PriseDeRendezVous.dart';
-import 'package:med_scheduler_front/Utilisateur.dart';
-import 'package:med_scheduler_front/AuthProvider.dart';
+import 'package:med_scheduler_front/Models/Utilisateur.dart';
+import 'package:med_scheduler_front/Models/AuthProvider.dart';
 import 'package:provider/provider.dart';
-import 'package:med_scheduler_front/Specialite.dart';
+import 'package:med_scheduler_front/Models/Specialite.dart';
 import 'dart:io';
-import 'package:med_scheduler_front/CustomAppointment.dart';
+import 'package:med_scheduler_front/Models/CustomAppointment.dart';
 import 'package:jwt_decode/jwt_decode.dart';
-import 'package:med_scheduler_front/Centre.dart';
+import 'package:med_scheduler_front/Models/Centre.dart';
 import 'AppointmentDetails.dart';
 import 'package:intl/intl.dart';
-import 'package:med_scheduler_front/UrlBase.dart';
-import 'package:med_scheduler_front/Patient.dart';
+import 'package:med_scheduler_front/Models/UrlBase.dart';
+import 'package:med_scheduler_front/Models/Patient.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:device_calendar/device_calendar.dart';
@@ -23,14 +23,13 @@ import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:med_scheduler_front/Repository/UserRepository.dart';
 import 'package:med_scheduler_front/Repository/BaseRepository.dart';
 import 'package:med_scheduler_front/Utilitie/Utilities.dart';
-import 'package:med_scheduler_front/AuthProviderUser.dart';
+import 'package:med_scheduler_front/Models/AuthProviderUser.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:med_scheduler_front/firebase_options.dart';
+import 'package:med_scheduler_front/Models/firebase_options.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:med_scheduler_front/FirebaseApi.dart';
-import 'package:awesome_dialog/awesome_dialog.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:med_scheduler_front/Models/FirebaseApi.dart';
+
 
 class AccueilPatient extends StatefulWidget {
   @override

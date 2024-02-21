@@ -1,32 +1,32 @@
 import 'package:flutter/material.dart';
-import 'package:med_scheduler_front/Utilisateur.dart';
-import 'package:med_scheduler_front/main.dart';
+import 'package:med_scheduler_front/Models/Utilisateur.dart';
+import 'package:med_scheduler_front/Models/main.dart';
 import 'dart:io';
 import 'package:provider/provider.dart';
-import 'package:med_scheduler_front/AuthProvider.dart';
+import 'package:med_scheduler_front/Models/AuthProvider.dart';
 import 'dart:async';
 import 'dart:typed_data';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:image/image.dart' as img;
 import 'package:uuid/uuid.dart';
-import 'package:med_scheduler_front/UrlBase.dart';
+import 'package:med_scheduler_front/Models/UrlBase.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
-import 'package:med_scheduler_front/Centre.dart';
+import 'package:med_scheduler_front/Models/Centre.dart';
 import 'ModificationPassword.dart';
-import 'package:med_scheduler_front/UtilisateurNewPassword.dart';
+import 'package:med_scheduler_front/Models/UtilisateurNewPassword.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:med_scheduler_front/Repository/BaseRepository.dart';
 import 'package:med_scheduler_front/Repository/MedecinRepository.dart';
 import 'package:med_scheduler_front/Utilitie/Utilities.dart';
-import 'package:med_scheduler_front/AuthProviderUser.dart';
+import 'package:med_scheduler_front/Models/AuthProviderUser.dart';
 import 'package:image_cropper/image_cropper.dart';
-import 'package:med_scheduler_front/UtilisateurImage.dart';
+import 'package:med_scheduler_front/Models/UtilisateurImage.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/services.dart';
-import 'package:med_scheduler_front/ConnectionError.dart';
+import 'package:med_scheduler_front/Models/ConnectionError.dart';
 
 class UpdateMedecin extends StatefulWidget {
   @override

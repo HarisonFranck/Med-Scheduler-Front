@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:med_scheduler_front/CustomAppointment.dart';
-import 'Dart:io';
+import 'package:med_scheduler_front/Models/CustomAppointment.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:med_scheduler_front/UrlBase.dart';
+import 'package:med_scheduler_front/Models/UrlBase.dart';
 import 'package:med_scheduler_front/Utilitie/Utilities.dart';
 
 class AppointmentDetails extends StatefulWidget {

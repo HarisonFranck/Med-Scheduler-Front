@@ -3,16 +3,16 @@ import 'AccueilAdmin.dart';
 import 'AdminDetails.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'NotificationAdmin.dart';
-import 'package:med_scheduler_front/Utilisateur.dart';
-import 'package:med_scheduler_front/AuthProvider.dart';
+import 'package:med_scheduler_front/Models/Utilisateur.dart';
+import 'package:med_scheduler_front/Models/AuthProvider.dart';
 import 'package:provider/provider.dart';
 import 'package:jwt_decode/jwt_decode.dart';
-import 'package:med_scheduler_front/UrlBase.dart';
+import 'package:med_scheduler_front/Models/UrlBase.dart';
 import 'SearchMedecin.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:med_scheduler_front/Repository/BaseRepository.dart';
 import 'package:med_scheduler_front/Utilitie/Utilities.dart';
-import 'package:med_scheduler_front/AuthProviderUser.dart';
+import 'package:med_scheduler_front/Models/AuthProviderUser.dart';
 
 class IndexAccueilAdmin extends StatefulWidget {
   @override
