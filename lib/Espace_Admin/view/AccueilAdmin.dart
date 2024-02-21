@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:med_scheduler_front/Utilisateur.dart';
+import 'package:med_scheduler_front/Models/Utilisateur.dart';
 import 'package:chips_choice/chips_choice.dart';
-import 'package:med_scheduler_front/Specialite.dart';
-import 'package:med_scheduler_front/Medecin.dart';
-import 'package:med_scheduler_front/AuthProvider.dart';
-import 'package:med_scheduler_front/UrlBase.dart';
+import 'package:med_scheduler_front/Models/Specialite.dart';
+import 'package:med_scheduler_front/Models/Medecin.dart';
+import 'package:med_scheduler_front/Models/AuthProvider.dart';
+import 'package:med_scheduler_front/Models/UrlBase.dart';
 import 'dart:async';
 import 'dart:io';
-import 'package:med_scheduler_front/Centre.dart';
+import 'package:med_scheduler_front/Models/Centre.dart';
 import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
 import 'MedecinDetails.dart';
 import 'package:med_scheduler_front/Repository/BaseRepository.dart';
@@ -15,11 +15,11 @@ import 'package:med_scheduler_front/Repository/AdminRepository.dart';
 import 'package:med_scheduler_front/Utilitie/Utilities.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:provider/provider.dart';
-import 'package:med_scheduler_front/AuthProviderUser.dart';
+import 'package:med_scheduler_front/Models/AuthProviderUser.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:med_scheduler_front/ConnectionError.dart';
+import 'package:med_scheduler_front/Models/ConnectionError.dart';
 
 class AccueilAdmin extends StatefulWidget {
   @override

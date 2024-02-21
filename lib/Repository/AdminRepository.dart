@@ -2,16 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:async';
 import 'dart:convert';
-import 'package:med_scheduler_front/Utilisateur.dart';
-import 'package:med_scheduler_front/Specialite.dart';
-import 'package:med_scheduler_front/AuthProvider.dart';
-import 'package:med_scheduler_front/UrlBase.dart';
-import 'package:med_scheduler_front/main.dart';
-import 'package:med_scheduler_front/Centre.dart';
+import 'package:med_scheduler_front/Models/Utilisateur.dart';
+import 'package:med_scheduler_front/Models/Specialite.dart';
+import 'package:med_scheduler_front/Models/AuthProvider.dart';
+import 'package:med_scheduler_front/Models/UrlBase.dart';
+import 'package:med_scheduler_front/Models/main.dart';
+import 'package:med_scheduler_front/Models/Centre.dart';
 import 'package:med_scheduler_front/Utilitie/Utilities.dart';
 import 'package:provider/provider.dart';
-import 'package:med_scheduler_front/Medecin.dart';
-import 'package:med_scheduler_front/ConnectionError.dart';
+import 'package:med_scheduler_front/Models/Medecin.dart';
+import 'package:med_scheduler_front/Models/ConnectionError.dart';
 
 
 

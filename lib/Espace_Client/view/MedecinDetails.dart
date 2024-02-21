@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:med_scheduler_front/Medecin.dart';
+import 'package:med_scheduler_front/Models/Medecin.dart';
 import 'dart:io';
 import 'package:provider/provider.dart';
 import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
-import 'package:med_scheduler_front/AuthProviderUser.dart';
-import 'package:med_scheduler_front/UrlBase.dart';
+import 'package:med_scheduler_front/Models/AuthProviderUser.dart';
+import 'package:med_scheduler_front/Models/UrlBase.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:med_scheduler_front/Utilitie/Utilities.dart';
 

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'Login.dart';
 import 'Registration.dart';
-import 'dart:async';
 
 
 class BienvenuePage extends StatefulWidget {

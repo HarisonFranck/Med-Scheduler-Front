@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:med_scheduler_front/Medecin.dart';
-import 'dart:io';
+import 'package:med_scheduler_front/Models/Medecin.dart';
 import 'Agenda.dart';
-import 'package:med_scheduler_front/AuthProvider.dart';
-import 'package:med_scheduler_front/UrlBase.dart';
+import 'package:med_scheduler_front/Models/AuthProvider.dart';
+import 'package:med_scheduler_front/Models/UrlBase.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:med_scheduler_front/Utilitie/Utilities.dart';
 import 'package:med_scheduler_front/Repository/BaseRepository.dart';

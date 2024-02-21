@@ -1,21 +1,21 @@
 import 'package:flutter/material.dart';
 import 'Login.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:med_scheduler_front/Categorie.dart';
+import 'package:med_scheduler_front/Models/Categorie.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:med_scheduler_front/main.dart';
+import 'package:med_scheduler_front/Models/main.dart';
 import 'dart:async';
-import 'package:med_scheduler_front/Utilisateur.dart';
+import 'package:med_scheduler_front/Models/Utilisateur.dart';
 import 'package:uuid/uuid.dart';
-import 'package:med_scheduler_front/UrlBase.dart';
+import 'package:med_scheduler_front/Models/UrlBase.dart';
 import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:med_scheduler_front/Utilitie/Utilities.dart';
 import 'package:med_scheduler_front/Repository/BaseRepository.dart';
-import 'package:med_scheduler_front/AuthProviderUser.dart';
+import 'package:med_scheduler_front/Models/AuthProviderUser.dart';
 import 'package:provider/provider.dart';
-import 'package:med_scheduler_front/AuthProvider.dart';
+import 'package:med_scheduler_front/Models/AuthProvider.dart';
 
 
 

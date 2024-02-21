@@ -1,40 +1,44 @@
 import 'package:flutter/material.dart';
-import 'package:med_scheduler_front/Medecin.dart';
+import 'package:med_scheduler_front/Models/Medecin.dart';
 import 'package:intl/intl.dart';
-import 'package:med_scheduler_front/Patient.dart';
+import 'package:med_scheduler_front/Models/Patient.dart';
 import 'dart:math';
 import 'dart:convert';
 
 
-class UnavalaibleAppointment{
+class CustomAppointment{
 
   final String type;
   final String id;
-  final String? medecin;
-  final String? patient;
-  final DateTime startAt;   // ex = 2023-12-19 00H
+  final Medecin? medecin;
+  final Patient? patient;
+  final DateTime startAt;   // ex = 2023-12-19 09H
   final DateTime timeStart; // ex = 2023-12-19 09H
   final DateTime timeEnd;   // ex = 2023-12-19 10H
   final String reason;
   final DateTime createdAt;
+  final DateTime? updatedAt;
   final Color color;
   final String? appType;
+  final bool? isDeleted;
 
-  UnavalaibleAppointment({
+  CustomAppointment({
     this.medecin,
     this.patient,
     required this.id,
     required this.type,
     required this.startAt,
     required this.timeStart,
+    this.updatedAt,
     required this.timeEnd,
     required this.reason,
     required this.createdAt,
-    this.appType
-  }): color = getRandomColor().withOpacity(0.5);
+    this.appType,
+    this.isDeleted
+  }): color = getRandomColor().withOpacity(0.9);
 
 
-  factory UnavalaibleAppointment.fromJson(Map<String,dynamic> json){
+  factory CustomAppointment.fromJson(Map<String,dynamic> json){
 
     Color color = getRandomColor().withOpacity(0.5);
 
@@ -50,19 +54,21 @@ class UnavalaibleAppointment{
     //Medecin medecin = Medecin(idmedecin: json['idmedecin'], speciality_id: json['speciality_id'], lastname: json['lastname'], firstname: json['firstname'], profil: json['profil'], phone: json['phone'], email: json['email'], onm: json['onm'], address: json['address'], created_at: json['created_at'], updated_at: json['updated_at']);
     //Patient patient = Patient(idpatient: json['idpatient'], nom: json['nom'], prenom: json['prenom'], email: json['email'], telephone: json['telephone'], idcategorie: json['idcategorie'], motdepasse: json['motdepasse']);
 
-    return UnavalaibleAppointment(
-      id: json['@id'],
-      type: json['@type'],
-      medecin: json['doctor'],
-      patient: json['patient'],
-      startAt: parseDate(json['startAt']) ,
-      timeStart:parseDate(json['timeStart']),
-      timeEnd:parseDate(json['timeEnd']),
-      reason: json['reason'],
-      createdAt: DateTime.parse(json['createdAt']),
-      appType:json['appType']??'',
-    );
-  }
+    return CustomAppointment(
+        id: json['@id'],
+        type: json['@type'],
+        medecin: json['doctor'] != null?Medecin.fromJson(json['doctor']):null,
+        patient: json['patient'] != null?Patient.fromJson(json['patient']):null,
+        startAt: parseDate(json['startAt']) ,
+        timeStart:parseDate(json['timeStart']),
+        timeEnd:parseDate(json['timeEnd']),
+        reason: json['reason'],
+        createdAt: json['createdAt']!=null?DateTime.parse(json['createdAt']):DateTime.now(),
+        updatedAt: json['updatedAt']!=null?DateTime.parse(json['updatedAt']):DateTime.now(),
+        appType:json['appType']??'',
+        isDeleted: json['isDeleted']
+        );
+}
 
 
 
@@ -81,17 +87,33 @@ class UnavalaibleAppointment{
   }
 
 
-  Map<String,dynamic> toJson()=>{
+Map<String,dynamic> toJson()=>{
 
 
+    "doctor": medecin!.id,
+    "patient": patient!.id,
+    "startAt": startAt.toIso8601String(),
+    "timeStart": timeStart.toIso8601String(),
+    "timeEnd": timeEnd.toIso8601String(),
+    "reason": reason,
+    "createdAt": (createdAt!=null)?createdAt.toIso8601String():null,
+    "updatedAt": (updatedAt!=null)?updatedAt!.toIso8601String():null,
+    "appType":appType,
+    "isDeleted": (isDeleted!=null)?isDeleted:null
 
-    "doctor": medecin,
-    "patient": patient,
+  };
+
+  Map<String,dynamic> toJsonUnav()=>{
+
+
+    "doctor": medecin!.id,
     "startAt": startAt.toIso8601String(),
     "timeStart": timeStart.toIso8601String(),
     "timeEnd": timeEnd.toIso8601String(),
     "reason": reason,
     "createdAt": createdAt.toIso8601String(),
+    "updatedAt": (updatedAt!=null)?updatedAt!.toIso8601String():null,
+    "isDeleted": (isDeleted!=null)?isDeleted:null,
     "appType":appType
 
   };

@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 import 'IndexAcceuilMedecin.dart';
 import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
-import 'package:med_scheduler_front/UtilisateurNewPassword.dart';
-import 'package:med_scheduler_front/Utilisateur.dart';
-import 'package:med_scheduler_front/UrlBase.dart';
-import 'package:med_scheduler_front/AuthProvider.dart';
+import 'package:med_scheduler_front/Models/UtilisateurNewPassword.dart';
+import 'package:med_scheduler_front/Models/Utilisateur.dart';
+import 'package:med_scheduler_front/Models/UrlBase.dart';
+import 'package:med_scheduler_front/Models/AuthProvider.dart';
 import 'package:med_scheduler_front/Utilitie/Utilities.dart';
 import 'package:med_scheduler_front/Repository/MedecinRepository.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:med_scheduler_front/main.dart';
-import 'package:med_scheduler_front/ConnectionError.dart';
+import 'package:med_scheduler_front/Models/main.dart';
+import 'package:med_scheduler_front/Models/ConnectionError.dart';
 
 
 class ModificationPassword extends StatefulWidget {

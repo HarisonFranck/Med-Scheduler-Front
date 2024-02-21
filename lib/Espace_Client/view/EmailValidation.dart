@@ -6,11 +6,11 @@ import 'Login.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:async';
-import 'package:med_scheduler_front/UrlBase.dart';
+import 'package:med_scheduler_front/Models/UrlBase.dart';
 import 'Modification_MotdePasse.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
-import 'package:med_scheduler_front/UtilisateurNewPassword.dart';
-import 'package:med_scheduler_front/ConnectionError.dart';
+import 'package:med_scheduler_front/Models/UtilisateurNewPassword.dart';
+import 'package:med_scheduler_front/Models/ConnectionError.dart';
 import 'package:med_scheduler_front/Utilitie/Utilities.dart';
 
 

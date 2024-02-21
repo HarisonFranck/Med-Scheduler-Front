@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:med_scheduler_front/CustomAppointment.dart';
+import 'package:med_scheduler_front/Models/CustomAppointment.dart';
 import 'package:intl/intl.dart';
-import 'package:med_scheduler_front/Medecin.dart';
-import 'package:med_scheduler_front/UrlBase.dart';
-import 'package:med_scheduler_front/AuthProvider.dart';
+import 'package:med_scheduler_front/Models/Medecin.dart';
+import 'package:med_scheduler_front/Models/UrlBase.dart';
+import 'package:med_scheduler_front/Models/AuthProvider.dart';
 import 'IndexAcceuilMedecin.dart';
 import 'package:awesome_dialog/awesome_dialog.dart';
 import 'AppointmentDetails.dart';
