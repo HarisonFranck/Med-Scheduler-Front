@@ -200,6 +200,8 @@ class _MedecinDetailsState extends State<MedecinDetails> {
     );
   }
 
+
+
   late AuthProviderUser authProviderUser;
   late AuthProvider authProvider;
   late String token;
@@ -265,7 +267,7 @@ class _MedecinDetailsState extends State<MedecinDetails> {
               : null;
           nomController.text = utilisateur.firstName;
           prenomController.text = utilisateur.lastName;
-          phoneController.text = utilisateur.phone;
+          phoneController.text = utilities!.formatPhoneNumber(utilisateur.phone);
           emailController.text = utilisateur.email;
           centreController.text =
               (utilisateur.center != null) ? utilisateur.center!.label : '';
@@ -419,7 +421,7 @@ class _MedecinDetailsState extends State<MedecinDetails> {
                                         imageUrl:
                                         '$baseUrl${utilities!.ajouterPrefixe(user!.imageName!)}',
                                         placeholder: (context, url) =>
-                                            CircularProgressIndicator(
+                                            const CircularProgressIndicator(
                                               color: Colors.redAccent,
                                             ), // Affiche un indicateur de chargement en attendant l'image
                                         errorWidget:
@@ -439,17 +441,17 @@ class _MedecinDetailsState extends State<MedecinDetails> {
                             ),
                             Row(
                               children: [
-                                Padding(
+                                const Padding(
                                   padding: EdgeInsets.only(left: 20,right: 60),
                                   child: Text('Nom:'),
                                 ),
                                 Padding(
-                                  padding: EdgeInsets.only(left: 0),
+                                  padding: const EdgeInsets.only(left: 0),
                                   child: Container(
                                     width:
                                         MediaQuery.of(context).size.width / 2.5,
                                     child: TextField(
-                                      style: TextStyle(
+                                      style: const TextStyle(
                                           fontSize: 15
                                       ),
                                       decoration: const InputDecoration(
@@ -474,12 +476,12 @@ class _MedecinDetailsState extends State<MedecinDetails> {
                                   child: Text('Prenom:'),
                                 ),
                                 Padding(
-                                  padding: EdgeInsets.only(left:  0),
+                                  padding: const EdgeInsets.only(left:  0),
                                   child: Container(
                                     width:
                                         MediaQuery.of(context).size.width / 2.5,
                                     child: TextField(
-                                      style: TextStyle(
+                                      style: const TextStyle(
                                           fontSize: 15
                                       ),
                                       decoration: const InputDecoration(
@@ -504,12 +506,12 @@ class _MedecinDetailsState extends State<MedecinDetails> {
                                   child: Text('Email:'),
                                 ),
                                 Padding(
-                                  padding: EdgeInsets.only(left: 0),
+                                  padding: const EdgeInsets.only(left: 0),
                                   child: Container(
                                     width: MediaQuery.of(context).size.width /
                                         2.5,
                                     child: TextField(
-                                      style: TextStyle(
+                                      style: const TextStyle(
                                           fontSize: 15
                                       ),
                                       decoration: const InputDecoration(
@@ -529,22 +531,25 @@ class _MedecinDetailsState extends State<MedecinDetails> {
                             ),
                             Row(
                               children: [
-                                Padding(
+                                const Padding(
                                   padding: EdgeInsets.only(left: 20,right: 16),
                                   child: Text('Telephone:'),
                                 ),
                                 Padding(
-                                  padding: EdgeInsets.only(left: 0),
+                                  padding: const EdgeInsets.only(left: 0),
                                   child: Container(
                                     width: MediaQuery.of(context).size.width /
                                         2.5,
                                     child: TextField(
-                                      style: TextStyle(
+
+                                      style: const TextStyle(
                                           fontSize: 15
                                       ),
                                       keyboardType: TextInputType.number,
-                                      decoration: const InputDecoration(
-                                        focusedBorder: UnderlineInputBorder(
+                                      decoration: InputDecoration(
+                                        prefixText: '+261 ',
+                                        prefixStyle: TextStyle(fontWeight: FontWeight.w500,color: Colors.black.withOpacity(0.7)),
+                                        focusedBorder:const UnderlineInputBorder(
                                           borderSide: BorderSide(
                                             color:
                                                 Color.fromARGB(230, 20, 20, 90),
@@ -560,17 +565,17 @@ class _MedecinDetailsState extends State<MedecinDetails> {
                             ),
                             Row(
                               children: [
-                                Padding(
+                                const Padding(
                                   padding: EdgeInsets.only(left: 20,right: 43),
                                   child: Text('Centre:',textAlign: TextAlign.start,),
                                 ),
                                 Padding(
-                                  padding: EdgeInsets.only(left:0),
+                                  padding: const EdgeInsets.only(left:0),
                                   child: Container(
                                     width: MediaQuery.of(context).size.width /
                                         2.5,
                                     child: TextField(
-                                      style: TextStyle(
+                                      style: const TextStyle(
                                         fontSize: 15
                                       ),
                                       keyboardType: TextInputType.name,
@@ -605,10 +610,10 @@ class _MedecinDetailsState extends State<MedecinDetails> {
                                   minimumSize: MaterialStateProperty.all(
                                       const Size(100.0, 40.0)),
                                 ),
-                                onPressed: (){
+                                onPressed: ()async{
 
 
-                                  Navigator.push(
+                                  bool isReturned = await Navigator.push(
                                       context,
                                       MaterialPageRoute(
                                           builder: (context) =>
@@ -616,8 +621,20 @@ class _MedecinDetailsState extends State<MedecinDetails> {
                                           settings: RouteSettings(
                                               arguments:
                                                   utilisateur)));
-                                  print('RETOUR OO');
-                                  didChangeDependencies();
+
+
+                                  if (isReturned) {
+                                    didChangeDependencies();
+                                    setState(() {
+                                      isLoading = true;
+                                    });
+                                    await Future.delayed(const Duration(seconds: 4));
+                                    setState(() {
+                                      isLoading = false;
+                                    });
+                                  }
+
+
                                 },
                                 child: const Text(
                                   'Modifier les informations',
@@ -634,19 +651,20 @@ class _MedecinDetailsState extends State<MedecinDetails> {
                                 padding: const EdgeInsets.only(
                                     top: 30, left: 30, bottom: 30),
                                 child: GestureDetector(
-                                  onTap: () {
+                                  onTap: ()async {
                                     authProvider.logout();
                                     authProviderUser.logout();
 
                                     print(
                                         'TOKEN PRVIDED: ${authProvider.token}');
-                                    Navigator.pushAndRemoveUntil(
+                                     Navigator.pushAndRemoveUntil(
                                       context,
                                       MaterialPageRoute(
                                         builder: (context) => const MyApp(),
                                       ),
                                       (route) => false,
                                     );
+
                                   },
                                   child: const Row(
                                     children: [

@@ -16,8 +16,7 @@ import 'package:med_scheduler_front/Repository/BaseRepository.dart';
 import 'package:med_scheduler_front/Models/AuthProviderUser.dart';
 import 'package:provider/provider.dart';
 import 'package:med_scheduler_front/Models/AuthProvider.dart';
-
-
+import 'package:flutter/services.dart';
 
 class Registration extends StatefulWidget {
   @override
@@ -25,6 +24,8 @@ class Registration extends StatefulWidget {
 }
 
 class _RegistrationState extends State<Registration> {
+  final TextEditingController phoneNumberController = TextEditingController();
+
   BaseRepository? baseRepository;
 
   String baseUrl = UrlBase().baseUrl;
@@ -45,10 +46,8 @@ class _RegistrationState extends State<Registration> {
   @override
   didChangeDependencies() {
     super.didChangeDependencies();
-    authProviderUser =
-        Provider.of<AuthProviderUser>(context, listen: false);
+    authProviderUser = Provider.of<AuthProviderUser>(context, listen: false);
   }
-
 
   List<Categorie> listCategorie = [];
 
@@ -61,13 +60,49 @@ class _RegistrationState extends State<Registration> {
         });
   }
 
+  void formatPhoneNumberText() {
+    final unformattedText =
+        phoneNumberController.text.replaceAll(RegExp(r'\D'), '');
+
+    String formattedText = '';
+    int index = 0;
+    final groups = [2, 2, 3, 2];
+
+    for (final group in groups) {
+      final endIndex = index + group;
+      if (endIndex <= unformattedText.length) {
+        formattedText += unformattedText.substring(index, endIndex);
+        if (endIndex < unformattedText.length) {
+          formattedText += ' ';
+        }
+        index = endIndex;
+      } else {
+        formattedText += unformattedText.substring(index);
+        break;
+      }
+    }
+
+    phoneNumberController.value = TextEditingValue(
+      text: formattedText,
+      selection: TextSelection.collapsed(offset: formattedText.length),
+    );
+  }
+
   @override
   void initState() {
     super.initState();
+    phoneNumberController.addListener(formatPhoneNumberText);
     utilities = Utilities(context: context);
     baseRepository = BaseRepository(context: context, utilities: utilities!);
 
     getAll();
+  }
+
+  @override
+  void dispose() {
+    phoneNumberController.removeListener(formatPhoneNumberText);
+    phoneNumberController.dispose();
+    super.dispose();
   }
 
   void success() {
@@ -91,8 +126,6 @@ class _RegistrationState extends State<Registration> {
       Navigator.of(context).pop();
     });
   }
-
-
 
   Future<void> addUser(Utilisateur utilisateur) async {
     setState(() {
@@ -271,7 +304,6 @@ class _RegistrationState extends State<Registration> {
                           ),
                         ),
                       ),
-
                       Padding(
                         padding: const EdgeInsets.only(
                             top: 30, left: 35, right: 35, bottom: 30),
@@ -771,7 +803,6 @@ class _RegistrationState extends State<Registration> {
                             ),
                           ),
                         ),
-
                         Padding(
                           padding: const EdgeInsets.only(
                               top: 30, left: 35, right: 35, bottom: 30),
@@ -870,10 +901,14 @@ class _RegistrationState extends State<Registration> {
                               left: 35, right: 35, bottom: 30),
                           child: TextFormField(
                             focusNode: _focusNodephone,
-                            controller: phoneController,
+                            controller: phoneNumberController,
                             keyboardType: TextInputType.number,
                             style: const TextStyle(color: Colors.black),
-                            maxLength: 10,
+                            maxLength: 12,
+                            inputFormatters: [
+                              FilteringTextInputFormatter.digitsOnly,
+                              LengthLimitingTextInputFormatter(9)
+                            ],
                             decoration: InputDecoration(
                               focusedBorder: const OutlineInputBorder(
                                   borderSide: BorderSide(
@@ -884,16 +919,11 @@ class _RegistrationState extends State<Registration> {
                                   color: Colors.black,
                                   fontWeight: FontWeight.w300),
                               labelText: 'Telephone',
-                              hintText: 'ex: 0380020020',
-                              suffixIcon: Padding(
-                                padding: const EdgeInsets.only(right: 10),
-                                child: SvgPicture.asset(
-                                  'assets/images/madagascar.svg',
-                                  fit: BoxFit.fitWidth,
-                                  width: 100,
-                                  height: 20,
-                                ),
-                              ),
+                              hintText: 'ex: 38 00 200 20',
+                              prefixText: '+261 ',
+                              prefixStyle: TextStyle(
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.black.withOpacity(0.7)),
                               labelStyle: TextStyle(
                                   color: _focusNodephone.hasFocus
                                       ? Colors.redAccent
@@ -901,8 +931,6 @@ class _RegistrationState extends State<Registration> {
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(8.0),
                               ),
-                              prefixIcon: const Icon(Icons.phone,
-                                  color: Color.fromARGB(1000, 60, 70, 120)),
                             ),
                           ),
                         ),
@@ -1139,12 +1167,15 @@ class _RegistrationState extends State<Registration> {
                               onPressed: () {
                                 FocusScope.of(context).unfocus();
 
+                                print(
+                                    '+261${phoneNumberController.text.replaceAll(RegExp(r'\s+'), '')}');
+
                                 if (passwordController.text ==
                                     confirmPasswordController.text) {
                                   if (nomController.text != "" &&
                                       prenomController.text != "" &&
                                       emailController.text != "" &&
-                                      phoneController.text != "" &&
+                                      phoneNumberController.text != "" &&
                                       passwordController.text != "" &&
                                       confirmPasswordController.text != "" &&
                                       categorie != null &&
@@ -1154,27 +1185,49 @@ class _RegistrationState extends State<Registration> {
                                         _validateEmail(emailController.text);
 
                                     if (mail == null) {
-                                      Utilisateur user = Utilisateur(
-                                          id: '',
-                                          lastName: nomController.text.trim(),
-                                          roles: ['ROLE_USER'],
-                                          firstName:
-                                              prenomController.text.trim(),
-                                          password:
-                                              passwordController.text.trim(),
-                                          userType: 'Patient',
-                                          phone: phoneController.text.trim(),
-                                          email: emailController.text.trim(),
-                                          imageName: (path.text != "")
-                                              ? path.text.trim()
-                                              : "",
-                                          category: utilities!
-                                              .extractApiPath(categorie!.id),
-                                          address:
-                                              addresseController.text.trim(),
-                                          createdAt: DateTime.now(),
-                                          city: villeController.text.trim());
-                                      addUser(user);
+                                      String phone =
+                                          '${phoneNumberController.text.replaceAll(RegExp(r'\s+'), '')}';
+                                      if (phone.length != 9) {
+                                        if (phone.startsWith('32') ||
+                                            phone.startsWith('33') ||
+                                            phone.startsWith('34') ||
+                                            phone.startsWith('38') ||
+                                            phone.startsWith('37')) {
+                                          String number =
+                                              "+261${phoneNumberController.text.replaceAll(RegExp(r'\s+'), '')}";
+                                          Utilisateur user = Utilisateur(
+                                              id: '',
+                                              lastName:
+                                                  nomController.text.trim(),
+                                              roles: ['ROLE_USER'],
+                                              firstName:
+                                                  prenomController.text.trim(),
+                                              password: passwordController.text
+                                                  .trim(),
+                                              userType: 'Patient',
+                                              phone: number,
+                                              email:
+                                                  emailController.text.trim(),
+                                              imageName: (path.text != "")
+                                                  ? path.text.trim()
+                                                  : "",
+                                              category: utilities!
+                                                  .extractApiPath(
+                                                      categorie!.id),
+                                              address: addresseController.text
+                                                  .trim(),
+                                              createdAt: DateTime.now(),
+                                              city:
+                                                  villeController.text.trim());
+                                          addUser(user);
+                                        } else {
+                                          utilities!.ModificationError(
+                                              'Veuillez inserer un numero valide');
+                                        }
+                                      } else {
+                                        utilities!.ModificationError(
+                                            'Veuillez inserer un numero valide');
+                                      }
                                     } else {
                                       //print('MAIL NON VALIDE');
                                       emailInvalide();

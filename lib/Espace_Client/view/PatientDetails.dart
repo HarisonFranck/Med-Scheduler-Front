@@ -30,6 +30,8 @@ class PatientDetails extends StatefulWidget {
 }
 
 class _PatientDetailsState extends State<PatientDetails> {
+  final TextEditingController phoneNumberController = TextEditingController();
+
   String baseUrl = UrlBase().baseUrl;
 
   late AuthProviderUser authProviderUser;
@@ -38,12 +40,44 @@ class _PatientDetailsState extends State<PatientDetails> {
   Utilities? utilities;
 
   Utilisateur? user;
+
   @override
   void dispose() {
-    // Libérer les ressources du widget ici
-
-    // Appeler la méthode dispose de la superclasse
+    phoneNumberController.removeListener(formatPhoneNumberText);
+    phoneNumberController.dispose();
     super.dispose();
+  }
+
+  void formatPhoneNumberText() {
+    final unformattedText =
+        phoneNumberController.text.replaceAll(RegExp(r'\D'), '');
+
+    String formattedText = '';
+    int index = 0;
+    final groups = [2, 2, 3, 2];
+    var cursorOffset = 0;
+
+    for (final group in groups) {
+      final endIndex = index + group;
+      if (endIndex <= unformattedText.length) {
+        formattedText += unformattedText.substring(index, endIndex);
+        cursorOffset += group;
+        if (endIndex < unformattedText.length) {
+          formattedText += ' ';
+          cursorOffset++;
+        }
+        index = endIndex;
+      } else {
+        formattedText += unformattedText.substring(index);
+        cursorOffset += unformattedText.length - index;
+        break;
+      }
+    }
+
+    phoneNumberController.value = TextEditingValue(
+      text: formattedText,
+      selection: TextSelection.collapsed(offset: cursorOffset),
+    );
   }
 
   String generateUniqueImageName() {
@@ -61,7 +95,7 @@ class _PatientDetailsState extends State<PatientDetails> {
   Stream<bool> get permissionStatusStream => _permissionStatusController.stream;
 
   Future<bool> _requestGalleryPermission() async {
-    print("Autorisation");
+
 
     PermissionStatus status = await Permission.storage.request();
     bool isGranted = status.isGranted;
@@ -129,7 +163,6 @@ class _PatientDetailsState extends State<PatientDetails> {
     );
 
     if (croppedFile != null) {
-
       // Faites quelque chose avec le fichier rogné (par exemple, l'envoyer au serveur)
       File? newFile = File(croppedFile.path);
 
@@ -230,11 +263,10 @@ class _PatientDetailsState extends State<PatientDetails> {
       setState(() {
         isLoading = false;
       });
-    if (e is http.ClientException) {
-
-    utilities!.handleConnectionError(ConnectionError("Une erreur de connexion s'est produite!"));
-
-    }else {
+      if (e is http.ClientException) {
+        utilities!.handleConnectionError(
+            ConnectionError("Une erreur de connexion s'est produite!"));
+      } else {
         // Gérer d'autres exceptions
         print('Une erreur inattendue s\'est produite: $e');
       }
@@ -310,6 +342,7 @@ class _PatientDetailsState extends State<PatientDetails> {
   @override
   void initState() {
     super.initState();
+    phoneNumberController.addListener(formatPhoneNumberText);
     utilities = Utilities(context: context);
     userRepository = UserRepository(context: context, utilities: utilities!);
   }
@@ -333,7 +366,6 @@ class _PatientDetailsState extends State<PatientDetails> {
     try {
       String jsonUser = jsonEncode(utilisateur.toJson());
       final response = await http.patch(url, headers: headers, body: jsonUser);
-      print(response.statusCode);
 
       if (response.statusCode == 200) {
         setState(() {
@@ -386,6 +418,8 @@ class _PatientDetailsState extends State<PatientDetails> {
     // TODO: implement didChangeDependencies
     super.didChangeDependencies();
 
+    print('DEP');
+
     authProviderUser = Provider.of<AuthProviderUser>(context, listen: false);
 
     user = Provider.of<AuthProviderUser>(context).utilisateur;
@@ -397,12 +431,13 @@ class _PatientDetailsState extends State<PatientDetails> {
 
       if (mounted) {
         setState(() {
+
           profilImage = (utilisateur.imageName != null)
               ? File(utilisateur.imageName!)
               : null;
           nomController.text = utilisateur.firstName;
           prenomController.text = utilisateur.lastName;
-          phoneController.text = utilisateur.phone;
+          phoneNumberController.text = utilisateur.phone.replaceFirst('+261', '');
           emailController.text = utilisateur.email;
           categorieController.text = (utilisateur.category != null)
               ? categorieSet(utilisateur.category!)
@@ -803,20 +838,27 @@ class _PatientDetailsState extends State<PatientDetails> {
                                         MediaQuery.of(context).size.width / 2.5,
                                     child: TextField(
                                       inputFormatters: [
-                                        FilteringTextInputFormatter.digitsOnly
+                                        FilteringTextInputFormatter.digitsOnly,
+                                        LengthLimitingTextInputFormatter(9)
                                       ],
                                       style: TextStyle(fontSize: 15),
-                                      maxLength: 10,
+                                      maxLength: 12,
                                       keyboardType: TextInputType.number,
-                                      decoration: const InputDecoration(
-                                        focusedBorder: UnderlineInputBorder(
+                                      decoration: InputDecoration(
+                                        prefixStyle: TextStyle(
+                                            fontWeight: FontWeight.w500,
+                                            color:
+                                                Colors.black.withOpacity(0.7)),
+                                        prefixText: '+261 ',
+                                        focusedBorder:
+                                            const UnderlineInputBorder(
                                           borderSide: BorderSide(
                                             color:
                                                 Color.fromARGB(230, 20, 20, 90),
                                           ),
                                         ),
                                       ),
-                                      controller: phoneController,
+                                      controller: phoneNumberController,
                                       readOnly: EditPhone ? false : true,
                                     ),
                                   ),
@@ -856,36 +898,48 @@ class _PatientDetailsState extends State<PatientDetails> {
                                   onPressed: () {
                                     FocusScope.of(context).unfocus();
 
-                                    String phone = phoneController.text;
-                                    if (phone.length != 10) {
+                                    String phone = phoneNumberController.text.replaceFirst('+261', '');
+                                    if (phone.replaceAll(' ', '').length != 9) {
+
                                       utilities!.ModificationError(
                                           'Veuillez inserer un numero valide');
                                     } else {
-                                      Utilisateur userInterm = Utilisateur(
-                                          id: utilisateur.id,
-                                          lastName: utilisateur.lastName,
-                                          firstName: utilisateur.firstName,
-                                          userType: utilisateur.userType,
-                                          phone: phone,
-                                          imageName: (user!.imageName != null)
-                                              ? utilities!.extraireNomFichier(
-                                                  user!.imageName!)
-                                              : null,
-                                          password: utilisateur.password,
-                                          email: utilisateur.email,
-                                          category: utilisateur.category,
-                                          address: utilisateur.address,
-                                          roles: utilisateur.roles,
-                                          createdAt: utilisateur.createdAt,
-                                          city: utilisateur.city);
-                                      UserUpdate(userInterm);
-                                      didChangeDependencies();
-                                      if (mounted) {
-                                        setState(() {
-                                          //phoneController.text =userInterm.phone;
-                                          EditPhone = false;
-                                        });
-                                      }
+                                      if (phone.startsWith('32') ||
+                                          phone.startsWith('33') ||
+                                          phone.startsWith('34') ||
+                                          phone.startsWith('38') ||
+                                          phone.startsWith('37')) {
+                                        String number =
+                                            "+261${phone.replaceAll(RegExp(r'\s+'), '')}";
+                                        Utilisateur userInterm = Utilisateur(
+                                            id: utilisateur.id,
+                                            lastName: utilisateur.lastName,
+                                            firstName: utilisateur.firstName,
+                                            userType: utilisateur.userType,
+                                            phone: number,
+                                            imageName: (user!.imageName != null)
+                                                ? utilities!.extraireNomFichier(
+                                                    user!.imageName!)
+                                                : null,
+                                            password: utilisateur.password,
+                                            email: utilisateur.email,
+                                            category: utilisateur.category,
+                                            address: utilisateur.address,
+                                            roles: utilisateur.roles,
+                                            createdAt: utilisateur.createdAt,
+                                            city: utilisateur.city);
+                                        UserUpdate(userInterm);
+                                        didChangeDependencies();
+                                        if (mounted) {
+                                          setState(() {
+                                            //phoneController.text =userInterm.phone;
+                                            EditPhone = false;
+                                          });
+                                        }
+                                      } else {
+    utilities!.ModificationError(
+    'Veuillez inserer un numero valide');
+    }
                                     }
                                   },
                                   child: const Text(
