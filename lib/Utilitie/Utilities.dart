@@ -493,21 +493,27 @@ class Utilities {
     ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 
+
   String formatPhoneNumber(String phoneNumber) {
-    if (phoneNumber.length != 10) {
-      // Vérifie si la longueur du numéro de téléphone est valide
-      return 'Numéro de téléphone invalide';
+    // Supprimer les espaces inutiles
+    phoneNumber = phoneNumber.replaceAll(' ', '');
+
+    // Vérifier si le numéro de téléphone commence par "+261"
+    if (phoneNumber.startsWith('+261')) {
+      // Supprimer le préfixe "+261"
+      phoneNumber = phoneNumber.substring(4);
+      // Ajouter les espaces après chaque groupe de chiffres
+      return phoneNumber.substring(0, 2) +
+          ' ' +
+          phoneNumber.substring(2, 4) +
+          ' ' +
+          phoneNumber.substring(4, 7) +
+          ' ' +
+          phoneNumber.substring(7);
     }
 
-    String formattedPhoneNumber = phoneNumber.substring(0, 3) +
-        ' ' +
-        phoneNumber.substring(3, 5) +
-        ' ' +
-        phoneNumber.substring(5, 8) +
-        ' ' +
-        phoneNumber.substring(8);
-
-    return formattedPhoneNumber;
+    // Retourner le numéro de téléphone non modifié s'il ne commence pas par "+261"
+    return phoneNumber;
   }
 
   void errorDoctorEmptyCenterOrSpeciality(String msg) {
@@ -525,4 +531,8 @@ class Utilities {
       content: Text('numero copié dans le presse-papiers'),
     ));
   }
+
+
+
+
 }

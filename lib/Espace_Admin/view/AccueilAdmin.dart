@@ -20,6 +20,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:med_scheduler_front/Models/ConnectionError.dart';
+import 'package:flutter/services.dart';
 
 class AccueilAdmin extends StatefulWidget {
   @override
@@ -35,9 +36,74 @@ class _AccueilAdminState extends State<AccueilAdmin> {
 
   bool isLoading = true;
 
+  void formatPhoneNumberTextAdd() {
+    final unformattedText = phoneController.text.replaceAll(RegExp(r'\D'), '');
+
+    String formattedText = '';
+    int index = 0;
+    final groups = [2, 2, 3, 2];
+    var cursorOffset = 0;
+
+    for (final group in groups) {
+      final endIndex = index + group;
+      if (endIndex <= unformattedText.length) {
+        formattedText += unformattedText.substring(index, endIndex);
+        cursorOffset += group;
+        if (endIndex < unformattedText.length) {
+          formattedText += ' ';
+          cursorOffset++;
+        }
+        index = endIndex;
+      } else {
+        formattedText += unformattedText.substring(index);
+        cursorOffset += unformattedText.length - index;
+        break;
+      }
+    }
+
+    phoneController.value = TextEditingValue(
+      text: formattedText,
+      selection: TextSelection.collapsed(offset: cursorOffset),
+    );
+  }
+
+  void formatPhoneNumberTextUpdate() {
+    final unformattedText =
+        modifPhoneController.text.replaceAll(RegExp(r'\D'), '');
+
+    String formattedText = '';
+    int index = 0;
+    final groups = [2, 2, 3, 2];
+    var cursorOffset = 0;
+
+    for (final group in groups) {
+      final endIndex = index + group;
+      if (endIndex <= unformattedText.length) {
+        formattedText += unformattedText.substring(index, endIndex);
+        cursorOffset += group;
+        if (endIndex < unformattedText.length) {
+          formattedText += ' ';
+          cursorOffset++;
+        }
+        index = endIndex;
+      } else {
+        formattedText += unformattedText.substring(index);
+        cursorOffset += unformattedText.length - index;
+        break;
+      }
+    }
+
+    modifPhoneController.value = TextEditingValue(
+      text: formattedText,
+      selection: TextSelection.collapsed(offset: cursorOffset),
+    );
+  }
+
   @override
   initState() {
     super.initState();
+    phoneController.addListener(formatPhoneNumberTextAdd);
+    modifPhoneController.addListener(formatPhoneNumberTextUpdate);
     utilities = Utilities(context: context);
     baseRepository = BaseRepository(context: context, utilities: utilities!);
     adminRepository = AdminRepository(context: context, utilities: utilities!);
@@ -106,6 +172,15 @@ class _AccueilAdminState extends State<AccueilAdmin> {
     emailController.text = "";
     villeController.text = "";
     phoneController.text = "";
+  }
+
+  @override
+  void dispose() {
+    phoneController.removeListener(formatPhoneNumberTextAdd);
+    modifPhoneController.removeListener(formatPhoneNumberTextUpdate);
+    modifPhoneController.dispose();
+    phoneController.dispose();
+    super.dispose();
   }
 
   @override
@@ -1854,12 +1929,16 @@ class _AccueilAdminState extends State<AccueilAdmin> {
                       return null;
                     },
                   ),
-                  buildTextFormField(
+                  buildTextFormFieldPhone(
                     label: 'Telephone',
                     controller: phoneController,
                     keyboardType: TextInputType.number,
                     focusNode: _focusNodephone,
-                    max: 10,
+                    inputFormatter: [
+                      FilteringTextInputFormatter.digitsOnly,
+                      LengthLimitingTextInputFormatter(9)
+                    ],
+                    max: 12,
                     validator: (value) {
                       if (value!.isEmpty) {
                         return 'Veuillez entrer votre numéro de téléphone';
@@ -1912,27 +1991,48 @@ class _AccueilAdminState extends State<AccueilAdmin> {
                               if (spec != null) {
                                 if (center != null) {
                                   if (mail == null) {
-                                    Utilisateur user = Utilisateur(
-                                        id: '',
-                                        lastName: nomController.text.trim(),
-                                        roles: ['ROLE_USER'],
-                                        firstName: prenomController.text.trim(),
-                                        password: "doctor",
-                                        userType: 'Doctor',
-                                        speciality: spec!,
-                                        center: center!,
-                                        phone: phoneController.text.trim(),
-                                        email: emailController.text.trim(),
-                                        imageName: "",
-                                        address: addresseController.text.trim(),
-                                        category: null,
-                                        createdAt: DateTime.now(),
-                                        city: villeController.text.trim());
-                                    addMedecin(user);
-                                    didChangeDependencies();
-                                    Navigator.of(context).pop();
-                                    didChangeDependencies();
-                                    ReInitDataMedecin();
+                                    String phone = phoneController.text
+                                        .replaceFirst('+261', '');
+                                    if (phone.replaceAll(' ', '').length != 9) {
+                                      utilities!.ModificationError(
+                                          'Veuillez inserer un numero valide');
+                                    } else {
+                                      if (phone.startsWith('32') ||
+                                          phone.startsWith('33') ||
+                                          phone.startsWith('34') ||
+                                          phone.startsWith('38') ||
+                                          phone.startsWith('37')) {
+                                        String number =
+                                            "+261${phone.replaceAll(RegExp(r'\s+'), '')}";
+                                        Utilisateur user = Utilisateur(
+                                            id: '',
+                                            lastName: nomController.text.trim(),
+                                            roles: ['ROLE_USER'],
+                                            firstName:
+                                                prenomController.text.trim(),
+                                            password: "doctor",
+                                            userType: 'Doctor',
+                                            speciality: spec!,
+                                            center: center!,
+                                            phone: number,
+                                            email: emailController.text.trim(),
+                                            imageName: "",
+                                            address:
+                                                addresseController.text.trim(),
+                                            category: null,
+                                            createdAt: DateTime.now(),
+                                            city: villeController.text.trim());
+                                        addMedecin(user);
+                                        didChangeDependencies();
+                                        Navigator.of(context).pop();
+                                        didChangeDependencies();
+                                        ReInitDataMedecin();
+                                      } else {
+                                        utilities!
+                                            .errorDoctorEmptyCenterOrSpeciality(
+                                                "Veuillez inserer un numero valide.");
+                                      }
+                                    }
                                   } else {
                                     // Gérez le cas où l'e-mail n'est pas valide
                                     emailInvalide();
@@ -2006,7 +2106,7 @@ class _AccueilAdminState extends State<AccueilAdmin> {
     modifNomController.text = medecin.lastName;
     modifPrenomController.text = medecin.firstName;
     modifEmailController.text = medecin.email;
-    modifPhoneController.text = medecin.phone;
+    modifPhoneController.text = utilities!.formatPhoneNumber(medecin.phone);
     modifAddresseController.text = medecin.address;
     modifVilleController.text = medecin.city;
 
@@ -2129,12 +2229,16 @@ class _AccueilAdminState extends State<AccueilAdmin> {
                       return null;
                     },
                   ),
-                  buildTextFormField(
+                  buildTextFormFieldPhone(
                     label: 'Telephone',
                     controller: modifPhoneController,
                     keyboardType: TextInputType.number,
                     focusNode: _focusNodephone,
-                    max: 10,
+                    inputFormatter: [
+                      FilteringTextInputFormatter.digitsOnly,
+                      LengthLimitingTextInputFormatter(9)
+                    ],
+                    max: 12,
                     validator: (value) {
                       if (value!.isEmpty) {
                         return 'Veuillez entrer votre numéro de téléphone';
@@ -2184,36 +2288,61 @@ class _AccueilAdminState extends State<AccueilAdmin> {
                               if (modifSpec != null) {
                                 if (modifCenter != null) {
                                   if (mail == null) {
-                                    Utilisateur user = Utilisateur(
-                                        id: medecin.id,
-                                        lastName:
-                                            modifNomController.text.trim(),
-                                        roles: ['ROLE_USER'],
-                                        firstName:
-                                            modifPrenomController.text.trim(),
-                                        password: "doctor",
-                                        userType: 'Doctor',
-                                        speciality: modifSpec!,
-                                        center: modifCenter!,
-                                        phone: modifPhoneController.text.trim(),
-                                        email: modifEmailController.text.trim(),
-                                        imageName: (medecin.imageName != null &&
-                                                medecin.imageName != "")
-                                            ? utilities!.extraireNomFichier(
-                                                medecin.imageName!)
-                                            : '',
-                                        address:
-                                            modifAddresseController.text.trim(),
-                                        category: null,
-                                        updatedAt: DateTime.now(),
-                                        city: modifVilleController.text.trim());
-                                    adminRepository!.updateMedecin(user);
-                                    didChangeDependencies();
-                                    Navigator.of(context).pop();
-                                    didChangeDependencies();
-                                    setState(() {
-                                      getAllAsync();
-                                    });
+                                    String phone = modifPhoneController.text
+                                        .replaceFirst('+261', '');
+                                    if (phone.replaceAll(' ', '').length != 9) {
+                                      utilities!.ModificationError(
+                                          'Veuillez inserer un numero valide');
+                                    } else {
+                                      if (phone.startsWith('32') ||
+                                          phone.startsWith('33') ||
+                                          phone.startsWith('34') ||
+                                          phone.startsWith('38') ||
+                                          phone.startsWith('37')) {
+                                        String number =
+                                            "+261${phone.replaceAll(RegExp(r'\s+'), '')}";
+                                        Utilisateur user = Utilisateur(
+                                            id: medecin.id,
+                                            lastName:
+                                                modifNomController.text.trim(),
+                                            roles: ['ROLE_USER'],
+                                            firstName: modifPrenomController
+                                                .text
+                                                .trim(),
+                                            password: "doctor",
+                                            userType: 'Doctor',
+                                            speciality: modifSpec!,
+                                            center: modifCenter!,
+                                            phone: modifPhoneController.text
+                                                .trim(),
+                                            email: modifEmailController.text
+                                                .trim(),
+                                            imageName: (medecin.imageName !=
+                                                        null &&
+                                                    medecin.imageName != "")
+                                                ? utilities!.extraireNomFichier(
+                                                    medecin.imageName!)
+                                                : '',
+                                            address: modifAddresseController
+                                                .text
+                                                .trim(),
+                                            category: null,
+                                            updatedAt: DateTime.now(),
+                                            city: modifVilleController.text
+                                                .trim());
+                                        adminRepository!.updateMedecin(user);
+                                        didChangeDependencies();
+                                        Navigator.of(context).pop();
+                                        didChangeDependencies();
+                                        setState(() {
+                                          getAllAsync();
+                                        });
+                                      } else {
+                                        utilities!
+                                            .errorDoctorEmptyCenterOrSpeciality(
+                                                "veuillez inserer un numero valide.");
+                                      }
+                                    }
                                   } else {
                                     // Gérez le cas où l'e-mail n'est pas valide
                                     emailInvalide();
@@ -2315,6 +2444,8 @@ class _AccueilAdminState extends State<AccueilAdmin> {
       required TextEditingController controller,
       required TextInputType keyboardType,
       required FocusNode focusNode,
+      List<TextInputFormatter>? inputFormatter,
+      InputDecoration? inputDecoration,
       required FormFieldValidator<String> validator,
       int? max}) {
     return Padding(
@@ -2323,9 +2454,59 @@ class _AccueilAdminState extends State<AccueilAdmin> {
         focusNode: focusNode,
         controller: controller,
         keyboardType: keyboardType,
+        inputFormatters: inputFormatter,
         maxLength: (max != null) ? max : null,
         style: const TextStyle(color: Colors.black),
         decoration: InputDecoration(
+          enabledBorder: const UnderlineInputBorder(
+            borderSide: BorderSide(color: Colors.grey),
+          ),
+          hintStyle: const TextStyle(
+            color: Colors.black,
+            fontWeight: FontWeight.w300,
+          ),
+          labelText: label,
+          hintText: 'Entrer votre $label',
+          labelStyle: TextStyle(
+            color: focusNode.hasFocus ? Colors.redAccent : Colors.black,
+          ),
+          border: UnderlineInputBorder(
+            borderRadius: BorderRadius.circular(8.0),
+          ),
+          prefixIcon: const Icon(
+            Icons.person_2_rounded,
+            color: Color.fromARGB(1000, 60, 70, 120),
+          ),
+        ),
+        validator: validator,
+      ),
+    );
+  }
+
+  Widget buildTextFormFieldPhone(
+      {required String label,
+      required TextEditingController controller,
+      required TextInputType keyboardType,
+      required FocusNode focusNode,
+      List<TextInputFormatter>? inputFormatter,
+      required FormFieldValidator<String> validator,
+      int? max}) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 30, left: 10, right: 10, bottom: 30),
+      child: TextFormField(
+        focusNode: focusNode,
+        controller: controller,
+        keyboardType: keyboardType,
+        inputFormatters: inputFormatter,
+        maxLength: (max != null) ? max : null,
+        style: const TextStyle(color: Colors.black),
+        decoration: InputDecoration(
+          prefixText: '+261 ',
+          prefixStyle: TextStyle(
+              color: Colors.black.withOpacity(
+                0.7,
+              ),
+              fontWeight: FontWeight.w500),
           enabledBorder: const UnderlineInputBorder(
             borderSide: BorderSide(color: Colors.grey),
           ),
@@ -2650,7 +2831,6 @@ class _AccueilAdminState extends State<AccueilAdmin> {
   /// Update Specialite
 
   Future<void> updateSpecialite(Specialite specialite) async {
-
     setState(() {
       isLoading = true;
     });

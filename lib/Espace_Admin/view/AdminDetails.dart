@@ -32,12 +32,53 @@ class AdminDetails extends StatefulWidget {
 }
 
 class _AdminDetailsState extends State<AdminDetails> {
+  final TextEditingController phoneNumberController = TextEditingController();
+
   String baseUrl = UrlBase().baseUrl;
 
   AdminRepository? adminRepository;
   Utilities? utilities;
 
   Utilisateur? user;
+
+  @override
+  void dispose() {
+    phoneNumberController.removeListener(formatPhoneNumberText);
+    phoneNumberController.dispose();
+    super.dispose();
+  }
+
+  void formatPhoneNumberText() {
+    final unformattedText =
+        phoneNumberController.text.replaceAll(RegExp(r'\D'), '');
+
+    String formattedText = '';
+    int index = 0;
+    final groups = [2, 2, 3, 2];
+    var cursorOffset = 0;
+
+    for (final group in groups) {
+      final endIndex = index + group;
+      if (endIndex <= unformattedText.length) {
+        formattedText += unformattedText.substring(index, endIndex);
+        cursorOffset += group;
+        if (endIndex < unformattedText.length) {
+          formattedText += ' ';
+          cursorOffset++;
+        }
+        index = endIndex;
+      } else {
+        formattedText += unformattedText.substring(index);
+        cursorOffset += unformattedText.length - index;
+        break;
+      }
+    }
+
+    phoneNumberController.value = TextEditingValue(
+      text: formattedText,
+      selection: TextSelection.collapsed(offset: cursorOffset),
+    );
+  }
 
   Widget loadingWidget() {
     return Center(
@@ -413,6 +454,7 @@ class _AdminDetailsState extends State<AdminDetails> {
   @override
   void initState() {
     super.initState();
+    phoneNumberController.addListener(formatPhoneNumberText);
 
     utilities = Utilities(context: context);
     adminRepository = AdminRepository(context: context, utilities: utilities!);
@@ -441,7 +483,7 @@ class _AdminDetailsState extends State<AdminDetails> {
             : null;
         nomController.text = utilisateur.firstName;
         prenomController.text = utilisateur.lastName;
-        phoneController.text = utilisateur.phone;
+        phoneNumberController.text = utilities!.formatPhoneNumber(utilisateur.phone);
         emailController.text = utilisateur.email;
         categorieController.text = (utilisateur.category != null)
             ? categorieSet(utilisateur.category!)
@@ -840,20 +882,27 @@ class _AdminDetailsState extends State<AdminDetails> {
                                         MediaQuery.of(context).size.width / 2.5,
                                     child: TextField(
                                       inputFormatters: [
-                                        FilteringTextInputFormatter.digitsOnly
+                                        FilteringTextInputFormatter.digitsOnly,
+                                        LengthLimitingTextInputFormatter(9)
                                       ],
                                       style: TextStyle(fontSize: 15),
-                                      maxLength: 10,
+                                      maxLength: 12,
                                       keyboardType: TextInputType.number,
-                                      decoration: const InputDecoration(
-                                        focusedBorder: UnderlineInputBorder(
+                                      decoration: InputDecoration(
+                                        prefixText: '+261 ',
+                                        prefixStyle: TextStyle(
+                                            fontWeight: FontWeight.w500,
+                                            color:
+                                                Colors.black.withOpacity(0.7)),
+                                        focusedBorder:
+                                            const UnderlineInputBorder(
                                           borderSide: BorderSide(
                                             color:
                                                 Color.fromARGB(230, 20, 20, 90),
                                           ),
                                         ),
                                       ),
-                                      controller: phoneController,
+                                      controller: phoneNumberController,
                                       readOnly: EditPhone ? false : true,
                                     ),
                                   ),
@@ -890,32 +939,44 @@ class _AdminDetailsState extends State<AdminDetails> {
                                         const Size(100.0, 30.0)),
                                   ),
                                   onPressed: () {
-                                    String phone = phoneController.text;
-                                    if (phone.length != 10) {
-                                      ModificationError(
+                                    String phone = phoneNumberController.text
+                                        .replaceFirst('+261', '');
+                                    if (phone.replaceAll(' ', '').length != 9) {
+                                      utilities!.ModificationError(
                                           'Veuillez inserer un numero valide');
                                     } else {
-                                      FocusScope.of(context).unfocus();
-                                      Utilisateur userInterm = Utilisateur(
-                                          id: utilisateur.id,
-                                          lastName: utilisateur.lastName,
-                                          firstName: utilisateur.firstName,
-                                          userType: utilisateur.userType,
-                                          phone: phone,
-                                          password: utilisateur.password,
-                                          email: utilisateur.email,
-                                          imageName: (user!.imageName != null)
-                                              ? utilities!.extraireNomFichier(
-                                                  user!.imageName!)
-                                              : null,
-                                          category: utilisateur.category,
-                                          address: utilisateur.address,
-                                          roles: utilisateur.roles,
-                                          createdAt: utilisateur.createdAt,
-                                          city: utilisateur.city);
-                                      UserUpdate(userInterm);
-                                      if (mounted) {
-                                        setState(() {});
+                                      if (phone.startsWith('32') ||
+                                          phone.startsWith('33') ||
+                                          phone.startsWith('34') ||
+                                          phone.startsWith('38') ||
+                                          phone.startsWith('37')) {
+                                        String number =
+                                            "+261${phone.replaceAll(RegExp(r'\s+'), '')}";
+                                        FocusScope.of(context).unfocus();
+                                        Utilisateur userInterm = Utilisateur(
+                                            id: utilisateur.id,
+                                            lastName: utilisateur.lastName,
+                                            firstName: utilisateur.firstName,
+                                            userType: utilisateur.userType,
+                                            phone: number,
+                                            password: utilisateur.password,
+                                            email: utilisateur.email,
+                                            imageName: (user!.imageName != null)
+                                                ? utilities!.extraireNomFichier(
+                                                    user!.imageName!)
+                                                : null,
+                                            category: utilisateur.category,
+                                            address: utilisateur.address,
+                                            roles: utilisateur.roles,
+                                            createdAt: utilisateur.createdAt,
+                                            city: utilisateur.city);
+                                        UserUpdate(userInterm);
+                                        if (mounted) {
+                                          setState(() {});
+                                        }
+                                      } else {
+                                        utilities!.ModificationError(
+                                            'Veuillez inserer un numero valide');
                                       }
                                     }
                                   },

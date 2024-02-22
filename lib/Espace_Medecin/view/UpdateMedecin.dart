@@ -34,6 +34,8 @@ class UpdateMedecin extends StatefulWidget {
 }
 
 class _UpdateMedecinState extends State<UpdateMedecin> {
+  final TextEditingController phoneNumberController = TextEditingController();
+
   String baseUrl = UrlBase().baseUrl;
 
   List<Centre> listCenter = [];
@@ -48,10 +50,43 @@ class _UpdateMedecinState extends State<UpdateMedecin> {
 
   Utilisateur? user;
 
+  void formatPhoneNumberText() {
+    final unformattedText =
+        phoneNumberController.text.replaceAll(RegExp(r'\D'), '');
+
+    String formattedText = '';
+    int index = 0;
+    final groups = [2, 2, 3, 2];
+    var cursorOffset = 0;
+
+    for (final group in groups) {
+      final endIndex = index + group;
+      if (endIndex <= unformattedText.length) {
+        formattedText += unformattedText.substring(index, endIndex);
+        cursorOffset += group;
+        if (endIndex < unformattedText.length) {
+          formattedText += ' ';
+          cursorOffset++;
+        }
+        index = endIndex;
+      } else {
+        formattedText += unformattedText.substring(index);
+        cursorOffset += unformattedText.length - index;
+        break;
+      }
+    }
+
+    phoneNumberController.value = TextEditingValue(
+      text: formattedText,
+      selection: TextSelection.collapsed(offset: cursorOffset),
+    );
+  }
+
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
+    phoneNumberController.addListener(formatPhoneNumberText);
     utilities = Utilities(context: context);
     baseRepository = BaseRepository(context: context, utilities: utilities!);
 
@@ -60,7 +95,7 @@ class _UpdateMedecinState extends State<UpdateMedecin> {
           (utilisateur.imageName != null) ? File(utilisateur.imageName!) : null;
       nomController.text = utilisateur.firstName;
       prenomController.text = utilisateur.lastName;
-      phoneController.text = utilisateur.phone;
+      phoneNumberController.text = utilisateur.phone.replaceFirst('+261', '');
       emailController.text = utilisateur.email;
       centreController.text =
           (utilisateur.center != null) ? utilisateur.center!.label : '';
@@ -104,7 +139,9 @@ class _UpdateMedecinState extends State<UpdateMedecin> {
             borderSide: BorderSide(color: Colors.grey),
           ),
           labelStyle: TextStyle(
-            color: focusNode.hasFocus ? Colors.redAccent : Colors.black.withOpacity(0.5),
+            color: focusNode.hasFocus
+                ? Colors.redAccent
+                : Colors.black.withOpacity(0.5),
           ),
           hintStyle: const TextStyle(
             color: Colors.black,
@@ -125,6 +162,8 @@ class _UpdateMedecinState extends State<UpdateMedecin> {
   void dispose() {
     // TODO: implement dispose
     super.dispose();
+    phoneNumberController.removeListener(formatPhoneNumberText);
+    phoneNumberController.dispose();
 
     print('--- DESTRUCTION PAGE ---');
   }
@@ -232,7 +271,6 @@ class _UpdateMedecinState extends State<UpdateMedecin> {
     final url = Uri.parse(
         "${baseUrl}api/image-profile/${utilities!.extractLastNumber(utilisateur.id)}");
 
-
     try {
       // Limiter la taille du fichier à, par exemple, 2 Mo (ajustez selon vos besoins)
       const maxSizeInBytes = 2 * 1024 * 1024; // 2 Mo
@@ -249,7 +287,7 @@ class _UpdateMedecinState extends State<UpdateMedecin> {
 
         // Ajouter le fichier au champ de données multipartes
         var fileStream = http.ByteStream(file.openRead());
-       var length = await file.length();
+        var length = await file.length();
         var multipartFile = http.MultipartFile('image', fileStream, length,
             filename: file.path.split('/').last);
         request.files.add(multipartFile);
@@ -269,8 +307,7 @@ class _UpdateMedecinState extends State<UpdateMedecin> {
           UtilisateurImage utilisateurImage = UtilisateurImage.fromJson(map);
 
           if (utilisateurImage.imageName != "") {
-
-           setState(() {
+            setState(() {
               utilisateur = Utilisateur(
                   id: utilisateur.id,
                   lastName: utilisateur.lastName,
@@ -287,7 +324,7 @@ class _UpdateMedecinState extends State<UpdateMedecin> {
               authProviderUser.setUser(utilisateur);
             });
             Navigator.pop(context);
-         } else {
+          } else {
             print('IMAGE USER NULL');
           }
 
@@ -320,11 +357,10 @@ class _UpdateMedecinState extends State<UpdateMedecin> {
       setState(() {
         isLoading = false;
       });
-    if (e is http.ClientException) {
-
-    utilities!.handleConnectionError(ConnectionError("Une erreur de connexion s'est produite!"));
-
-    }else {
+      if (e is http.ClientException) {
+        utilities!.handleConnectionError(
+            ConnectionError("Une erreur de connexion s'est produite!"));
+      } else {
         // Gérer d'autres exceptions
         print('Une erreur inattendue s\'est produite: $e');
       }
@@ -422,11 +458,9 @@ class _UpdateMedecinState extends State<UpdateMedecin> {
 
     final headers = {'Content-Type': 'application/merge-patch+json'};
 
-    print('URL: $url');
-
     try {
       String jsonUser = jsonEncode(utilisateur.toJson());
-      print('Request Body: $jsonUser');
+
       final response = await http.patch(url, headers: headers, body: jsonUser);
       print(response.statusCode);
 
@@ -435,14 +469,10 @@ class _UpdateMedecinState extends State<UpdateMedecin> {
           isLoading = false;
         });
         final Map<String, dynamic> jsonResponse = json.decode(response.body);
-        print('ERRRR: $jsonResponse');
 
         if (jsonResponse.containsKey('error')) {
           utilities!.error('Erreur de modification');
         } else {
-
-          print('REQ BODY: ${response.body}');
-
           authProviderUser.setUser(utilisateur);
           utilities!.ModificationUtilisateur();
 
@@ -450,7 +480,7 @@ class _UpdateMedecinState extends State<UpdateMedecin> {
             isLoading = false;
             dataLoaded = false;
           });
-          Navigator.pop(context);
+          Navigator.pop(context,true);
 
           //Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context)=>IndexAcceuilMedecin()), (route) => false);
 
@@ -734,9 +764,7 @@ class _UpdateMedecinState extends State<UpdateMedecin> {
                                     width:
                                         MediaQuery.of(context).size.width / 2.5,
                                     child: TextField(
-                                      style: TextStyle(
-                                          fontSize: 15
-                                      ),
+                                      style: TextStyle(fontSize: 15),
                                       decoration: const InputDecoration(
                                         focusedBorder: UnderlineInputBorder(
                                           borderSide: BorderSide(
@@ -762,11 +790,9 @@ class _UpdateMedecinState extends State<UpdateMedecin> {
                                   padding: const EdgeInsets.only(left: 40),
                                   child: Container(
                                     width:
-                                        MediaQuery.of(context).size.width /2.5,
+                                        MediaQuery.of(context).size.width / 2.5,
                                     child: TextField(
-                                      style: TextStyle(
-                                          fontSize: 15
-                                      ),
+                                      style: TextStyle(fontSize: 15),
                                       decoration: const InputDecoration(
                                         focusedBorder: UnderlineInputBorder(
                                           borderSide: BorderSide(
@@ -791,12 +817,10 @@ class _UpdateMedecinState extends State<UpdateMedecin> {
                                 Padding(
                                   padding: const EdgeInsets.only(left: 55),
                                   child: Container(
-                                    width: MediaQuery.of(context).size.width /
-                                        2.5,
+                                    width:
+                                        MediaQuery.of(context).size.width / 2.5,
                                     child: TextField(
-                                      style: TextStyle(
-                                          fontSize: 15
-                                      ),
+                                      style: TextStyle(fontSize: 15),
                                       decoration: const InputDecoration(
                                         focusedBorder: UnderlineInputBorder(
                                           borderSide: BorderSide(
@@ -898,26 +922,31 @@ class _UpdateMedecinState extends State<UpdateMedecin> {
                                 Padding(
                                   padding: const EdgeInsets.only(left: 20),
                                   child: Container(
-                                    width: MediaQuery.of(context).size.width /
-                                        2.5,
+                                    width:
+                                        MediaQuery.of(context).size.width / 2.5,
                                     child: TextField(
-                                        inputFormatters: [
-                                          FilteringTextInputFormatter.digitsOnly
-                                        ],
-                                        style: TextStyle(
-                                        fontSize: 15
-                                        ),
-                                      maxLength: 10,
+                                      inputFormatters: [
+                                        FilteringTextInputFormatter.digitsOnly,
+                                        LengthLimitingTextInputFormatter(9)
+                                      ],
+                                      style: TextStyle(fontSize: 15),
+                                      maxLength: 12,
                                       keyboardType: TextInputType.number,
-                                      decoration: const InputDecoration(
-                                        focusedBorder: UnderlineInputBorder(
+                                      decoration: InputDecoration(
+                                        prefixText: '+261 ',
+                                        prefixStyle: TextStyle(
+                                            fontWeight: FontWeight.w500,
+                                            color:
+                                                Colors.black.withOpacity(0.7)),
+                                        focusedBorder:
+                                            const UnderlineInputBorder(
                                           borderSide: BorderSide(
                                             color:
                                                 Color.fromARGB(230, 20, 20, 90),
                                           ),
                                         ),
                                       ),
-                                      controller: phoneController,
+                                      controller: phoneNumberController,
                                       readOnly: EditPhone ? false : true,
                                     ),
                                   ),
@@ -956,36 +985,46 @@ class _UpdateMedecinState extends State<UpdateMedecin> {
                                         const Size(100.0, 30.0)),
                                   ),
                                   onPressed: () {
-                                    String phone = phoneController.text;
-                                    if (phone.length != 10) {
+                                    FocusScope.of(context).unfocus();
+
+                                    String phone = phoneNumberController.text
+                                        .replaceFirst('+261', '');
+                                    if (phone.replaceAll(' ', '').length != 9) {
                                       ModificationError(
                                           'Veuillez inserer un numero valide');
                                     } else {
-
-                                      print('PHONE IMG USER: ${utilisateur.imageName}');
-
-                                      FocusScope.of(context).unfocus();
-                                      Utilisateur userInterm = Utilisateur(
-                                          id: utilisateur.id,
-                                          lastName: utilisateur.lastName,
-                                          firstName: utilisateur.firstName,
-                                          userType: utilisateur.userType,
-                                          phone: phone,
-                                          center: utilisateur.center,
-                                          speciality: utilisateur.speciality,
-                                          password: utilisateur.password,
-                                          email: utilisateur.email,
-                                          imageName: (utilisateur.imageName !=
-                                                  null)
-                                              ? utilities!.extraireNomFichier(
-                                                  utilisateur.imageName!)
-                                              : null,
-                                          category: utilisateur.category,
-                                          address: utilisateur.address,
-                                          roles: utilisateur.roles,
-                                          createdAt: utilisateur.createdAt,
-                                          city: utilisateur.city);
-                                      UserUpdate(userInterm);
+                                      if (phone.startsWith('32') ||
+                                          phone.startsWith('33') ||
+                                          phone.startsWith('34') ||
+                                          phone.startsWith('38') ||
+                                          phone.startsWith('37')) {
+                                        String number =
+                                            "+261${phone.replaceAll(RegExp(r'\s+'), '')}";
+                                        Utilisateur userInterm = Utilisateur(
+                                            id: utilisateur.id,
+                                            lastName: utilisateur.lastName,
+                                            firstName: utilisateur.firstName,
+                                            userType: utilisateur.userType,
+                                            phone: number,
+                                            center: utilisateur.center,
+                                            speciality: utilisateur.speciality,
+                                            password: utilisateur.password,
+                                            email: utilisateur.email,
+                                            imageName: (utilisateur.imageName !=
+                                                    null)
+                                                ? utilities!.extraireNomFichier(
+                                                    utilisateur.imageName!)
+                                                : null,
+                                            category: utilisateur.category,
+                                            address: utilisateur.address,
+                                            roles: utilisateur.roles,
+                                            createdAt: utilisateur.createdAt,
+                                            city: utilisateur.city);
+                                        UserUpdate(userInterm);
+                                      } else {
+                                        ModificationError(
+                                            'Veuillez inserer un numero valide');
+                                      }
                                     }
                                   },
                                   child: const Text(
@@ -1012,9 +1051,7 @@ class _UpdateMedecinState extends State<UpdateMedecin> {
                                       width: MediaQuery.of(context).size.width /
                                           2.5,
                                       child: TextField(
-                                      style: TextStyle(
-                                      fontSize: 15
-                                        ),
+                                        style: TextStyle(fontSize: 15),
                                         maxLength: 10,
                                         keyboardType: TextInputType.name,
                                         decoration: const InputDecoration(
@@ -1051,8 +1088,8 @@ class _UpdateMedecinState extends State<UpdateMedecin> {
                                   Padding(
                                     padding: const EdgeInsets.only(left: 7),
                                     child: Container(
-                                      width: MediaQuery.of(context).size.width /
-                                          2,
+                                      width:
+                                          MediaQuery.of(context).size.width / 2,
                                       child: buildDropdownButtonFormFieldCenter(
                                         label: 'Centre',
                                         value: centerTemporaire ?? center,
