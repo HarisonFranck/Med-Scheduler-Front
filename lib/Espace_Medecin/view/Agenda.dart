@@ -802,6 +802,7 @@ class AgendaState extends State<Agenda> {
                                   ),
                                   Expanded(
                                       child: ListView(
+                                    physics: BouncingScrollPhysics(),
                                     children: [
                                       if (isAppointment) ...[
                                         for (int ap = 0;
@@ -1637,7 +1638,7 @@ class AgendaState extends State<Agenda> {
                                   fontSize: 14,
                                   fontWeight: FontWeight.w500),
                             ),
-        Spacer()
+                            Spacer()
                           ],
                         )),
                     Divider(

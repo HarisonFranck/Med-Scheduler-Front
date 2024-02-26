@@ -627,14 +627,11 @@ class _PatientDetailsState extends State<PatientDetails> {
                                                         _cropImage(
                                                             originalFile);
 
-                                                        print(
-                                                            'Chemin du fichier original : $originalPath');
                                                       } else {
                                                         print(
                                                             'Aucun fichier sélectionné');
                                                       }
                                                     } else {
-                                                      print('NOT GRANTED');
                                                     }
                                                   },
                                                   icon: const Icon(
@@ -659,7 +656,7 @@ class _PatientDetailsState extends State<PatientDetails> {
                               children: [
                                 const Padding(
                                   padding: EdgeInsets.only(left: 20),
-                                  child: Text('Nom:'),
+                                  child: Text('Nom:',style: TextStyle(fontSize: 14,)),
                                 ),
                                 Padding(
                                   padding: const EdgeInsets.only(left: 60),
@@ -687,7 +684,7 @@ class _PatientDetailsState extends State<PatientDetails> {
                               children: [
                                 const Padding(
                                   padding: EdgeInsets.only(left: 20),
-                                  child: Text('Prenom:'),
+                                  child: Text('Prenom:',style: TextStyle(fontSize: 14,)),
                                 ),
                                 Padding(
                                   padding: const EdgeInsets.only(left: 36),
@@ -715,7 +712,7 @@ class _PatientDetailsState extends State<PatientDetails> {
                               children: [
                                 const Padding(
                                   padding: EdgeInsets.only(left: 20),
-                                  child: Text('Email:'),
+                                  child: Text('Email:',style: TextStyle(fontSize: 14,)),
                                 ),
                                 Padding(
                                   padding: const EdgeInsets.only(left: 53),
@@ -829,7 +826,7 @@ class _PatientDetailsState extends State<PatientDetails> {
                               children: [
                                 const Padding(
                                   padding: EdgeInsets.only(left: 20),
-                                  child: Text('Telephone:'),
+                                  child: Text('Telephone:',style: TextStyle(fontSize: 14,)),
                                 ),
                                 Padding(
                                   padding: const EdgeInsets.only(left: 17),
@@ -957,7 +954,7 @@ class _PatientDetailsState extends State<PatientDetails> {
                               children: [
                                 const Padding(
                                   padding: EdgeInsets.only(left: 20),
-                                  child: Text('Categorie:'),
+                                  child: Text('Categorie:',style: TextStyle(fontSize: 14,)),
                                 ),
                                 Padding(
                                   padding: const EdgeInsets.only(left: 22),

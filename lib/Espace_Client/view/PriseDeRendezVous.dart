@@ -287,7 +287,7 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
             (appointment.medecin!.lastName == medecin.lastName) &&
             (appointment.startAt.year >= now.year &&
                 appointment.startAt.month >= now.month &&
-                appointment.startAt.isAfter(now.subtract(Duration(days: 1))))) {
+                appointment.startAt.isAfter(now.subtract(const Duration(days: 1))))) {
           setState(() {
             AppointmentList.add(appointment);
           });
@@ -1381,7 +1381,7 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
             Container(
               width: AppointWidth,
               height: (appoint.isDeleted != null && appoint.isDeleted == true)
-                  ? 125
+                  ? 135
                   : 55,
               // ajustez la taille du point en fonction de vos besoins
 
@@ -1389,7 +1389,7 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
                 shape: BoxShape.rectangle,
                 borderRadius: BorderRadius.circular(6),
                 color: (appoint.isDeleted != null && appoint.isDeleted == true)
-                    ? Color.fromARGB(1000, 238, 239, 244)
+                    ? const Color.fromARGB(1000, 238, 239, 244)
                     : Colors.redAccent.withOpacity(
                         0.7), // utilisez la couleur de l'appointment
               ),
@@ -1439,7 +1439,7 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
                       appoint.isDeleted == true) ...[
                     Column(
                       children: [
-                        Row(
+                        const Row(
                           mainAxisAlignment: MainAxisAlignment.start,
                           children: [
                             Padding(
@@ -1459,26 +1459,26 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
                             ),
                           ],
                         ),
-                        SizedBox(height: 10),
+
                         Row(
                           mainAxisAlignment: MainAxisAlignment.start,
                           children: [
                             Padding(
-                              padding: EdgeInsets.only(left: 10),
+                              padding: const EdgeInsets.only(left: 10),
                               child: Text(
                                 textAlign: TextAlign.start,
                                 maxLines: 3,
                                 softWrap: false,
                                 overflow: TextOverflow.ellipsis,
                                 'Contact: ${medecinCliked!.phone}',
-                                style: TextStyle(
+                                style: const TextStyle(
                                     fontWeight: FontWeight.w500,
                                     fontSize: 12,
                                     letterSpacing: 2,
                                     color: Colors.redAccent),
                               ),
                             ),
-                            SizedBox(
+                            const SizedBox(
                               width: 10,
                             ),
                             GestureDetector(
@@ -1487,34 +1487,26 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
                                       .copyText(context, medecinCliked!.phone);
                                 },
                                 child: Container(
-    padding: EdgeInsets.only(left: 4,right: 4),
+                                  width: 35,
+                                  height: 30,
+                                  margin: EdgeInsets.only(top: 10,bottom: 10),
+                                  padding: const EdgeInsets.only(left: 4,right: 4),
                                   decoration: BoxDecoration(
-                                  color: Color.fromARGB(230, 20, 20, 90).withOpacity(0.2),
+                                  color: const Color.fromARGB(230, 20, 20, 90).withOpacity(0.2),
                                       borderRadius: BorderRadius.circular(3),
                                       border: Border.all(
-                                          color: Color.fromARGB(230, 20, 20, 90)
+                                          color: const Color.fromARGB(230, 20, 20, 90)
                                               .withOpacity(0.4),
                                           width: 1)),
-                                  child: Row(
-                                    children: [
-                                      Text(
-                                        'Copier',
-                                        style: TextStyle(
-                                            color:
-                                                Colors.black.withOpacity(0.5)),
-                                      ),
-                                      SizedBox(
-                                        width: 5,
-                                      ),
+                                  child:
                                       Icon(
-                                        size: 15,
+                                        size: 16,
                                         Icons.copy,
                                         color: Colors.black.withOpacity(0.5),
                                       ),
-                                    ],
-                                  ),
+
                                 )),
-                                      Spacer()
+                                      const Spacer()
 
                           ],
                         ),
@@ -1825,7 +1817,7 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
                                   fontSize: 14,
                                   fontWeight: FontWeight.w500),
                             ),
-                            Spacer()
+                            const Spacer()
                           ],
                         )),
                     Divider(
@@ -1858,7 +1850,7 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
                                   fontSize: 14,
                                   fontWeight: FontWeight.w500),
                             ),
-                            Spacer()
+                            const Spacer()
                           ],
                         )),
                     Divider(

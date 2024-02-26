@@ -790,7 +790,7 @@ class _ConfirmAppointmentState extends State<ConfirmAppointment> {
                                                       .appointment.timeStart,
                                                   timeEnd: widget
                                                       .appointment.timeEnd,
-                                                  reason: raison.text,
+                                                  reason: raison.text.trim(),
                                                   createdAt: DateTime.now());
 
 
@@ -1127,7 +1127,7 @@ class _ConfirmAppointmentState extends State<ConfirmAppointment> {
                                                   widget.appointment.timeStart,
                                               timeEnd:
                                                   widget.appointment.timeEnd,
-                                              reason: raison.text,
+                                              reason: raison.text.trim(),
                                               createdAt: DateTime.now());
                                       addAppointment(
                                           newAppointment, widget.appointment);

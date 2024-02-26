@@ -712,7 +712,7 @@ class _AdminDetailsState extends State<AdminDetails> {
                               children: [
                                 const Padding(
                                   padding: EdgeInsets.only(left: 20),
-                                  child: Text('Nom:'),
+                                  child: Text('Nom:',style: TextStyle(fontSize: 14,)),
                                 ),
                                 Padding(
                                   padding: const EdgeInsets.only(left: 65),
@@ -740,7 +740,7 @@ class _AdminDetailsState extends State<AdminDetails> {
                               children: [
                                 const Padding(
                                   padding: EdgeInsets.only(left: 20),
-                                  child: Text('Prenom:'),
+                                  child: Text('Prenom:',style: TextStyle(fontSize: 14,)),
                                 ),
                                 Padding(
                                   padding: const EdgeInsets.only(left: 41),
@@ -768,7 +768,7 @@ class _AdminDetailsState extends State<AdminDetails> {
                               children: [
                                 const Padding(
                                   padding: EdgeInsets.only(left: 20),
-                                  child: Text('Email:'),
+                                  child: Text('Email:',style: TextStyle(fontSize: 14,)),
                                 ),
                                 Padding(
                                   padding: const EdgeInsets.only(left: 55),
@@ -873,7 +873,7 @@ class _AdminDetailsState extends State<AdminDetails> {
                               children: [
                                 const Padding(
                                   padding: EdgeInsets.only(left: 20),
-                                  child: Text('Telephone:'),
+                                  child: Text('Telephone:',style: TextStyle(fontSize: 14,)),
                                 ),
                                 Padding(
                                   padding: const EdgeInsets.only(left: 18),
@@ -999,8 +999,7 @@ class _AdminDetailsState extends State<AdminDetails> {
                                     authProvider.logout();
                                     //Provider.of<AuthProviderUser>(context).dispose();
                                     authProviderUser.logout();
-                                    print(
-                                        'TOKEN PRVIDED: ${authProvider.token}');
+
                                     Navigator.pushAndRemoveUntil(
                                       context,
                                       MaterialPageRoute(
