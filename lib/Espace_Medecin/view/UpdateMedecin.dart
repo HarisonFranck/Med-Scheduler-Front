@@ -756,7 +756,7 @@ class _UpdateMedecinState extends State<UpdateMedecin> {
                               children: [
                                 const Padding(
                                   padding: EdgeInsets.only(left: 20),
-                                  child: Text('Nom:'),
+                                  child: Text('Nom:',style: TextStyle(fontSize: 14,)),
                                 ),
                                 Padding(
                                   padding: const EdgeInsets.only(left: 63),
@@ -784,7 +784,7 @@ class _UpdateMedecinState extends State<UpdateMedecin> {
                               children: [
                                 const Padding(
                                   padding: EdgeInsets.only(left: 20),
-                                  child: Text('Prenom:'),
+                                  child: Text('Prenom:',style: TextStyle(fontSize: 14,)),
                                 ),
                                 Padding(
                                   padding: const EdgeInsets.only(left: 40),
@@ -812,7 +812,7 @@ class _UpdateMedecinState extends State<UpdateMedecin> {
                               children: [
                                 const Padding(
                                   padding: EdgeInsets.only(left: 20),
-                                  child: Text('Email:'),
+                                  child: Text('Email:',style: TextStyle(fontSize: 14,)),
                                 ),
                                 Padding(
                                   padding: const EdgeInsets.only(left: 55),
@@ -917,7 +917,7 @@ class _UpdateMedecinState extends State<UpdateMedecin> {
                               children: [
                                 const Padding(
                                   padding: EdgeInsets.only(left: 20),
-                                  child: Text('Telephone:'),
+                                  child: Text('Telephone:',style: TextStyle(fontSize: 14,)),
                                 ),
                                 Padding(
                                   padding: const EdgeInsets.only(left: 20),
@@ -1043,7 +1043,7 @@ class _UpdateMedecinState extends State<UpdateMedecin> {
                                 children: [
                                   const Padding(
                                     padding: EdgeInsets.only(left: 20),
-                                    child: Text('Centre:'),
+                                    child: Text('Centre:',style: TextStyle(fontSize: 14,)),
                                   ),
                                   Padding(
                                     padding: const EdgeInsets.only(left: 45),
@@ -1083,7 +1083,7 @@ class _UpdateMedecinState extends State<UpdateMedecin> {
                                 children: [
                                   const Padding(
                                     padding: EdgeInsets.only(left: 20),
-                                    child: Text('Centre:'),
+                                    child: Text('Centre:',style: TextStyle(fontSize: 14,)),
                                   ),
                                   Padding(
                                     padding: const EdgeInsets.only(left: 7),

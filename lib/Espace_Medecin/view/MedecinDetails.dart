@@ -45,6 +45,7 @@ class _MedecinDetailsState extends State<MedecinDetails> {
   void initState() {
     // TODO: implement initState
     super.initState();
+    phoneController.addListener(formatPhoneNumberText);
     utilities = Utilities(context: context);
     baseRepository = BaseRepository(context: context, utilities: utilities!);
     getAll();
@@ -95,7 +96,8 @@ class _MedecinDetailsState extends State<MedecinDetails> {
 
   @override
   void dispose() {
-    // TODO: implement dispose
+    phoneController.removeListener(formatPhoneNumberText);
+    phoneController.dispose();
     super.dispose();
 
     print('--- DESTRUCTION PAGE ---');
@@ -250,7 +252,7 @@ class _MedecinDetailsState extends State<MedecinDetails> {
   void didChangeDependencies() {
     // TODO: implement didChangeDependencies
     super.didChangeDependencies();
-    print('DID ZAO');
+
     authProviderUser = Provider.of<AuthProviderUser>(context, listen: false);
     user = Provider.of<AuthProviderUser>(context,listen: false).utilisateur;
 
@@ -345,6 +347,38 @@ class _MedecinDetailsState extends State<MedecinDetails> {
   double basePaddingLeft = 20.0;
 
 
+
+  void formatPhoneNumberText() {
+    final unformattedText =
+    phoneController.text.replaceAll(RegExp(r'\D'), '');
+
+    String formattedText = '';
+    int index = 0;
+    final groups = [2, 2, 3, 2];
+    var cursorOffset = 0;
+
+    for (final group in groups) {
+      final endIndex = index + group;
+      if (endIndex <= unformattedText.length) {
+        formattedText += unformattedText.substring(index, endIndex);
+        cursorOffset += group;
+        if (endIndex < unformattedText.length) {
+          formattedText += ' ';
+          cursorOffset++;
+        }
+        index = endIndex;
+      } else {
+        formattedText += unformattedText.substring(index);
+        cursorOffset += unformattedText.length - index;
+        break;
+      }
+    }
+
+    phoneController.value = TextEditingValue(
+      text: formattedText,
+      selection: TextSelection.collapsed(offset: cursorOffset),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -443,7 +477,7 @@ class _MedecinDetailsState extends State<MedecinDetails> {
                               children: [
                                 const Padding(
                                   padding: EdgeInsets.only(left: 20,right: 60),
-                                  child: Text('Nom:'),
+                                  child: Text('Nom:',style: TextStyle(fontSize: 14,)),
                                 ),
                                 Padding(
                                   padding: const EdgeInsets.only(left: 0),
@@ -473,7 +507,7 @@ class _MedecinDetailsState extends State<MedecinDetails> {
                               children: [
                                 const Padding(
                                   padding: EdgeInsets.only(left: 20,right: 37),
-                                  child: Text('Prenom:'),
+                                  child: Text('Prenom:',style: TextStyle(fontSize: 14,)),
                                 ),
                                 Padding(
                                   padding: const EdgeInsets.only(left:  0),
@@ -503,7 +537,7 @@ class _MedecinDetailsState extends State<MedecinDetails> {
                               children: [
                                 const Padding(
                                   padding: EdgeInsets.only(left: 20,right: 53),
-                                  child: Text('Email:'),
+                                  child: Text('Email:',style: TextStyle(fontSize: 14,)),
                                 ),
                                 Padding(
                                   padding: const EdgeInsets.only(left: 0),
@@ -567,7 +601,7 @@ class _MedecinDetailsState extends State<MedecinDetails> {
                               children: [
                                 const Padding(
                                   padding: EdgeInsets.only(left: 20,right: 43),
-                                  child: Text('Centre:',textAlign: TextAlign.start,),
+                                  child: Text('Centre:',style: TextStyle(fontSize: 14,),textAlign: TextAlign.start,),
                                 ),
                                 Padding(
                                   padding: const EdgeInsets.only(left:0),

@@ -43,24 +43,6 @@ class _NotificationMedecinState extends State<NotificationMedecin> {
     user = Provider.of<AuthProviderUser>(context).utilisateur;
   }
 
-  bool isToday(DateTime startAt, DateTime timeStart) {
-    DateTime now = DateTime.now();
-    DateTime startOfWeek = DateTime(now.year, now.month, now.day - now.weekday);
-    DateTime endOfWeek = startOfWeek.add(const Duration(days: 6));
-    bool isIt = false;
-    bool val = DateFormat('yyyy-MM-dd').format(startAt) ==
-        DateFormat('yyyy-MM-dd').format(now);
-    if (val) {
-      if (TimeOfDay.fromDateTime(now).hour >
-          TimeOfDay.fromDateTime(timeStart).hour) {
-        isIt = false;
-      } else {
-        isIt = true;
-      }
-    }
-
-    return isIt;
-  }
 
   Future<List<CustomAppointment>> filterAppointments(
       Future<List<CustomAppointment>> appointmentsFuture) async {
@@ -69,7 +51,7 @@ class _NotificationMedecinState extends State<NotificationMedecin> {
     // Filtrer les rendez-vous avec startAt égal à DateTime.now()
     List<CustomAppointment> filteredAppointments = allAppointments
         .where((appointment) =>
-            isToday(appointment.startAt, appointment.timeStart))
+            utilities!.isToday(appointment.startAt, appointment.timeStart))
         .toList();
 
     return filteredAppointments;
@@ -89,62 +71,7 @@ class _NotificationMedecinState extends State<NotificationMedecin> {
     }
   }
 
-  String formatTimeAppointment(
-      DateTime startDateTime, DateTime timeStart, DateTime timeEnd) {
-    // Liste des jours de la semaine
-    final List<String> jours = [
-      'Lundi',
-      'Mardi',
-      'Mercredi',
-      'Jeudi',
-      'Vendredi',
-      'Samedi',
-      'Dimanche'
-    ];
 
-    // Liste des mois de l'année
-    final List<String> mois = [
-      '',
-      'Janvier',
-      'Février',
-      'Mars',
-      'Avril',
-      'Mai',
-      'Juin',
-      'Juillet',
-      'Août',
-      'Septembre',
-      'Octobre',
-      'Novembre',
-      'Décembre'
-    ];
-
-    // Extraire les composants de la date et de l'heure
-    int jour = startDateTime.day;
-    int moisIndex = startDateTime.month;
-    int annee = startDateTime.year;
-    int heureStart = timeStart.hour;
-    int minuteStart = timeStart.minute;
-    int heureEnd = timeEnd.hour;
-    int minuteEnd = timeEnd.minute;
-
-    // Formater le jour de la semaine
-    String jourSemaine = jours[startDateTime.weekday - 1];
-
-    // Formater le mois
-    String nomMois = mois[moisIndex];
-
-    // Formater l'heure
-    String formatHeureStart =
-        '${heureStart.toString().padLeft(2, '0')}:${minuteStart.toString().padLeft(2, '0')}';
-    String formatHeureEnd =
-        '${heureEnd.toString().padLeft(2, '0')}:${minuteEnd.toString().padLeft(2, '0')}';
-
-    // Construire la chaîne lisible
-    String resultat = 'Ajourd\'hui  $formatHeureStart - $formatHeureEnd';
-
-    return resultat;
-  }
 
   String abbreviateName(String fullName) {
     List<String> nameParts = fullName.split(' ');
@@ -397,6 +324,7 @@ class _NotificationMedecinState extends State<NotificationMedecin> {
                                         ),
                                         Expanded(
                                             child: ListView.builder(
+                                              physics: BouncingScrollPhysics(),
                                           padding:
                                               const EdgeInsets.only(top: 20),
                                           itemCount: snapshot.data!.length,
@@ -517,7 +445,7 @@ class _NotificationMedecinState extends State<NotificationMedecin> {
                                                             const SizedBox(width: 25),
                                                             Expanded(
                                                                 child: Text(
-                                                                    'Vous avez un rendez-vous prévu avec un patient :',
+                                                                    'Vous avez un rendez-vous prévu avec cette personne.',
                                                                     style: TextStyle(
                                                                         color: Colors
                                                                             .black
@@ -539,7 +467,7 @@ class _NotificationMedecinState extends State<NotificationMedecin> {
                                                               const SizedBox(
                                                                   width: 10),
                                                               Text(
-                                                                '${formatTimeAppointment(listRDV.elementAt(index).startAt, listRDV.elementAt(index).timeStart, listRDV.elementAt(index).timeEnd)}',
+                                                                '${utilities!.formatTimeAppointmentNotif(listRDV.elementAt(index).startAt, listRDV.elementAt(index).timeStart, listRDV.elementAt(index).timeEnd)}',
                                                                 textAlign:
                                                                     TextAlign
                                                                         .center,

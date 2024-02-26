@@ -48,127 +48,12 @@ class _NotificationPatientState extends State<NotificationPatient> {
     // Filtrer les rendez-vous avec startAt égal à DateTime.now()
     List<CustomAppointment> filteredAppointments = allAppointments
         .where((appointment) =>
-            DateFormat('yyyy-MM-dd').format(appointment.startAt) ==
-            DateFormat('yyyy-MM-dd').format(DateTime.now()))
+    utilities!.isToday(appointment.startAt, appointment.timeStart))
         .toList();
 
     return filteredAppointments;
   }
 
-  String formatTimeAppointmentNow(
-      DateTime startDateTime, DateTime timeStart, DateTime timeEnd) {
-    // Liste des jours de la semaine
-    final List<String> jours = [
-      'Lundi',
-      'Mardi',
-      'Mercredi',
-      'Jeudi',
-      'Vendredi',
-      'Samedi',
-      'Dimanche'
-    ];
-
-    // Liste des mois de l'année
-    final List<String> mois = [
-      '',
-      'Janvier',
-      'Février',
-      'Mars',
-      'Avril',
-      'Mai',
-      'Juin',
-      'Juillet',
-      'Août',
-      'Septembre',
-      'Octobre',
-      'Novembre',
-      'Décembre'
-    ];
-
-    // Extraire les composants de la date et de l'heure
-    int jour = startDateTime.day;
-    int moisIndex = startDateTime.month;
-    int annee = startDateTime.year;
-    int heureStart = timeStart.hour;
-    int minuteStart = timeStart.minute;
-    int heureEnd = timeEnd.hour;
-    int minuteEnd = timeEnd.minute;
-
-    // Formater le jour de la semaine
-    String jourSemaine = jours[startDateTime.weekday - 1];
-
-    // Formater le mois
-    String nomMois = mois[moisIndex];
-
-    // Formater l'heure
-    String formatHeureStart =
-        '${heureStart.toString().padLeft(2, '0')}:${minuteStart.toString().padLeft(2, '0')}';
-    String formatHeureEnd =
-        '${heureEnd.toString().padLeft(2, '0')}:${minuteEnd.toString().padLeft(2, '0')}';
-
-    // Construire la chaîne lisible
-    String resultat = 'Ajourd\'hui  $formatHeureStart - $formatHeureEnd';
-
-    return resultat;
-  }
-
-  String formatTimeAppointment(
-      DateTime startDateTime, DateTime timeStart, DateTime timeEnd) {
-    // Liste des jours de la semaine
-    final List<String> jours = [
-      'Lundi',
-      'Mardi',
-      'Mercredi',
-      'Jeudi',
-      'Vendredi',
-      'Samedi',
-      'Dimanche'
-    ];
-
-    // Liste des mois de l'année
-    final List<String> mois = [
-      '',
-      'Janvier',
-      'Février',
-      'Mars',
-      'Avril',
-      'Mai',
-      'Juin',
-      'Juillet',
-      'Août',
-      'Septembre',
-      'Octobre',
-      'Novembre',
-      'Décembre'
-    ];
-
-    // Extraire les composants de la date et de l'heure
-    int jour = startDateTime.day;
-    int moisIndex = startDateTime.month;
-    int annee = startDateTime.year;
-    int heureStart = timeStart.hour;
-    int minuteStart = timeStart.minute;
-    int heureEnd = timeEnd.hour;
-    int minuteEnd = timeEnd.minute;
-
-    // Formater le jour de la semaine
-    String jourSemaine = jours[startDateTime.weekday - 1];
-
-    // Formater le mois
-    String nomMois = mois[moisIndex];
-
-    // Formater l'heure
-    String formatHeureStart =
-        '${heureStart.toString().padLeft(2, '0')}:${minuteStart.toString().padLeft(2, '0')}';
-    String formatHeureEnd =
-        '${heureEnd.toString().padLeft(2, '0')}:${minuteEnd.toString().padLeft(2, '0')}';
-
-    // Construire la chaîne lisible
-    String resultat =
-        '$jourSemaine, $jour $nomMois  $formatHeureStart - $formatHeureEnd';
-
-    return resultat;
-  }
 
   String abbreviateName(String fullName) {
     List<String> nameParts = fullName.split(' ');
@@ -421,6 +306,7 @@ class _NotificationPatientState extends State<NotificationPatient> {
                                         ),
                                         Expanded(
                                             child: ListView.builder(
+                                              physics: BouncingScrollPhysics(),
                                           padding:
                                               const EdgeInsets.only(top: 30),
                                           itemCount: snapshot.data!.length,
@@ -565,7 +451,7 @@ class _NotificationPatientState extends State<NotificationPatient> {
                                                               const SizedBox(
                                                                   width: 10),
                                                               Text(
-                                                                '${formatTimeAppointment(listRDV.elementAt(index).startAt, listRDV.elementAt(index).timeStart, listRDV.elementAt(index).timeEnd)}',
+                                                                '${utilities!.formatTimeAppointmentNotif(listRDV.elementAt(index).startAt, listRDV.elementAt(index).timeStart, listRDV.elementAt(index).timeEnd)}',
                                                                 textAlign:
                                                                     TextAlign
                                                                         .center,

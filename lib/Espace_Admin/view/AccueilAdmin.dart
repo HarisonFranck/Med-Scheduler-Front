@@ -429,6 +429,7 @@ class _AccueilAdminState extends State<AccueilAdmin> {
                               }
 
                               return ListView.builder(
+                              physics: BouncingScrollPhysics(),
                                 itemCount: specs.length,
                                 itemBuilder: (context, index) {
                                   Specialite spec = specs[index];
@@ -606,6 +607,7 @@ class _AccueilAdminState extends State<AccueilAdmin> {
                               }
 
                               return ListView.builder(
+                              physics: BouncingScrollPhysics(),
                                 itemCount: centers.length,
                                 itemBuilder: (context, index) {
                                   Centre centre = centers[index];
@@ -1994,8 +1996,8 @@ class _AccueilAdminState extends State<AccueilAdmin> {
                                     String phone = phoneController.text
                                         .replaceFirst('+261', '');
                                     if (phone.replaceAll(' ', '').length != 9) {
-                                      utilities!.ModificationError(
-                                          'Veuillez inserer un numero valide');
+                                      utilities!.errorDoctorEmptyCenterOrSpeciality(
+                                          "Veuillez inserer un numero valide.");
                                     } else {
                                       if (phone.startsWith('32') ||
                                           phone.startsWith('33') ||
@@ -2291,8 +2293,8 @@ class _AccueilAdminState extends State<AccueilAdmin> {
                                     String phone = modifPhoneController.text
                                         .replaceFirst('+261', '');
                                     if (phone.replaceAll(' ', '').length != 9) {
-                                      utilities!.ModificationError(
-                                          'Veuillez inserer un numero valide');
+                                      utilities!.errorDoctorEmptyCenterOrSpeciality(
+                                          "Veuillez inserer un numero valide.");
                                     } else {
                                       if (phone.startsWith('32') ||
                                           phone.startsWith('33') ||
@@ -2313,8 +2315,7 @@ class _AccueilAdminState extends State<AccueilAdmin> {
                                             userType: 'Doctor',
                                             speciality: modifSpec!,
                                             center: modifCenter!,
-                                            phone: modifPhoneController.text
-                                                .trim(),
+                                            phone: number,
                                             email: modifEmailController.text
                                                 .trim(),
                                             imageName: (medecin.imageName !=

@@ -988,8 +988,8 @@ class _AccueilPatientState extends State<AccueilPatient> {
                                           ? Border.all(color: Colors.black)
                                           : null,
                                     ),
-                                    width: 80,
-                                    height: 80,
+                                    width: 70,
+                                    height: 70,
                                     child: const Icon(
                                       Icons.home_work_rounded,
                                       color: Color.fromARGB(1000, 60, 70, 120),
@@ -1041,8 +1041,8 @@ class _AccueilPatientState extends State<AccueilPatient> {
                                           ? Border.all(color: Colors.black)
                                           : null,
                                     ),
-                                    width: 80,
-                                    height: 80,
+                                    width: 70,
+                                    height: 70,
                                     child: const Icon(
                                       FontAwesome.user_doctor,
                                       color: Color.fromARGB(1000, 60, 70, 120),
@@ -1093,8 +1093,8 @@ class _AccueilPatientState extends State<AccueilPatient> {
                                             )
                                           : null,
                                     ),
-                                    width: 80,
-                                    height: 80,
+                                    width: 70,
+                                    height: 70,
                                     child: const Icon(
                                       FontAwesome.location_dot,
                                       color: Color.fromARGB(1000, 60, 70, 120),
@@ -1256,7 +1256,7 @@ class _AccueilPatientState extends State<AccueilPatient> {
                         flex: (_focusNodeSearchLoc.hasFocus) ? 8 : 1,
                         child: Padding(
                           padding: const EdgeInsets.only(
-                              left: 30, right: 30, top: 20),
+                              left: 30, right: 30, top: 20,bottom: 10),
                           child: TextFormField(
                             onChanged: (nom) {
                               if (nom.trim().isEmpty) {

@@ -36,6 +36,7 @@ class _MedecinDetailsState extends State<MedecinDetails> {
   @override
   void initState() {
     super.initState();
+    phoneController.addListener(formatPhoneNumberText);
     utilities = Utilities(context: context);
     print('INIT ZAO');
     utilisateur = widget.user;
@@ -59,6 +60,47 @@ class _MedecinDetailsState extends State<MedecinDetails> {
     super.didChangeDependencies();
     authProviderUser = Provider.of<AuthProviderUser>(context, listen: false);
     utilities = Utilities(context: context);
+  }
+
+
+
+  @override
+  void dispose() {
+    phoneController.removeListener(formatPhoneNumberText);
+    phoneController.dispose();
+    super.dispose();
+  }
+
+  void formatPhoneNumberText() {
+    final unformattedText =
+    phoneController.text.replaceAll(RegExp(r'\D'), '');
+
+    String formattedText = '';
+    int index = 0;
+    final groups = [2, 2, 3, 2];
+    var cursorOffset = 0;
+
+    for (final group in groups) {
+      final endIndex = index + group;
+      if (endIndex <= unformattedText.length) {
+        formattedText += unformattedText.substring(index, endIndex);
+        cursorOffset += group;
+        if (endIndex < unformattedText.length) {
+          formattedText += ' ';
+          cursorOffset++;
+        }
+        index = endIndex;
+      } else {
+        formattedText += unformattedText.substring(index);
+        cursorOffset += unformattedText.length - index;
+        break;
+      }
+    }
+
+    phoneController.value = TextEditingValue(
+      text: formattedText,
+      selection: TextSelection.collapsed(offset: cursorOffset),
+    );
   }
 
   @override
@@ -158,14 +200,14 @@ class _MedecinDetailsState extends State<MedecinDetails> {
           children: [
             const Padding(
               padding: EdgeInsets.only(left: 20),
-              child: Text('Nom:'),
+              child: Text('Nom:',style: TextStyle(fontSize: 14,)),
             ),
             Padding(
               padding: const EdgeInsets.only(left: 68),
               child: Container(
                 width: MediaQuery.of(context).size.width / 2.2,
                 child: TextField(
-                  style: TextStyle(
+                  style: const TextStyle(
                       fontSize: 15
                   ),
                   decoration: const InputDecoration(
@@ -186,14 +228,14 @@ class _MedecinDetailsState extends State<MedecinDetails> {
           children: [
             const Padding(
               padding: EdgeInsets.only(left: 20),
-              child: Text('Prenom:'),
+              child: Text('Prenom:',style: TextStyle(fontSize: 14,)),
             ),
             Padding(
               padding: const EdgeInsets.only(left: 45),
               child: Container(
                 width: MediaQuery.of(context).size.width / 2.2,
                 child: TextField(
-                  style: TextStyle(
+                  style: const TextStyle(
                       fontSize: 15
                   ),
                   decoration: const InputDecoration(
@@ -214,14 +256,14 @@ class _MedecinDetailsState extends State<MedecinDetails> {
           children: [
             const Padding(
               padding: EdgeInsets.only(left: 20),
-              child: Text('Specialite:'),
+              child: Text('Specialite:',style: TextStyle(fontSize: 14,)),
             ),
             Padding(
               padding: const EdgeInsets.only(left: 30),
               child: Container(
                 width: MediaQuery.of(context).size.width / 2.2,
                 child: TextField(
-                  style: TextStyle(
+                  style: const TextStyle(
                       fontSize: 15
                   ),
                   decoration: const InputDecoration(
@@ -242,14 +284,14 @@ class _MedecinDetailsState extends State<MedecinDetails> {
           children: [
             const Padding(
               padding: EdgeInsets.only(left: 20),
-              child: Text('Email:'),
+              child: Text('Email:',style: TextStyle(fontSize: 14,)),
             ),
             Padding(
               padding: const EdgeInsets.only(left: 62),
               child: Container(
                 width: MediaQuery.of(context).size.width / 2.2,
                 child: TextField(
-                  style: TextStyle(
+                  style: const TextStyle(
                       fontSize: 15
                   ),
                   decoration: const InputDecoration(
@@ -270,18 +312,21 @@ class _MedecinDetailsState extends State<MedecinDetails> {
           children: [
             const Padding(
               padding: EdgeInsets.only(left: 20),
-              child: Text('Telephone:'),
+              child: Text('Telephone:',style: TextStyle(fontSize: 14,)),
             ),
             Padding(
               padding: const EdgeInsets.only(left: 25),
               child: Container(
                 width: MediaQuery.of(context).size.width / 2.2,
                 child: TextField(
-                  style: TextStyle(
+                  style: const TextStyle(
                       fontSize: 15
                   ),
-                  decoration: const InputDecoration(
-                    focusedBorder: UnderlineInputBorder(
+                  decoration:  InputDecoration(
+                    prefixText: '+261 ',
+                    prefixStyle: TextStyle(color: Colors.black.withOpacity(0.7),fontWeight: FontWeight.w500),
+
+                    focusedBorder:const UnderlineInputBorder(
                       borderSide: BorderSide(
                         color: Color.fromARGB(230, 20, 20, 90),
                       ),
@@ -298,14 +343,14 @@ class _MedecinDetailsState extends State<MedecinDetails> {
           children: [
             const Padding(
               padding: EdgeInsets.only(left: 20),
-              child: Text('Ville:'),
+              child: Text('Ville:',style: TextStyle(fontSize: 14,)),
             ),
             Padding(
               padding: const EdgeInsets.only(left: 70),
               child: Container(
                 width: MediaQuery.of(context).size.width / 2.2,
                 child: TextField(
-                  style: TextStyle(
+                  style: const TextStyle(
                       fontSize: 15
                   ),
                   decoration: const InputDecoration(

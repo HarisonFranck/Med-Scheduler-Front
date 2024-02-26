@@ -53,7 +53,6 @@ class _Modification_MotdePasseState extends State<Modification_MotdePasse> {
 
     final url = Uri.parse("${baseUrl}api/change-password/$id");
 
-
     final body = {"password": "$newPassword"};
 
     try {
@@ -61,13 +60,13 @@ class _Modification_MotdePasseState extends State<Modification_MotdePasse> {
 
       if (response.statusCode == 200) {
         utilities!.modifPasswordValider();
-
-        setState(() {
-          isLoading = false;
-        });
+        await Future.delayed(const Duration(seconds: 4));
 
         Navigator.pushAndRemoveUntil(context,
             MaterialPageRoute(builder: (context) => Login()), (route) => false);
+        setState(() {
+          isLoading = false;
+        });
       } else {
         // Gestion des erreurs HTTP
         setState(() {
@@ -84,11 +83,10 @@ class _Modification_MotdePasseState extends State<Modification_MotdePasse> {
       setState(() {
         isLoading = false;
       });
-    if (e is http.ClientException) {
-
-    utilities!.handleConnectionError(ConnectionError("Une erreur de connexion s'est produite!"));
-
-    }else {
+      if (e is http.ClientException) {
+        utilities!.handleConnectionError(
+            ConnectionError("Une erreur de connexion s'est produite!"));
+      } else {
         // Gérer d'autres exceptions
         print('Une erreur inattendue s\'est produite: $e');
       }

@@ -885,21 +885,21 @@ class _ListAppointmentState extends State<ListAppointment> {
                                                   BorderRadius.circular(60),
                                             ),
                                             child: CachedNetworkImage(
-                                              imageUrl:
-                                                  '$baseUrl${utilities!.ajouterPrefixe(listFinished.elementAt(index).patient!.imageName!)}',
-                                              placeholder: (context, url) =>
-                                                  const CircularProgressIndicator(
-                                                color: Colors.redAccent,
-                                              ), // Affiche un indicateur de chargement en attendant l'image
-                                              errorWidget:
-                                                  (context, url, error) =>
-                                                      Image.asset(
-                                                'assets/images/medecin.png',
-                                                fit: BoxFit.cover,
-                                                width: 50,
-                                                height: 50,
-                                              ), // Affiche une icône d'erreur si le chargement échoue
-                                            ),
+                                                imageUrl:
+                                                    '$baseUrl${utilities!.ajouterPrefixe(listFinished.elementAt(index).patient!.imageName!)}',
+                                                placeholder: (context, url) =>
+                                                    const CircularProgressIndicator(
+                                                      color: Colors.redAccent,
+                                                    ), // Affiche un indicateur de chargement en attendant l'image
+                                                errorWidget: (context, url,
+                                                        error) =>
+                                                    Icon(
+                                                      Icons.account_circle,
+                                                      size: 60,
+                                                      color: Colors.black
+                                                          .withOpacity(0.6),
+                                                    ) // Affiche une icône d'erreur si le chargement échoue
+                                                ),
                                           ),
                                         ),
                                         Column(
