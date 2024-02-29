@@ -106,8 +106,7 @@ class _IndexAccueilState extends State<IndexAccueil> {
 
   @override
   Widget build(BuildContext context) {
-    bool isLandscape =
-        MediaQuery.of(context).orientation == Orientation.landscape;
+
     return PopScope(
         canPop: false,
         child: Scaffold(
@@ -122,7 +121,8 @@ class _IndexAccueilState extends State<IndexAccueil> {
                     const SizedBox(
                       height: 30,
                     ),
-                    const Text(
+                    Text(
+                      style:TextStyle(color: Colors.black.withOpacity(0.5),letterSpacing: 2),
                       'Chargement des données..\n Assurez-vous d\'avoir une connexion internet',
                       textAlign: TextAlign.center,
                     )

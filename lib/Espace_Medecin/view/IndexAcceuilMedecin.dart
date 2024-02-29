@@ -134,6 +134,7 @@ class _IndexAcceuilMedecinState extends State<IndexAcceuilMedecin> {
                     height: 30,
                   ),
                   Text(
+                    style:TextStyle(color: Colors.black.withOpacity(0.5),letterSpacing: 2),
                     'Chargement des données..\n Assurez-vous d\'avoir une connexion internet',
                     textAlign: TextAlign.center,
                   )

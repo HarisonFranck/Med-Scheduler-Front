@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:med_scheduler_front/Models/Utilisateur.dart';
 import 'package:med_scheduler_front/Models/CustomAppointment.dart';
 import 'package:med_scheduler_front/Models/AuthProvider.dart';
-import 'package:intl/intl.dart';
 import 'package:med_scheduler_front/Models/UrlBase.dart';
-import 'dart:io';
 import 'IndexAcceuilMedecin.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:med_scheduler_front/Repository/MedecinRepository.dart';
@@ -333,6 +331,18 @@ class _NotificationMedecinState extends State<NotificationMedecin> {
                                                 snapshot.data!;
                                             // Utilisez snapshot.data[index] pour accéder aux éléments de la liste
 
+
+                                            listRDV.sort((a, b) {
+                                            // Compare les dates startAt
+                                            int dateComparison = b.startAt.compareTo(a.startAt);
+                                            if (dateComparison != 0) {
+                                            return dateComparison;
+                                            } else {
+                                            // Si les dates sont égales, compare les heures timeStart
+                                            return b.timeStart.compareTo(a.timeStart);
+                                            }
+                                            });
+
                                             return Padding(
                                                 padding: const EdgeInsets.only(
                                                     bottom: 40,
@@ -445,7 +455,7 @@ class _NotificationMedecinState extends State<NotificationMedecin> {
                                                             const SizedBox(width: 25),
                                                             Expanded(
                                                                 child: Text(
-                                                                    'Vous avez un rendez-vous prévu avec cette personne.',
+                                                                    'Vous avez eu un rendez-vous avec cette personne.',
                                                                     style: TextStyle(
                                                                         color: Colors
                                                                             .black

@@ -8,7 +8,6 @@ import 'package:med_scheduler_front/Models/Utilisateur.dart';
 import 'package:med_scheduler_front/Models/AuthProvider.dart';
 import 'package:provider/provider.dart';
 import 'package:med_scheduler_front/Models/Specialite.dart';
-import 'dart:io';
 import 'package:med_scheduler_front/Models/CustomAppointment.dart';
 import 'package:jwt_decode/jwt_decode.dart';
 import 'package:med_scheduler_front/Models/Centre.dart';
@@ -30,7 +29,6 @@ import 'package:med_scheduler_front/Models/firebase_options.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:med_scheduler_front/Models/FirebaseApi.dart';
 
-
 class AccueilPatient extends StatefulWidget {
   @override
   _AccueilPatientState createState() => _AccueilPatientState();
@@ -44,7 +42,6 @@ class _AccueilPatientState extends State<AccueilPatient> {
   Utilities? utilities;
 
   String FireBaseTokenPatient = "";
-
 
   Utilisateur? user;
 
@@ -70,7 +67,6 @@ class _AccueilPatientState extends State<AccueilPatient> {
 
   Future<List<Medecin>> loadMoreData() async {
 
-    print('PAGE MORE: $currentPage');
 
     try {
       List<Medecin> moreMedecins = await userRepository!.getAllMedecin(
@@ -157,13 +153,12 @@ class _AccueilPatientState extends State<AccueilPatient> {
                 false;
 
             if (!eventExists) {
-              final result =
-                  await deviceCalendarPlugin.createOrUpdateEvent(event);
+              await deviceCalendarPlugin.createOrUpdateEvent(event);
             }
           }
         });
       }
-    } catch (e, stackTrace) {}
+    } catch (e) {}
   }
 
   Future<void> getAllAsync() async {
@@ -177,7 +172,6 @@ class _AccueilPatientState extends State<AccueilPatient> {
     super.dispose();
   }
 
-
   InitFireBase() async {
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
     await Firebase.initializeApp(
@@ -189,7 +183,7 @@ class _AccueilPatientState extends State<AccueilPatient> {
 
     await FirebaseApi().initPushForegroundNotif();
     await FirebaseApi().initLocalNotif();
-    if(FireBaseTokenPatient!=""&&FireBaseTokenPatient!=null){
+    if (FireBaseTokenPatient != "" && FireBaseTokenPatient != null) {
       setState(() {});
       didChangeDependencies();
     }
@@ -202,7 +196,6 @@ class _AccueilPatientState extends State<AccueilPatient> {
     userRepository = UserRepository(context: context, utilities: utilities!);
 
     WidgetsFlutterBinding.ensureInitialized();
-
 
     InitFireBase();
   }
@@ -336,16 +329,17 @@ class _AccueilPatientState extends State<AccueilPatient> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    authProvider = Provider.of<AuthProvider>(context,listen: false);
+    authProvider = Provider.of<AuthProvider>(context, listen: false);
     token = authProvider.token;
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-
       await getAllAsync();
 
-      SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+      SharedPreferences sharedPreferences =
+          await SharedPreferences.getInstance();
 
-      String? tokenFromFireBase = sharedPreferences.getString('FireBaseTokenPatient');
-      if(tokenFromFireBase!=null&&tokenFromFireBase!=""){
+      String? tokenFromFireBase =
+          sharedPreferences.getString('FireBaseTokenPatient');
+      if (tokenFromFireBase != null && tokenFromFireBase != "") {
         Map<String, dynamic> payload = Jwt.parseJwt(token);
         idUser = payload['id'] ?? '';
         dataLoaded = true;
@@ -354,35 +348,33 @@ class _AccueilPatientState extends State<AccueilPatient> {
             id: user!.id,
             imageName: (user!.imageName != null && user!.imageName != "")
                 ? utilities!.extraireNomFichier(user!.imageName!)
-          : '',
-      lastName: user!.lastName,
-      firstName: user!.firstName,
-      userType: user!.userType,
-      phone: user!.phone,
-      password: user!.password,
-      email: user!.email,
-      category: user!.category,
-      address: user!.address,
-      roles: user!.roles,
-      city: user!.city,
-      token: tokenFromFireBase);
+                : '',
+            lastName: user!.lastName,
+            firstName: user!.firstName,
+            userType: user!.userType,
+            phone: user!.phone,
+            password: user!.password,
+            email: user!.email,
+            category: user!.category,
+            address: user!.address,
+            roles: user!.roles,
+            city: user!.city,
+            token: tokenFromFireBase);
 
-      userRepository!.updatePatient(patientWithToken);
+        userRepository!.updatePatient(patientWithToken);
 
-      patient = Patient(
-      token: patientWithToken.token,
-      id: user!.id,
-      type: user!.userType,
-      lastName: user!.lastName,
-      firstName: user!.firstName);
-      }else{
+        patient = Patient(
+            token: patientWithToken.token,
+            id: user!.id,
+            type: user!.userType,
+            lastName: user!.lastName,
+            firstName: user!.firstName);
+      } else {
         InitFireBase();
       }
-
-
     });
     baseRepository = BaseRepository(context: context, utilities: utilities!);
-    user = Provider.of<AuthProviderUser>(context,listen: false).utilisateur;
+    user = Provider.of<AuthProviderUser>(context, listen: false).utilisateur;
     initializeCalendar();
     if (mounted) {
       getAll();
@@ -460,7 +452,6 @@ class _AccueilPatientState extends State<AccueilPatient> {
     // Extraire les composants de la date et de l'heure
     int jour = startDateTime.day;
     int moisIndex = startDateTime.month;
-    int annee = startDateTime.year;
     int heure = startDateTime.hour;
     int minute = startDateTime.minute;
 
@@ -482,49 +473,10 @@ class _AccueilPatientState extends State<AccueilPatient> {
 
   String formatDateTimeAppointmentAgenda(
       DateTime startAt, DateTime startDateTime, DateTime timeEnd) {
-    // Liste des jours de la semaine
-    final List<String> jours = [
-      'Lundi',
-      'Mardi',
-      'Mercredi',
-      'Jeudi',
-      'Vendredi',
-      'Samedi',
-      'Dimanche'
-    ];
-
-    // Liste des mois de l'année
-    final List<String> mois = [
-      '',
-      'Janvier',
-      'Février',
-      'Mars',
-      'Avril',
-      'Mai',
-      'Juin',
-      'Juillet',
-      'Août',
-      'Septembre',
-      'Octobre',
-      'Novembre',
-      'Décembre'
-    ];
-
-    // Extraire les composants de la date et de l'heure
-
-    int jour = startAt.day;
-    int moisIndex = startAt.month;
-    int annee = startDateTime.year;
     int heureStart = startDateTime.hour;
     int minuteStart = startDateTime.minute;
     int heureEnd = timeEnd.hour;
     int minuteEnd = timeEnd.minute;
-
-    // Formater le jour de la semaine
-    String jourSemaine = jours[startAt.weekday - 1];
-
-    // Formater le mois
-    String nomMois = mois[moisIndex];
 
     // Formater l'heure
     String formatHeureStart =
@@ -572,7 +524,6 @@ class _AccueilPatientState extends State<AccueilPatient> {
 
     int jour = startAt.day;
     int moisIndex = startAt.month;
-    int annee = startDateTime.year;
     int heureStart = startDateTime.hour;
     int minuteStart = startDateTime.minute;
     int heureEnd = timeEnd.hour;
@@ -628,16 +579,17 @@ class _AccueilPatientState extends State<AccueilPatient> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-
-                      Padding(padding: EdgeInsets.only(bottom: 10),child: Text(
-                        'Aucun rendez-vous pour cette semaine',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w500,
-                            fontSize: 15,
-                            letterSpacing: 2),
-                      ),
+                      Padding(
+                        padding: EdgeInsets.only(bottom: 10),
+                        child: Text(
+                          'Aucun rendez-vous pour cette semaine',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w500,
+                              fontSize: 15,
+                              letterSpacing: 2),
+                        ),
                       ),
                       Center(
                         child: Icon(
@@ -667,7 +619,7 @@ class _AccueilPatientState extends State<AccueilPatient> {
             child: Card(
                 color: const Color.fromARGB(1000, 60, 70, 120),
                 child: Column(children: [
-                  SizedBox(
+                  const SizedBox(
                     height: 10,
                   ),
                   Row(
@@ -747,26 +699,26 @@ class _AccueilPatientState extends State<AccueilPatient> {
                   Row(
                     children: [
                       Padding(
-                        padding: EdgeInsets.only(left: 20),
+                        padding: const EdgeInsets.only(left: 20),
                         child: Image.asset(
                           'assets/images/date-limite.png',
                           width: 30,
                         ),
                       ),
-                      Spacer()
+                      const Spacer()
                     ],
                   ),
                   Row(
                     children: [
                       Padding(
-                        padding: EdgeInsets.only(left: 20, top: 5),
+                        padding: const EdgeInsets.only(left: 20, top: 5),
                         child: Text(
                           '${formatDateTimeAppointment(appointment.startAt, appointment.timeStart, appointment.timeEnd)} ',
                           textAlign: TextAlign.center,
                           style: const TextStyle(color: Colors.white),
                         ),
                       ),
-                      Spacer()
+                      const Spacer()
                     ],
                   )
                 ]))),
@@ -1197,7 +1149,6 @@ class _AccueilPatientState extends State<AccueilPatient> {
                             ),
                             value: speciality,
                             onChanged: (Specialite? newval) {
-
                               setState(() {
                                 searchCenter.text = "";
                                 speciality = newval!;
@@ -1256,7 +1207,7 @@ class _AccueilPatientState extends State<AccueilPatient> {
                         flex: (_focusNodeSearchLoc.hasFocus) ? 8 : 1,
                         child: Padding(
                           padding: const EdgeInsets.only(
-                              left: 30, right: 30, top: 20,bottom: 10),
+                              left: 30, right: 30, top: 20, bottom: 10),
                           child: TextFormField(
                             onChanged: (nom) {
                               if (nom.trim().isEmpty) {
@@ -1335,15 +1286,18 @@ class _AccueilPatientState extends State<AccueilPatient> {
                                 ConnectionState.waiting) {
                               return Center(
                                   child: ListView(
-                                children: const [
-                                  Center(
+                                children: [
+                                  const Center(
                                       child: CircularProgressIndicator(
                                     color: Colors.redAccent,
                                   )),
-                                  SizedBox(
+                                  const SizedBox(
                                     height: 30,
                                   ),
                                   Text(
+                                    style: TextStyle(
+                                        color: Colors.black.withOpacity(0.5),
+                                        letterSpacing: 2),
                                     'Chargement des données..\n Assurez-vous d\'avoir une connexion internet',
                                     textAlign: TextAlign.center,
                                   )
@@ -1415,7 +1369,7 @@ class _AccueilPatientState extends State<AccueilPatient> {
                                     return false;
                                   },
                                   child: ListView.builder(
-                                  physics: BouncingScrollPhysics(),
+                                    physics: const BouncingScrollPhysics(),
                                     controller: scrollController,
                                     itemCount:
                                         medecins.length + (isLoading ? 1 : 0),
@@ -1681,7 +1635,10 @@ class _AccueilPatientState extends State<AccueilPatient> {
                     const SizedBox(
                       height: 30,
                     ),
-                    const Text(
+                    Text(
+                      style: TextStyle(
+                          color: Colors.black.withOpacity(0.5),
+                          letterSpacing: 2),
                       'Chargement des données..\n Assurez-vous d\'avoir une connexion internet',
                       textAlign: TextAlign.center,
                     )

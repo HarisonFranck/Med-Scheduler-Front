@@ -134,7 +134,6 @@ class _MedecinDetailsState extends State<MedecinDetails> {
     return true;
   }
 
-  File? _profileImageFile;
 
   Future<List<int>> _resizeImage(String imagePath) async {
     final bytes = await File(imagePath).readAsBytes();

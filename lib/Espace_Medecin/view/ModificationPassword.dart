@@ -52,9 +52,6 @@ class _ModificationPasswordState extends State<ModificationPassword> {
 
 
 
-  FocusNode _focusNodemail = FocusNode();
-
-
   final GlobalKey<ScaffoldState> scafkey = GlobalKey<ScaffoldState>();
 
 Utilisateur? user;

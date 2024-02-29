@@ -38,8 +38,6 @@ class _ListAppointmentState extends State<ListAppointment> {
 
   bool isToday(DateTime startAt, DateTime timeStart) {
     DateTime now = DateTime.now();
-    DateTime startOfWeek = DateTime(now.year, now.month, now.day - now.weekday);
-    DateTime endOfWeek = startOfWeek.add(const Duration(days: 6));
     bool isIt = false;
     bool val = DateFormat('yyyy-MM-dd').format(startAt) ==
         DateFormat('yyyy-MM-dd').format(now);
@@ -57,8 +55,6 @@ class _ListAppointmentState extends State<ListAppointment> {
 
   bool isYesterday(DateTime startAt) {
     DateTime now = DateTime.now();
-    DateTime startOfWeek = DateTime(now.year, now.month, now.day - now.weekday);
-    DateTime endOfWeek = startOfWeek.add(const Duration(days: 6));
     bool isIt = false;
     isIt = now.isBefore(startAt);
 
@@ -67,8 +63,6 @@ class _ListAppointmentState extends State<ListAppointment> {
 
   bool isFinished(DateTime startAt, DateTime startTime) {
     DateTime now = DateTime.now();
-    DateTime startOfWeek = DateTime(now.year, now.month, now.day - now.weekday);
-    DateTime endOfWeek = startOfWeek.add(const Duration(days: 6));
     bool isIt = false;
 
     if (DateFormat('yyyy-MM-dd').format(now) ==
@@ -88,10 +82,6 @@ class _ListAppointmentState extends State<ListAppointment> {
 
   Future<List<CustomAppointment>> filterToday(
       Future<List<CustomAppointment>> appointmentFuture) async {
-    DateTime now = DateTime.now();
-    DateTime startOfWeek = DateTime(now.year, now.month, now.day - now.weekday);
-    DateTime endOfWeek = startOfWeek.add(const Duration(days: 6));
-
     List<CustomAppointment> filteredAppointments = [];
 
     // Attendre la résolution du Future<List<CustomAppointment>>
@@ -111,10 +101,6 @@ class _ListAppointmentState extends State<ListAppointment> {
 
   Future<List<CustomAppointment>> filterNext(
       Future<List<CustomAppointment>> appointmentFuture) async {
-    DateTime now = DateTime.now();
-    DateTime startOfWeek = DateTime(now.year, now.month, now.day - now.weekday);
-    DateTime endOfWeek = startOfWeek.add(const Duration(days: 6));
-
     List<CustomAppointment> filteredAppointments = [];
 
     // Attendre la résolution du Future<List<CustomAppointment>>
@@ -134,10 +120,6 @@ class _ListAppointmentState extends State<ListAppointment> {
 
   Future<List<CustomAppointment>> filterFinished(
       Future<List<CustomAppointment>> appointmentFuture) async {
-    DateTime now = DateTime.now();
-    DateTime startOfWeek = DateTime(now.year, now.month, now.day - now.weekday);
-    DateTime endOfWeek = startOfWeek.add(const Duration(days: 6));
-
     List<CustomAppointment> filteredAppointments = [];
 
     // Attendre la résolution du Future<List<CustomAppointment>>
@@ -220,48 +202,12 @@ class _ListAppointmentState extends State<ListAppointment> {
 
   String formatTimeAppointmentNow(
       DateTime startDateTime, DateTime timeStart, DateTime timeEnd) {
-    // Liste des jours de la semaine
-    final List<String> jours = [
-      'Lundi',
-      'Mardi',
-      'Mercredi',
-      'Jeudi',
-      'Vendredi',
-      'Samedi',
-      'Dimanche'
-    ];
-
-    // Liste des mois de l'année
-    final List<String> mois = [
-      '',
-      'Janvier',
-      'Février',
-      'Mars',
-      'Avril',
-      'Mai',
-      'Juin',
-      'Juillet',
-      'Août',
-      'Septembre',
-      'Octobre',
-      'Novembre',
-      'Décembre'
-    ];
-
     // Extraire les composants de la date et de l'heure
-    int jour = startDateTime.day;
-    int moisIndex = startDateTime.month;
-    int annee = startDateTime.year;
+
     int heureStart = timeStart.hour;
     int minuteStart = timeStart.minute;
     int heureEnd = timeEnd.hour;
     int minuteEnd = timeEnd.minute;
-
-    // Formater le jour de la semaine
-    String jourSemaine = jours[startDateTime.weekday - 1];
-
-    // Formater le mois
-    String nomMois = mois[moisIndex];
 
     // Formater l'heure
     String formatHeureStart =
@@ -308,7 +254,6 @@ class _ListAppointmentState extends State<ListAppointment> {
     // Extraire les composants de la date et de l'heure
     int jour = startDateTime.day;
     int moisIndex = startDateTime.month;
-    int annee = startDateTime.year;
     int heureStart = timeStart.hour;
     int minuteStart = timeStart.minute;
     int heureEnd = timeEnd.hour;
@@ -470,6 +415,7 @@ class _ListAppointmentState extends State<ListAppointment> {
                           });
 
                           return ListView.builder(
+                            physics: BouncingScrollPhysics(),
                             padding: const EdgeInsets.only(
                                 top: 50, left: 20, right: 20),
                             itemCount: snapshot.data!.length,
@@ -695,6 +641,7 @@ class _ListAppointmentState extends State<ListAppointment> {
 
                           // Construisez votre ListView avec les données obtenues
                           return ListView.builder(
+                            physics: BouncingScrollPhysics(),
                             padding: const EdgeInsets.only(
                                 top: 50, left: 20, right: 20),
                             itemCount: snapshot.data!.length,
@@ -908,17 +855,18 @@ class _ListAppointmentState extends State<ListAppointment> {
                           // Trier les appointments par startAt et timeStart
                           snapshot.data!.sort((a, b) {
                             // Compare les dates startAt
-                            int dateComparison = a.startAt.compareTo(b.startAt);
+                            int dateComparison = b.startAt.compareTo(a.startAt);
                             if (dateComparison != 0) {
                               return dateComparison;
                             } else {
                               // Si les dates sont égales, compare les heures timeStart
-                              return a.timeStart.compareTo(b.timeStart);
+                              return b.timeStart.compareTo(a.timeStart);
                             }
                           });
 
                           // Construisez votre ListView avec les données obtenues
                           return ListView.builder(
+                            physics: BouncingScrollPhysics(),
                             padding: const EdgeInsets.only(
                                 top: 50, left: 20, right: 20),
                             itemCount: snapshot.data!.length,

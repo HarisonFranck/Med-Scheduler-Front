@@ -215,7 +215,8 @@ class SearchMedecinState extends State<SearchMedecin> {
                                         const SizedBox(
                                           height: 30,
                                         ),
-                                        const Text(
+                                        Text(
+                                          style:TextStyle(color: Colors.black.withOpacity(0.5),letterSpacing: 2),
                                           'Chargement des données..\n Assurez-vous d\'avoir une connexion internet',
                                           textAlign: TextAlign.center,
                                         )

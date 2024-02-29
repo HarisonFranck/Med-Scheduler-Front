@@ -6,7 +6,6 @@ import 'package:med_scheduler_front/Models/Medecin.dart';
 import 'package:med_scheduler_front/Models/AuthProvider.dart';
 import 'package:med_scheduler_front/Models/UrlBase.dart';
 import 'dart:async';
-import 'dart:io';
 import 'package:med_scheduler_front/Models/Centre.dart';
 import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
 import 'MedecinDetails.dart';
@@ -367,7 +366,11 @@ class _AccueilAdminState extends State<AccueilAdmin> {
                                         const SizedBox(
                                           height: 30,
                                         ),
-                                        const Text(
+                                        Text(
+                                          style: TextStyle(
+                                              color:
+                                                  Colors.black.withOpacity(0.5),
+                                              letterSpacing: 2),
                                           'Chargement des données..\n Assurez-vous d\'avoir une connexion internet',
                                           textAlign: TextAlign.center,
                                         )
@@ -429,7 +432,7 @@ class _AccueilAdminState extends State<AccueilAdmin> {
                               }
 
                               return ListView.builder(
-                              physics: BouncingScrollPhysics(),
+                                physics: BouncingScrollPhysics(),
                                 itemCount: specs.length,
                                 itemBuilder: (context, index) {
                                   Specialite spec = specs[index];
@@ -545,7 +548,11 @@ class _AccueilAdminState extends State<AccueilAdmin> {
                                         const SizedBox(
                                           height: 30,
                                         ),
-                                        const Text(
+                                        Text(
+                                          style: TextStyle(
+                                              color:
+                                                  Colors.black.withOpacity(0.5),
+                                              letterSpacing: 2),
                                           'Chargement des données..\n Assurez-vous d\'avoir une connexion internet',
                                           textAlign: TextAlign.center,
                                         )
@@ -607,7 +614,7 @@ class _AccueilAdminState extends State<AccueilAdmin> {
                               }
 
                               return ListView.builder(
-                              physics: BouncingScrollPhysics(),
+                                physics: BouncingScrollPhysics(),
                                 itemCount: centers.length,
                                 itemBuilder: (context, index) {
                                   Centre centre = centers[index];
@@ -710,7 +717,11 @@ class _AccueilAdminState extends State<AccueilAdmin> {
                                         const SizedBox(
                                           height: 30,
                                         ),
-                                        const Text(
+                                        Text(
+                                          style: TextStyle(
+                                              color:
+                                                  Colors.black.withOpacity(0.5),
+                                              letterSpacing: 2),
                                           'Chargement des données..\n Assurez-vous d\'avoir une connexion internet',
                                           textAlign: TextAlign.center,
                                         )

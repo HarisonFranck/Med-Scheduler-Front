@@ -454,7 +454,7 @@ class Utilities {
     // Vérifier si le préfixe est déjà présent
     if (!chemin.startsWith('/images/profiles/')) {
       // Ajouter le préfixe s'il n'est pas déjà inclus
-      chemin = '/images/profiles/' + chemin;
+      chemin = '/images/profiles/$chemin';
     }
     return chemin;
   }
@@ -504,13 +504,7 @@ class Utilities {
       // Supprimer le préfixe "+261"
       phoneNumber = phoneNumber.substring(4);
       // Ajouter les espaces après chaque groupe de chiffres
-      return phoneNumber.substring(0, 2) +
-          ' ' +
-          phoneNumber.substring(2, 4) +
-          ' ' +
-          phoneNumber.substring(4, 7) +
-          ' ' +
-          phoneNumber.substring(7);
+      return '${phoneNumber.substring(0, 2)} ${phoneNumber.substring(2, 4)} ${phoneNumber.substring(4, 7)} ${phoneNumber.substring(7)}';
     }
 
     // Retourner le numéro de téléphone non modifié s'il ne commence pas par "+261"
