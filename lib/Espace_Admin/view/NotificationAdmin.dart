@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:med_scheduler_front/Models/Utilisateur.dart';
 import 'package:med_scheduler_front/Models/CustomAppointment.dart';
 import 'package:med_scheduler_front/Models/AuthProvider.dart';
-import 'package:intl/intl.dart';
 import 'package:med_scheduler_front/Models/UrlBase.dart';
-import 'dart:io';
 import 'IndexAccueilAdmin.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:med_scheduler_front/Repository/BaseRepository.dart';
@@ -105,13 +103,12 @@ class _NotificationAdminState extends State<NotificationAdmin> {
 
 
     while (true) {
-      print('PAGE: $currentPage');
       // Obtenir la page courante d'appointments
       List<CustomAppointment> appointments = await baseRepository!.getAllAppointmentPerPage(currentPage);
 
     // Si la page est vide, on a fini
     if (appointments.isEmpty) {
-    print('PAGE VIDE');
+
     break;
     }
 
@@ -137,13 +134,13 @@ class _NotificationAdminState extends State<NotificationAdmin> {
       List<CustomAppointment> moreAppoints =
           await baseRepository!.getAllAppointmentPerPage(currentPage);
       if (moreAppoints.isNotEmpty) {
-        print('TSISY: Page-$currentPage');
+
         currentPage++;
         setState(() {
           addAllAppointmentPage();
         });
       }else{
-        print('MISY Page-$currentPage');
+
     }
       return moreAppoints;
     } catch (e) {
@@ -387,6 +384,17 @@ class _NotificationAdminState extends State<NotificationAdmin> {
                                                   snapshot.data!;
                                               // Utilisez snapshot.data[index] pour accéder aux éléments de la liste
 
+                                              listRDV.sort((a, b) {
+                                              // Compare les dates startAt
+                                              int dateComparison = b.startAt.compareTo(a.startAt);
+                                              if (dateComparison != 0) {
+                                              return dateComparison;
+                                              } else {
+                                              // Si les dates sont égales, compare les heures timeStart
+                                              return b.timeStart.compareTo(a.timeStart);
+                                              }
+                                              });
+
                                               return Padding(
                                                   padding:
                                                       const EdgeInsets.only(
@@ -500,7 +508,7 @@ class _NotificationAdminState extends State<NotificationAdmin> {
                                                                   width: 25),
                                                               Expanded(
                                                                   child: Text(
-                                                                      'Le Dr.${listRDV.elementAt(index).medecin!.lastName} ${abbreviateName(listRDV.elementAt(index).medecin!.firstName)} a un rendez-vous prévu avec une personne.',
+                                                                      'Le Dr.${listRDV.elementAt(index).medecin!.lastName} ${abbreviateName(listRDV.elementAt(index).medecin!.firstName)} a eu un rendez-vous avec une personne.',
                                                                       style: TextStyle(
                                                                           color: Colors
                                                                               .black

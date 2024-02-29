@@ -55,9 +55,6 @@ class _AppointmentDialogState extends State<AppointmentDialog> {
   List<bool> isDisableIndex = List.generate(6, (index) => false);
 
   bool isDayClicked(DateTime startAt) {
-    DateTime now = DateTime.now();
-    DateTime startOfWeek = DateTime(now.year, now.month, now.day - now.weekday);
-    DateTime endOfWeek = startOfWeek.add(const Duration(days: 6));
 
     bool val = DateFormat('yyyy-MM-dd').format(startAt) ==
         DateFormat('yyyy-MM-dd').format(currentJour!);
@@ -67,9 +64,6 @@ class _AppointmentDialogState extends State<AppointmentDialog> {
 
   Future<List<CustomAppointment>> filterDayClicked(
       Future<List<CustomAppointment>> appointmentFuture) async {
-    DateTime now = DateTime.now();
-    DateTime startOfWeek = DateTime(now.year, now.month, now.day - now.weekday);
-    DateTime endOfWeek = startOfWeek.add(const Duration(days: 6));
 
     List<CustomAppointment> filteredAppointments = [];
 
@@ -298,8 +292,6 @@ class _AppointmentDialogState extends State<AppointmentDialog> {
     int jour = dateTime.day;
     int moisIndex = dateTime.month;
     int annee = dateTime.year;
-    int heure = dateTime.hour;
-    int minute = dateTime.minute;
 
     // Formater le jour de la semaine
     String jourSemaine = jours[dateTime.weekday - 1];
@@ -307,9 +299,6 @@ class _AppointmentDialogState extends State<AppointmentDialog> {
     // Formater le mois
     String nomMois = mois[moisIndex];
 
-    // Formater l'heure
-    String formatHeure =
-        '${heure.toString().padLeft(2, '0')}h:${minute.toString().padLeft(2, '0')}';
 
     // Construire la chaîne lisible
     String resultat = '$jourSemaine, $jour $nomMois $annee';
@@ -319,49 +308,14 @@ class _AppointmentDialogState extends State<AppointmentDialog> {
 
   String formatDateTimeAppointment(
       DateTime startAt, DateTime startDateTime, DateTime timeEnd) {
-    // Liste des jours de la semaine
-    final List<String> jours = [
-      'Lundi',
-      'Mardi',
-      'Mercredi',
-      'Jeudi',
-      'Vendredi',
-      'Samedi',
-      'Dimanche'
-    ];
 
-    // Liste des mois de l'année
-    final List<String> mois = [
-      '',
-      'Janvier',
-      'Février',
-      'Mars',
-      'Avril',
-      'Mai',
-      'Juin',
-      'Juillet',
-      'Août',
-      'Septembre',
-      'Octobre',
-      'Novembre',
-      'Décembre'
-    ];
 
     // Extraire les composants de la date et de l'heure
-
-    int jour = startAt.day;
-    int moisIndex = startAt.month;
-    int annee = startDateTime.year;
     int heureStart = startDateTime.hour;
     int minuteStart = startDateTime.minute;
     int heureEnd = timeEnd.hour;
     int minuteEnd = timeEnd.minute;
 
-    // Formater le jour de la semaine
-    String jourSemaine = jours[startAt.weekday - 1];
-
-    // Formater le mois
-    String nomMois = mois[moisIndex];
 
     // Formater l'heure
     String formatHeureStart =
@@ -518,11 +472,6 @@ class _AppointmentDialogState extends State<AppointmentDialog> {
                                             unavAppoint.timeEnd.hour ==
                                                 appointment.timeEnd.hour && (unavAppoint.appType=="Prise"||unavAppoint.appType=="Pris");
 
-                                        bool isEqualTimeAndDisabled = unavAppoint
-                                            .timeStart.hour ==
-                                            appointment.timeStart.hour &&
-                                            unavAppoint.timeEnd.hour ==
-                                                appointment.timeEnd.hour && unavAppoint.appType=="Desactiver";
 
                                         /// Si l'appointment a desactiver est unique, on affecte isUnique en false
                                         if (isEqualTimeAndPrise) {
@@ -533,19 +482,6 @@ class _AppointmentDialogState extends State<AppointmentDialog> {
 
                                       if (isUnique==false) {
 
-                                        CustomAppointment customAppointment =
-                                        CustomAppointment(
-                                          medecin: widget.medecin,
-                                          id: appointment.id,
-                                          type: appointment.type,
-                                          startAt: currentJour!,
-                                          timeStart: appointment.timeStart,
-                                          timeEnd: appointment.timeEnd,
-                                          reason: "",
-                                          createdAt: appointment.createdAt,
-                                          appType:
-                                          'Desactiver',
-                                        );
 
                                         if(isInUnavalaibleDesactiver(listUnavalaibleAppointment,appointment)==null){
 

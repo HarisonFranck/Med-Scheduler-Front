@@ -7,7 +7,6 @@ import 'package:med_scheduler_front/Models/CustomAppointmentDataSource.dart';
 import 'package:med_scheduler_front/Models/Medecin.dart';
 import 'package:med_scheduler_front/Models/Patient.dart';
 import 'package:med_scheduler_front/Models/AuthProvider.dart';
-import 'dart:io';
 import 'package:med_scheduler_front/Models/UrlBase.dart';
 import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
 import 'package:intl/intl.dart';
@@ -102,7 +101,6 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
               false;
 
           if (!eventExists) {
-            final result =
                 await deviceCalendarPlugin.createOrUpdateEvent(event);
           }
         });
@@ -129,13 +127,7 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
           appointment.timeStart.hour,
           appointment.timeStart.minute,
           appointment.timeStart.second);
-      DateTime endDate = DateTime(
-          appointment.startAt.year,
-          appointment.startAt.month,
-          appointment.startAt.day,
-          appointment.timeEnd.hour,
-          appointment.timeEnd.minute,
-          appointment.timeEnd.second);
+
 
       if (startDate.isAfter(now) &&
           isInCurrentWeek(startDate, rendezVousList.elementAt(i).timeStart)) {
@@ -162,8 +154,6 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
     bool isIt = false;
     DateTime formatedStartAt =
         DateTime.parse(DateFormat('yyyy-MM-dd').format(startAt));
-    DateTime formatedStartOfWeek =
-        DateTime.parse(DateFormat('yyyy-MM-dd').format(startOfWeek));
     DateTime formatedEndOfWeek =
         DateTime.parse(DateFormat('yyyy-MM-dd').format(endOfWeek));
     DateTime TimeDtStart =
@@ -201,49 +191,13 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
 
   String formatDateTimeAppointment(
       DateTime startAt, DateTime startDateTime, DateTime timeEnd) {
-    // Liste des jours de la semaine
-    final List<String> jours = [
-      'Lundi',
-      'Mardi',
-      'Mercredi',
-      'Jeudi',
-      'Vendredi',
-      'Samedi',
-      'Dimanche'
-    ];
 
-    // Liste des mois de l'année
-    final List<String> mois = [
-      '',
-      'Janvier',
-      'Février',
-      'Mars',
-      'Avril',
-      'Mai',
-      'Juin',
-      'Juillet',
-      'Août',
-      'Septembre',
-      'Octobre',
-      'Novembre',
-      'Décembre'
-    ];
 
-    // Extraire les composants de la date et de l'heure
-
-    int jour = startAt.day;
-    int moisIndex = startAt.month;
-    int annee = startDateTime.year;
     int heureStart = startDateTime.hour;
     int minuteStart = startDateTime.minute;
     int heureEnd = timeEnd.hour;
     int minuteEnd = timeEnd.minute;
 
-    // Formater le jour de la semaine
-    String jourSemaine = jours[startAt.weekday - 1];
-
-    // Formater le mois
-    String nomMois = mois[moisIndex];
 
     // Formater l'heure
     String formatHeureStart =
@@ -420,10 +374,7 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
     int jour = startDateTime.day;
     int moisIndex = startDateTime.month;
     int annee = startDateTime.year;
-    int heureStart = startDateTime.hour;
-    int minuteStart = startDateTime.minute;
-    int heureEnd = timeEnd.hour;
-    int minuteEnd = timeEnd.minute;
+
 
     // Formater le jour de la semaine
     String jourSemaine = jours[startDateTime.weekday - 1];
@@ -431,11 +382,6 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
     // Formater le mois
     String nomMois = mois[moisIndex];
 
-    // Formater l'heure
-    String formatHeureStart =
-        '${heureStart.toString().padLeft(2, '0')}:${minuteStart.toString().padLeft(2, '0')}';
-    String formatHeureEnd =
-        '${heureEnd.toString().padLeft(2, '0')}:${minuteEnd.toString().padLeft(2, '0')}';
 
     // Construire la chaîne lisible
     String resultat = '$jourSemaine, $jour $nomMois $annee';
@@ -476,18 +422,13 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
     int jour = dateTime.day;
     int moisIndex = dateTime.month;
     int annee = dateTime.year;
-    int heure = dateTime.hour;
-    int minute = dateTime.minute;
+
 
     // Formater le jour de la semaine
     String jourSemaine = jours[dateTime.weekday - 1];
 
     // Formater le mois
     String nomMois = mois[moisIndex];
-
-    // Formater l'heure
-    String formatHeure =
-        '${heure.toString().padLeft(2, '0')}h:${minute.toString().padLeft(2, '0')}';
 
     // Construire la chaîne lisible
     String resultat = '$jourSemaine, $jour $nomMois $annee';
@@ -1194,9 +1135,7 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
                                             String dtClick =
                                                 DateFormat('yyyy-MM-dd')
                                                     .format(details.date!);
-                                            String now =
-                                                DateFormat('yyyy-MM-dd')
-                                                    .format(DateTime.now());
+
                                             DateTime dt =
                                                 DateTime.parse(dtClick);
                                             DateTime dtNow =
@@ -1521,16 +1460,7 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
   }
 
   String formatDT(DateTime Date) {
-    // Liste des jours de la semaine
-    final List<String> jours = [
-      'Lundi',
-      'Mardi',
-      'Mercredi',
-      'Jeudi',
-      'Vendredi',
-      'Samedi',
-      'Dimanche'
-    ];
+
 
     // Liste des mois de l'année
     final List<String> mois = [
@@ -1550,12 +1480,9 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
     ];
 
     // Extraire les composants de la date et de l'heure
-    int jour = Date.day;
-    int moisIndex = Date.month;
-    int annee = Date.year;
 
-    // Formater le jour de la semaine
-    String jourSemaine = jours[Date.weekday - 1];
+    int moisIndex = Date.month;
+
 
     // Formater le mois
     String nomMois = mois[moisIndex];
@@ -1630,7 +1557,7 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
 
     int jour = startAt.day;
     int moisIndex = startAt.month;
-    int annee = startDateTime.year;
+
     int heureStart = startDateTime.hour;
     int minuteStart = startDateTime.minute;
     int heureEnd = timeEnd.hour;

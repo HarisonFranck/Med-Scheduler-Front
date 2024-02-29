@@ -814,7 +814,7 @@ packages:
     source: hosted
     version: "2.1.1"
   path_provider_windows:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: path_provider_windows
       sha256: "8bc9f22eee8690981c22aa7fc602f5c85b497a6fb2ceb35ee5a5e5ed85ad8170"
@@ -958,7 +958,7 @@ packages:
     source: hosted
     version: "2.3.5"
   shared_preferences_linux:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: shared_preferences_linux
       sha256: "9f2cbcf46d4270ea8be39fa156d86379077c8a5228d9dfdb1164ae0bb93f1faa"
@@ -982,7 +982,7 @@ packages:
     source: hosted
     version: "2.2.2"
   shared_preferences_windows:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: shared_preferences_windows
       sha256: "841ad54f3c8381c480d0c9b508b89a34036f512482c407e6df7a9c4aa2ef8f59"

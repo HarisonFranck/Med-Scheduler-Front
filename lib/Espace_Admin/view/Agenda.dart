@@ -7,7 +7,6 @@ import 'package:provider/provider.dart';
 import 'package:med_scheduler_front/Models/UrlBase.dart';
 import 'package:intl/intl.dart';
 import 'package:med_scheduler_front/Models/CustomAppointmentDataSource.dart';
-import 'dart:io';
 import 'IndexAccueilAdmin.dart';
 import 'AppointmentDialog.dart';
 import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
@@ -27,7 +26,6 @@ class AgendaState extends State<Agenda> {
   late String token;
   late AuthProviderUser authProviderUser;
 
-  bool _isPageActive = true;
 
   BaseRepository? baseRepository;
   Utilities? utilities;
@@ -46,7 +44,6 @@ class AgendaState extends State<Agenda> {
   @override
   void dispose() {
     // TODO: implement dispose
-    _isPageActive = false;
     super.dispose();
 
     print('--- DESTRUCTION PAGE ---');
@@ -562,8 +559,7 @@ class AgendaState extends State<Agenda> {
 
 
                                             if (list.length >= 1) {
-                                              CustomAppointment appoint =
-                                                  list.first;
+
                                               setState(() {
                                                 istoAddAppointment = false;
                                                 isAppointment = true;
@@ -758,16 +754,7 @@ class AgendaState extends State<Agenda> {
   }
 
   String formatDT(DateTime Date) {
-    // Liste des jours de la semaine
-    final List<String> jours = [
-      'Lundi',
-      'Mardi',
-      'Mercredi',
-      'Jeudi',
-      'Vendredi',
-      'Samedi',
-      'Dimanche'
-    ];
+
 
     // Liste des mois de l'année
     final List<String> mois = [
@@ -787,12 +774,8 @@ class AgendaState extends State<Agenda> {
     ];
 
     // Extraire les composants de la date et de l'heure
-    int jour = Date.day;
     int moisIndex = Date.month;
-    int annee = Date.year;
 
-    // Formater le jour de la semaine
-    String jourSemaine = jours[Date.weekday - 1];
 
     // Formater le mois
     String nomMois = mois[moisIndex];
@@ -1131,8 +1114,7 @@ class AgendaState extends State<Agenda> {
     int jour = dateTime.day;
     int moisIndex = dateTime.month;
     int annee = dateTime.year;
-    int heure = dateTime.hour;
-    int minute = dateTime.minute;
+
 
     // Formater le jour de la semaine
     String jourSemaine = jours[dateTime.weekday - 1];
@@ -1140,9 +1122,6 @@ class AgendaState extends State<Agenda> {
     // Formater le mois
     String nomMois = mois[moisIndex];
 
-    // Formater l'heure
-    String formatHeure =
-        '${heure.toString().padLeft(2, '0')}h:${minute.toString().padLeft(2, '0')}';
 
     // Construire la chaîne lisible
     String resultat = '$jourSemaine, $jour $nomMois $annee';
@@ -1199,7 +1178,6 @@ class AgendaState extends State<Agenda> {
 
     int jour = startAt.day;
     int moisIndex = startAt.month;
-    int annee = startDateTime.year;
     int heureStart = startDateTime.hour;
     int minuteStart = startDateTime.minute;
     int heureEnd = timeEnd.hour;
@@ -1501,10 +1479,6 @@ class AgendaState extends State<Agenda> {
     int jour = startDateTime.day;
     int moisIndex = startDateTime.month;
     int annee = startDateTime.year;
-    int heureStart = startDateTime.hour;
-    int minuteStart = startDateTime.minute;
-    int heureEnd = timeEnd.hour;
-    int minuteEnd = timeEnd.minute;
 
     // Formater le jour de la semaine
     String jourSemaine = jours[startDateTime.weekday - 1];
@@ -1512,11 +1486,6 @@ class AgendaState extends State<Agenda> {
     // Formater le mois
     String nomMois = mois[moisIndex];
 
-    // Formater l'heure
-    String formatHeureStart =
-        '${heureStart.toString().padLeft(2, '0')}:${minuteStart.toString().padLeft(2, '0')}';
-    String formatHeureEnd =
-        '${heureEnd.toString().padLeft(2, '0')}:${minuteEnd.toString().padLeft(2, '0')}';
 
     // Construire la chaîne lisible
     String resultat = '$jourSemaine, $jour $nomMois $annee';
@@ -1526,49 +1495,16 @@ class AgendaState extends State<Agenda> {
 
   String formatDateTimeAppointment(
       DateTime startAt, DateTime startDateTime, DateTime timeEnd) {
-    // Liste des jours de la semaine
-    final List<String> jours = [
-      'Lundi',
-      'Mardi',
-      'Mercredi',
-      'Jeudi',
-      'Vendredi',
-      'Samedi',
-      'Dimanche'
-    ];
 
-    // Liste des mois de l'année
-    final List<String> mois = [
-      '',
-      'Janvier',
-      'Février',
-      'Mars',
-      'Avril',
-      'Mai',
-      'Juin',
-      'Juillet',
-      'Août',
-      'Septembre',
-      'Octobre',
-      'Novembre',
-      'Décembre'
-    ];
+
 
     // Extraire les composants de la date et de l'heure
 
-    int jour = startAt.day;
-    int moisIndex = startAt.month;
-    int annee = startDateTime.year;
+
     int heureStart = startDateTime.hour;
     int minuteStart = startDateTime.minute;
     int heureEnd = timeEnd.hour;
     int minuteEnd = timeEnd.minute;
-
-    // Formater le jour de la semaine
-    String jourSemaine = jours[startAt.weekday - 1];
-
-    // Formater le mois
-    String nomMois = mois[moisIndex];
 
     // Formater l'heure
     String formatHeureStart =

@@ -202,7 +202,6 @@ class _RegistrationState extends State<Registration> {
   FocusNode _focusNodephone = FocusNode();
   FocusNode _focusNodecategorie = FocusNode();
   FocusNode _focusNodepass = FocusNode();
-  FocusNode _focusNodeimage = FocusNode();
   FocusNode _focusNodeconfpass = FocusNode();
   FocusNode _focusNodeaddresse = FocusNode();
   FocusNode _focusNodeville = FocusNode();

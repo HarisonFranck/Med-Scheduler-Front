@@ -132,7 +132,6 @@ class _AdminDetailsState extends State<AdminDetails> {
     return true;
   }
 
-  File? _profileImageFile;
 
   Future<File?> resizeImage(File file,
       {int width = 300, int height = 300}) async {
@@ -364,7 +363,7 @@ class _AdminDetailsState extends State<AdminDetails> {
           utilities!.ErrorConnexion();
         }
       }
-    } catch (e, exception) {
+    } catch (e) {
       setState(() {
         isLoading = false;
       });
@@ -433,7 +432,7 @@ class _AdminDetailsState extends State<AdminDetails> {
         throw Exception(
             '-- Failed to add user. HTTP Status Code: ${response.statusCode}');
       }
-    } catch (e, exception) {
+    } catch (e) {
       if (e is http.ClientException) {
         utilities!.ErrorConnexion();
       } else {

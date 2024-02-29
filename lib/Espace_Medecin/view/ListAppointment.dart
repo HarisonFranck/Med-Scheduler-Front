@@ -41,8 +41,6 @@ class _ListAppointmentState extends State<ListAppointment> {
 
   bool isToday(DateTime startAt, DateTime timeStart) {
     DateTime now = DateTime.now();
-    DateTime startOfWeek = DateTime(now.year, now.month, now.day - now.weekday);
-    DateTime endOfWeek = startOfWeek.add(const Duration(days: 6));
     bool isIt = false;
     bool val = DateFormat('yyyy-MM-dd').format(startAt) ==
         DateFormat('yyyy-MM-dd').format(now);
@@ -60,8 +58,6 @@ class _ListAppointmentState extends State<ListAppointment> {
 
   bool isYesterday(DateTime startAt) {
     DateTime now = DateTime.now();
-    DateTime startOfWeek = DateTime(now.year, now.month, now.day - now.weekday);
-    DateTime endOfWeek = startOfWeek.add(const Duration(days: 6));
     bool isIt = false;
     isIt = now.isBefore(startAt);
 
@@ -70,8 +66,6 @@ class _ListAppointmentState extends State<ListAppointment> {
 
   bool isFinished(DateTime startAt, DateTime startTime) {
     DateTime now = DateTime.now();
-    DateTime startOfWeek = DateTime(now.year, now.month, now.day - now.weekday);
-    DateTime endOfWeek = startOfWeek.add(const Duration(days: 6));
     bool isIt = false;
 
     if (DateFormat('yyyy-MM-dd').format(now) ==
@@ -91,9 +85,6 @@ class _ListAppointmentState extends State<ListAppointment> {
 
   Future<List<CustomAppointment>> filterToday(
       Future<List<CustomAppointment>> appointmentFuture) async {
-    DateTime now = DateTime.now();
-    DateTime startOfWeek = DateTime(now.year, now.month, now.day - now.weekday);
-    DateTime endOfWeek = startOfWeek.add(const Duration(days: 6));
 
     List<CustomAppointment> filteredAppointments = [];
 
@@ -116,9 +107,6 @@ class _ListAppointmentState extends State<ListAppointment> {
 
   Future<List<CustomAppointment>> filterNext(
       Future<List<CustomAppointment>> appointmentFuture) async {
-    DateTime now = DateTime.now();
-    DateTime startOfWeek = DateTime(now.year, now.month, now.day - now.weekday);
-    DateTime endOfWeek = startOfWeek.add(const Duration(days: 6));
 
     List<CustomAppointment> filteredAppointments = [];
 
@@ -139,9 +127,6 @@ class _ListAppointmentState extends State<ListAppointment> {
 
   Future<List<CustomAppointment>> filterFinished(
       Future<List<CustomAppointment>> appointmentFuture) async {
-    DateTime now = DateTime.now();
-    DateTime startOfWeek = DateTime(now.year, now.month, now.day - now.weekday);
-    DateTime endOfWeek = startOfWeek.add(const Duration(days: 6));
 
     List<CustomAppointment> filteredAppointments = [];
 
@@ -244,7 +229,6 @@ class _ListAppointmentState extends State<ListAppointment> {
     // Extraire les composants de la date et de l'heure
     int jour = startDateTime.day;
     int moisIndex = startDateTime.month;
-    int annee = startDateTime.year;
     int heureStart = timeStart.hour;
     int minuteStart = timeStart.minute;
     int heureEnd = timeEnd.hour;
@@ -395,17 +379,18 @@ class _ListAppointmentState extends State<ListAppointment> {
                         } else {
                           // Trier les appointments par startAt et timeStart
                           snapshot.data!.sort((a, b) {
-                            // Compare les dates startAt
-                            int dateComparison = a.startAt.compareTo(b.startAt);
-                            if (dateComparison != 0) {
-                              return dateComparison;
-                            } else {
-                              // Si les dates sont égales, compare les heures timeStart
-                              return a.timeStart.compareTo(b.timeStart);
-                            }
+                          // Compare les dates startAt
+                          int dateComparison = a.startAt.compareTo(b.startAt);
+                          if (dateComparison != 0) {
+                          return dateComparison;
+                          } else {
+                          // Si les dates sont égales, compare les heures timeStart
+                          return a.timeStart.compareTo(b.timeStart);
+                          }
                           });
 
                           return ListView.builder(
+    physics: BouncingScrollPhysics(),
                             padding: const EdgeInsets.only(
                                 top: 50, left: 20, right: 20),
                             itemCount: snapshot.data!.length,
@@ -619,18 +604,19 @@ class _ListAppointmentState extends State<ListAppointment> {
                         } else {
                           // Trier les appointments par startAt et timeStart
                           snapshot.data!.sort((a, b) {
-                            // Compare les dates startAt
-                            int dateComparison = a.startAt.compareTo(b.startAt);
-                            if (dateComparison != 0) {
-                              return dateComparison;
-                            } else {
-                              // Si les dates sont égales, compare les heures timeStart
-                              return a.timeStart.compareTo(b.timeStart);
-                            }
+                          // Compare les dates startAt
+                          int dateComparison = a.startAt.compareTo(b.startAt);
+                          if (dateComparison != 0) {
+                          return dateComparison;
+                          } else {
+                          // Si les dates sont égales, compare les heures timeStart
+                          return a.timeStart.compareTo(b.timeStart);
+                          }
                           });
 
                           // Construisez votre ListView avec les données obtenues
                           return ListView.builder(
+    physics: BouncingScrollPhysics(),
                             padding: const EdgeInsets.only(
                                 top: 50, left: 20, right: 20),
                             itemCount: snapshot.data!.length,
@@ -844,17 +830,18 @@ class _ListAppointmentState extends State<ListAppointment> {
                           // Trier les appointments par startAt et timeStart
                           snapshot.data!.sort((a, b) {
                             // Compare les dates startAt
-                            int dateComparison = a.startAt.compareTo(b.startAt);
+                            int dateComparison = b.startAt.compareTo(a.startAt);
                             if (dateComparison != 0) {
                               return dateComparison;
                             } else {
                               // Si les dates sont égales, compare les heures timeStart
-                              return a.timeStart.compareTo(b.timeStart);
+                              return b.timeStart.compareTo(a.timeStart);
                             }
                           });
 
                           // Construisez votre ListView avec les données obtenues
                           return ListView.builder(
+    physics: BouncingScrollPhysics(),
                             padding: const EdgeInsets.only(
                                 top: 50, left: 20, right: 20),
                             itemCount: snapshot.data!.length,

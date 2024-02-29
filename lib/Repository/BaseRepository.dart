@@ -540,9 +540,9 @@ class BaseRepository{
           if (response.statusCode == 401) {
             authProvider.logout();
             // ignore: use_build_context_synchronously
-            Navigator.pushReplacement(
+            Navigator.pushAndRemoveUntil(
                 context,
-                MaterialPageRoute(builder: (context) => const MyApp()));
+                MaterialPageRoute(builder: (context) => const MyApp()),(route) => false,);
           }
 
           // Gestion des erreurs HTTP
