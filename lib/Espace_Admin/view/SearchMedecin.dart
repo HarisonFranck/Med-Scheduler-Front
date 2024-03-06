@@ -25,7 +25,6 @@ class SearchMedecinState extends State<SearchMedecin> {
 
   bool dataLoaded = false;
 
-
   @override
   void initState() {
     super.initState();
@@ -35,7 +34,6 @@ class SearchMedecinState extends State<SearchMedecin> {
     WidgetsFlutterBinding.ensureInitialized();
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-
       await getAllAsync();
       setState(() {
         dataLoaded = true;
@@ -48,7 +46,6 @@ class SearchMedecinState extends State<SearchMedecin> {
     // TODO: implement didChangeDependencies
     super.didChangeDependencies();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-
       await getAllAsync();
     });
   }
@@ -100,7 +97,6 @@ class SearchMedecinState extends State<SearchMedecin> {
   FocusNode _focusNodeSearch = FocusNode();
   TextEditingController searchLastName = TextEditingController();
 
-
   int currentPage = 1;
 
   bool isLoading = false;
@@ -111,25 +107,24 @@ class SearchMedecinState extends State<SearchMedecin> {
     medecinsFuture = loadMoreData();
   }
 
-
   Future<List<Medecin>> loadMoreData() async {
-    print('LOAD MORE: $currentPage');
     setState(() {
       isLoading = true;
     });
     try {
-      List<Medecin> moreMedecins = await baseRepository!.getAllMedecinPerPage(currentPage);
-    if (moreMedecins.isNotEmpty) {
-    currentPage++;
-    }
-    print('LOAD MORE: $currentPage');
-    setState(() {
-    isLoading = false;
-    });
-    return moreMedecins;
+      List<Medecin> moreMedecins =
+          await baseRepository!.getAllMedecinPerPage(currentPage);
+      if (moreMedecins.isNotEmpty) {
+        currentPage++;
+      }
+
+      setState(() {
+        isLoading = false;
+      });
+      return moreMedecins;
     } catch (e) {
-    // Gérez les erreurs de chargement de données supplémentaires ici
-    return []; // ou lancez une exception appropriée selon votre logique
+      // Gérez les erreurs de chargement de données supplémentaires ici
+      return []; // ou lancez une exception appropriée selon votre logique
     }
   }
 
@@ -157,7 +152,6 @@ class SearchMedecinState extends State<SearchMedecin> {
                               searchLastName.text = nom;
                               medecinsFuture = baseRepository!
                                   .searchAllMedecin(searchLastName.text);
-                              print('LASTNAME: ${searchLastName.text}');
                             });
                           }
                         },
@@ -216,7 +210,10 @@ class SearchMedecinState extends State<SearchMedecin> {
                                           height: 30,
                                         ),
                                         Text(
-                                          style:TextStyle(color: Colors.black.withOpacity(0.5),letterSpacing: 2),
+                                          style: TextStyle(
+                                              color:
+                                                  Colors.black.withOpacity(0.5),
+                                              letterSpacing: 2),
                                           'Chargement des données..\n Assurez-vous d\'avoir une connexion internet',
                                           textAlign: TextAlign.center,
                                         )
@@ -282,239 +279,257 @@ class SearchMedecinState extends State<SearchMedecin> {
                               }
 
                               return NotificationListener<ScrollNotification>(
-                              onNotification: (ScrollNotification scrollInfo) {
-                            if (!isLoading &&
-                            scrollInfo.metrics.pixels == scrollInfo.metrics.maxScrollExtent) {
-                            if (scrollInfo is ScrollEndNotification &&
-                            scrollController.position.extentAfter ==
-                            0) {
-                            // L'utilisateur a atteint la fin de la liste, chargez plus de données
-                            loadMoreData();
-                            }
-                            }
-                            return false;
-                            },
+                                  onNotification:
+                                      (ScrollNotification scrollInfo) {
+                                    if (!isLoading &&
+                                        scrollInfo.metrics.pixels ==
+                                            scrollInfo
+                                                .metrics.maxScrollExtent) {
+                                      if (scrollInfo is ScrollEndNotification &&
+                                          scrollController
+                                                  .position.extentAfter ==
+                                              0) {
+                                        // L'utilisateur a atteint la fin de la liste, chargez plus de données
+                                        loadMoreData();
+                                      }
+                                    }
+                                    return false;
+                                  },
                                   child: ListView.builder(
-                            physics: BouncingScrollPhysics(),
-                                controller: scrollController,
-                                itemCount: medecins.length,
-                                itemBuilder: (context, index) {
-                                  Medecin medecin = medecins[index];
+                                    physics: BouncingScrollPhysics(),
+                                    controller: scrollController,
+                                    itemCount: medecins.length,
+                                    itemBuilder: (context, index) {
+                                      Medecin medecin = medecins[index];
 
-                                  return Padding(
-                                      padding: const EdgeInsets.only(
-                                          right: 18, left: 18, bottom: 10),
-                                      child: ClipRRect(
-                                        borderRadius: BorderRadius.circular(23),
-                                        child: Container(
-                                          height: 200,
-                                          child: Card(
-                                            elevation: 0.5,
-                                            color: Colors.white,
-                                            child: Column(
-                                              children: [
-                                                const Spacer(),
-                                                Row(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment
-                                                          .spaceEvenly,
+                                      return Padding(
+                                          padding: const EdgeInsets.only(
+                                              right: 18, left: 18, bottom: 10),
+                                          child: ClipRRect(
+                                            borderRadius:
+                                                BorderRadius.circular(23),
+                                            child: Container(
+                                              height: 200,
+                                              child: Card(
+                                                elevation: 0.5,
+                                                color: Colors.white,
+                                                child: Column(
                                                   children: [
-                                                    const SizedBox(
-                                                      width: 20,
-                                                    ),
-                                                    ClipRRect(
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              50),
-                                                      child: Container(
-                                                        width: 60,
-                                                        height: 60,
-                                                        decoration:
-                                                            BoxDecoration(
+                                                    const Spacer(),
+                                                    Row(
+                                                      mainAxisAlignment:
+                                                          MainAxisAlignment
+                                                              .spaceEvenly,
+                                                      children: [
+                                                        const SizedBox(
+                                                          width: 20,
+                                                        ),
+                                                        ClipRRect(
                                                           borderRadius:
                                                               BorderRadius
-                                                                  .circular(60),
+                                                                  .circular(50),
+                                                          child: Container(
+                                                            width: 60,
+                                                            height: 60,
+                                                            decoration:
+                                                                BoxDecoration(
+                                                              borderRadius:
+                                                                  BorderRadius
+                                                                      .circular(
+                                                                          60),
+                                                            ),
+                                                            child:
+                                                                CachedNetworkImage(
+                                                              imageUrl:
+                                                                  '$baseUrl${utilities!.ajouterPrefixe(medecin.imageName!)}',
+                                                              placeholder: (context,
+                                                                      url) =>
+                                                                  const CircularProgressIndicator(
+                                                                color: Colors
+                                                                    .redAccent,
+                                                              ), // Affiche un indicateur de chargement en attendant l'image
+                                                              errorWidget: (context,
+                                                                      url,
+                                                                      error) =>
+                                                                  Image.asset(
+                                                                'assets/images/medecin.png',
+                                                                fit: BoxFit
+                                                                    .cover,
+                                                                width: 50,
+                                                                height: 50,
+                                                              ), // Affiche une icône d'erreur si le chargement échoue
+                                                            ),
+                                                          ),
                                                         ),
-                                                        child:
-                                                            CachedNetworkImage(
-                                                          imageUrl:
-                                                              '$baseUrl${utilities!.ajouterPrefixe(medecin.imageName!)}',
-                                                          placeholder: (context,
-                                                                  url) =>
-                                                              const CircularProgressIndicator(
-                                                            color: Colors
-                                                                .redAccent,
-                                                          ), // Affiche un indicateur de chargement en attendant l'image
-                                                          errorWidget: (context,
-                                                                  url, error) =>
-                                                              Image.asset(
-                                                            'assets/images/medecin.png',
-                                                            fit: BoxFit.cover,
-                                                            width: 50,
-                                                            height: 50,
-                                                          ), // Affiche une icône d'erreur si le chargement échoue
+                                                        const SizedBox(
+                                                          width: 10,
                                                         ),
+                                                        Column(
+                                                          children: [
+                                                            Text(
+                                                              'Dr ${medecin.lastName[0]}.${abbreviateName(medecin.firstName)}',
+                                                              style: const TextStyle(
+                                                                  color: Color
+                                                                      .fromARGB(
+                                                                          1000,
+                                                                          60,
+                                                                          70,
+                                                                          120),
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w500),
+                                                            ),
+                                                            Text(
+                                                              '${(medecin.speciality != null) ? medecin.speciality!.label : ""}',
+                                                              style: const TextStyle(
+                                                                  color: Color
+                                                                      .fromARGB(
+                                                                          1000,
+                                                                          60,
+                                                                          70,
+                                                                          120),
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w300),
+                                                            )
+                                                          ],
+                                                        ),
+                                                        const Spacer()
+                                                      ],
+                                                    ),
+                                                    const Opacity(
+                                                      opacity: 0.4,
+                                                      child: Divider(
+                                                        thickness: 1,
+                                                        indent: 20,
+                                                        endIndent: 20,
+                                                        color: Colors.grey,
                                                       ),
                                                     ),
-                                                    const SizedBox(
-                                                      width: 10,
-                                                    ),
-                                                    Column(
+                                                    Row(
+                                                      mainAxisAlignment:
+                                                          MainAxisAlignment
+                                                              .center,
                                                       children: [
-                                                        Text(
-                                                          'Dr ${medecin.lastName[0]}.${abbreviateName(medecin.firstName)}',
-                                                          style: const TextStyle(
-                                                              color: Color
-                                                                  .fromARGB(
-                                                                      1000,
-                                                                      60,
-                                                                      70,
-                                                                      120),
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .w500),
+                                                        Padding(
+                                                          padding:
+                                                              const EdgeInsets
+                                                                  .only(
+                                                                  left: 30,
+                                                                  right: 10),
+                                                          child: Image.asset(
+                                                            'assets/images/date-limite.png',
+                                                            width: 30,
+                                                            height: 30,
+                                                          ),
                                                         ),
-                                                        Text(
-                                                          '${(medecin.speciality != null) ? medecin.speciality!.label : ""}',
-                                                          style: const TextStyle(
+                                                        const Text(
+                                                          '5rdv/jour',
+                                                          textAlign:
+                                                              TextAlign.center,
+                                                          style: TextStyle(
                                                               color: Color
                                                                   .fromARGB(
                                                                       1000,
                                                                       60,
                                                                       70,
-                                                                      120),
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .w300),
+                                                                      120)),
+                                                        ),
+                                                        const Spacer(),
+                                                        const Icon(
+                                                          Icons.watch_later,
+                                                          color:
+                                                              Colors.redAccent,
+                                                        ),
+                                                        const Padding(
+                                                          padding:
+                                                              EdgeInsets.only(
+                                                                  left: 5,
+                                                                  right: 15),
+                                                          child: Text(
+                                                            'Disponible de 08:00',
+                                                            textAlign: TextAlign
+                                                                .center,
+                                                            style: TextStyle(
+                                                                color: Color
+                                                                    .fromARGB(
+                                                                        1000,
+                                                                        60,
+                                                                        70,
+                                                                        120)),
+                                                          ),
                                                         )
                                                       ],
                                                     ),
-                                                    const Spacer()
-                                                  ],
-                                                ),
-                                                const Opacity(
-                                                  opacity: 0.4,
-                                                  child: Divider(
-                                                    thickness: 1,
-                                                    indent: 20,
-                                                    endIndent: 20,
-                                                    color: Colors.grey,
-                                                  ),
-                                                ),
-                                                Row(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment.center,
-                                                  children: [
                                                     Padding(
-                                                      padding:
-                                                          const EdgeInsets.only(
-                                                              left: 30,
-                                                              right: 10),
-                                                      child: Image.asset(
-                                                        'assets/images/date-limite.png',
-                                                        width: 30,
-                                                        height: 30,
-                                                      ),
-                                                    ),
-                                                    const Text(
-                                                      '5rdv/jour',
-                                                      textAlign:
-                                                          TextAlign.center,
-                                                      style: TextStyle(
-                                                          color: Color.fromARGB(
-                                                              1000,
-                                                              60,
-                                                              70,
-                                                              120)),
-                                                    ),
-                                                    const Spacer(),
-                                                    const Icon(
-                                                      Icons.watch_later,
-                                                      color: Colors.redAccent,
-                                                    ),
-                                                    const Padding(
-                                                      padding: EdgeInsets.only(
-                                                          left: 5, right: 15),
-                                                      child: Text(
-                                                        'Disponible de 08:00',
-                                                        textAlign:
-                                                            TextAlign.center,
-                                                        style: TextStyle(
-                                                            color:
-                                                                Color.fromARGB(
-                                                                    1000,
-                                                                    60,
-                                                                    70,
-                                                                    120)),
-                                                      ),
-                                                    )
+                                                        padding:
+                                                            const EdgeInsets
+                                                                .only(
+                                                                top: 15.0,
+                                                                left: 10,
+                                                                right: 10,
+                                                                bottom: 15),
+                                                        child: ElevatedButton(
+                                                          style: ButtonStyle(
+                                                            backgroundColor:
+                                                                MaterialStateProperty
+                                                                    .all(const Color
+                                                                        .fromARGB(
+                                                                        1000,
+                                                                        60,
+                                                                        70,
+                                                                        120)),
+                                                            shape:
+                                                                MaterialStateProperty
+                                                                    .all(
+                                                              RoundedRectangleBorder(
+                                                                borderRadius:
+                                                                    BorderRadius
+                                                                        .circular(
+                                                                            8.0), // Définissez le rayon de la bordure ici
+                                                              ),
+                                                            ),
+                                                            minimumSize:
+                                                                MaterialStateProperty
+                                                                    .all(const Size(
+                                                                        180.0,
+                                                                        40.0)),
+                                                          ),
+                                                          onPressed: () {
+                                                            Navigator.push(
+                                                                context,
+                                                                MaterialPageRoute(
+                                                                    builder:
+                                                                        (context) =>
+                                                                            Agenda(),
+                                                                    settings: RouteSettings(
+                                                                        arguments:
+                                                                            medecin)));
+                                                          },
+                                                          child: const Text(
+                                                            'Voir Agenda',
+                                                            textScaleFactor:
+                                                                1.2,
+                                                            style: TextStyle(
+                                                              color: Color
+                                                                  .fromARGB(
+                                                                      255,
+                                                                      253,
+                                                                      253,
+                                                                      253),
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .w500,
+                                                            ),
+                                                          ),
+                                                        )),
                                                   ],
                                                 ),
-                                                Padding(
-                                                    padding:
-                                                        const EdgeInsets.only(
-                                                            top: 15.0,
-                                                            left: 10,
-                                                            right: 10,
-                                                            bottom: 15),
-                                                    child: ElevatedButton(
-                                                      style: ButtonStyle(
-                                                        backgroundColor:
-                                                            MaterialStateProperty
-                                                                .all(const Color
-                                                                    .fromARGB(
-                                                                    1000,
-                                                                    60,
-                                                                    70,
-                                                                    120)),
-                                                        shape:
-                                                            MaterialStateProperty
-                                                                .all(
-                                                          RoundedRectangleBorder(
-                                                            borderRadius:
-                                                                BorderRadius
-                                                                    .circular(
-                                                                        8.0), // Définissez le rayon de la bordure ici
-                                                          ),
-                                                        ),
-                                                        minimumSize:
-                                                            MaterialStateProperty
-                                                                .all(const Size(
-                                                                    180.0,
-                                                                    40.0)),
-                                                      ),
-                                                      onPressed: () {
-                                                        Navigator.push(
-                                                            context,
-                                                            MaterialPageRoute(
-                                                                builder:
-                                                                    (context) =>
-                                                                        Agenda(),
-                                                                settings: RouteSettings(
-                                                                    arguments:
-                                                                        medecin)));
-                                                      },
-                                                      child: const Text(
-                                                        'Voir Agenda',
-                                                        textScaleFactor: 1.2,
-                                                        style: TextStyle(
-                                                          color: Color.fromARGB(
-                                                              255,
-                                                              253,
-                                                              253,
-                                                              253),
-                                                          fontWeight:
-                                                              FontWeight.w500,
-                                                        ),
-                                                      ),
-                                                    )),
-                                              ],
+                                              ),
                                             ),
-                                          ),
-                                        ),
-                                      ));
-                                },
-                              ));
+                                          ));
+                                    },
+                                  ));
                             }
                           },
                         ))

@@ -132,7 +132,6 @@ class _AdminDetailsState extends State<AdminDetails> {
     return true;
   }
 
-
   Future<File?> resizeImage(File file,
       {int width = 300, int height = 300}) async {
     try {
@@ -257,16 +256,12 @@ class _AdminDetailsState extends State<AdminDetails> {
     authProvider = Provider.of<AuthProvider>(context, listen: false);
     token = authProvider.token;
 
-    print('TOKEN: $token');
-
     setState(() {
       isLoading = true;
     });
 
     final url = Uri.parse(
         "${baseUrl}api/image-profile/${utilities!.extractLastNumber(utilisateur.id)}");
-
-    print('URL PHOTO UPDATE: $url');
 
     try {
       // Limiter la taille du fichier à, par exemple, 2 Mo (ajustez selon vos besoins)
@@ -284,27 +279,16 @@ class _AdminDetailsState extends State<AdminDetails> {
 
         // Ajouter le fichier au champ de données multipartes
         var fileStream = http.ByteStream(file.openRead());
-        print('BYTE STREAM: ${fileStream.isBroadcast}');
+
         var length = await file.length();
         var multipartFile = http.MultipartFile('image', fileStream, length,
             filename: file.path.split('/').last);
         request.files.add(multipartFile);
 
-        print(
-            'REQUEST FILES: ${request.files.first.field}, ${request.files.first.filename}, ${request.files.first.contentType}');
-
-        // Logs supplémentaires
-        print('Request URL: ${request.url}');
-        print('Request Headers: ${request.headers}');
-        print('File Length: $length');
-        print('File Name: ${file.path.split('/').last}');
-
         var response = await request.send();
 
         // Lire la réponse
         var responseBody = await response.stream.bytesToString();
-        print('Response Status Code: ${response.statusCode}');
-        print('Response Body: $responseBody');
 
         if (response.statusCode == 200) {
           setState(() {
@@ -314,9 +298,8 @@ class _AdminDetailsState extends State<AdminDetails> {
           Map<String, dynamic> map = json.decode(responseBody);
 
           UtilisateurImage utilisateurImage = UtilisateurImage.fromJson(map);
-          print('IMAGE USER: ${utilisateurImage.imageName}');
+
           if (utilisateurImage.imageName != "") {
-            print('NEFA MAKATO');
             setState(() {
               utilisateur = Utilisateur(
                   id: utilisateur.id,
@@ -333,7 +316,6 @@ class _AdminDetailsState extends State<AdminDetails> {
                   city: utilisateur.city);
               authProviderUser.setUser(utilisateur);
             });
-            print('IMAGE USER: ${utilisateur.imageName}');
           } else {
             print('IMAGE USER NULL');
           }
@@ -371,7 +353,6 @@ class _AdminDetailsState extends State<AdminDetails> {
         utilities!.ErrorConnexion();
       } else {
         // Gérer d'autres exceptions
-        print('Une erreur inattendue s\'est produite: $e');
       }
       throw Exception('-- CATCH Failed to add user. Error: $e');
     }
@@ -391,20 +372,16 @@ class _AdminDetailsState extends State<AdminDetails> {
 
     final headers = {'Content-Type': 'application/merge-patch+json'};
 
-    print('URL: $url');
-
     try {
       String jsonUser = jsonEncode(utilisateur.toJson());
-      print('Request Body: $jsonUser');
+
       final response = await http.patch(url, headers: headers, body: jsonUser);
-      print(response.statusCode);
 
       if (response.statusCode == 200) {
         setState(() {
           isLoading = false;
         });
         final Map<String, dynamic> jsonResponse = json.decode(response.body);
-        print('ERRRR: $jsonResponse');
 
         if (jsonResponse.containsKey('error')) {
           utilities!.error('Erreur de modification');
@@ -423,8 +400,10 @@ class _AdminDetailsState extends State<AdminDetails> {
         });
         if (response.statusCode == 401) {
           authProvider.logout();
-          Navigator.pushReplacement(
-              context, MaterialPageRoute(builder: (context) => const MyApp()));
+          Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (context) => const MyApp()),
+              (route) => false);
         }
         // Gestion des erreurs HTTP
         utilities!.error(
@@ -437,7 +416,6 @@ class _AdminDetailsState extends State<AdminDetails> {
         utilities!.ErrorConnexion();
       } else {
         // Gérer d'autres exceptions
-        print('Une erreur inattendue s\'est produite: $e');
       }
       throw Exception('-- CATCH Failed to add user. Error: $e');
     }
@@ -470,7 +448,7 @@ class _AdminDetailsState extends State<AdminDetails> {
     authProviderUser = Provider.of<AuthProviderUser>(context, listen: false);
 
     user = Provider.of<AuthProviderUser>(context).utilisateur;
-    print('DID ZAO');
+
     authProvider = Provider.of<AuthProvider>(context, listen: false);
     token = authProvider.token;
     WidgetsBinding.instance.addPostFrameCallback((_) async {
@@ -482,7 +460,8 @@ class _AdminDetailsState extends State<AdminDetails> {
             : null;
         nomController.text = utilisateur.firstName;
         prenomController.text = utilisateur.lastName;
-        phoneNumberController.text = utilities!.formatPhoneNumber(utilisateur.phone);
+        phoneNumberController.text =
+            utilities!.formatPhoneNumber(utilisateur.phone);
         emailController.text = utilisateur.email;
         categorieController.text = (utilisateur.category != null)
             ? categorieSet(utilisateur.category!)
@@ -655,8 +634,7 @@ class _AdminDetailsState extends State<AdminDetails> {
                                                       String imageName =
                                                           generateUniqueImageName()
                                                               .trim();
-                                                      print(
-                                                          'IMAGE NAME: $imageName');
+
                                                       FilePickerResult? result =
                                                           await FilePicker
                                                               .platform
@@ -677,9 +655,6 @@ class _AdminDetailsState extends State<AdminDetails> {
 
                                                         _cropImage(
                                                             originalFile);
-
-                                                        print(
-                                                            'Chemin du fichier original : $originalPath');
                                                       } else {
                                                         print(
                                                             'Aucun fichier sélectionné');
@@ -709,84 +684,96 @@ class _AdminDetailsState extends State<AdminDetails> {
                             ),
                             Row(
                               children: [
-                                const Padding(
-                                  padding: EdgeInsets.only(left: 20),
-                                  child: Text('Nom:',style: TextStyle(fontSize: 14,)),
+                                Container(
+                                  padding: const EdgeInsets.only(left: 20),
+                                  child: const Text('Nom:',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                      )),
                                 ),
-                                Padding(
-                                  padding: const EdgeInsets.only(left: 65),
-                                  child: Container(
-                                    width:
-                                        MediaQuery.of(context).size.width / 2.5,
-                                    child: TextField(
-                                      style: TextStyle(fontSize: 15),
-                                      decoration: const InputDecoration(
-                                        focusedBorder: UnderlineInputBorder(
-                                          borderSide: BorderSide(
-                                            color:
-                                                Color.fromARGB(230, 20, 20, 90),
-                                          ),
+                                const Spacer(),
+                                Container(
+                                  padding: const EdgeInsets.only(left: 15),
+                                  width:
+                                      MediaQuery.of(context).size.width / 2.3,
+                                  child: TextField(
+                                    style: TextStyle(fontSize: 15),
+                                    decoration: const InputDecoration(
+                                      focusedBorder: UnderlineInputBorder(
+                                        borderSide: BorderSide(
+                                          color:
+                                              Color.fromARGB(230, 20, 20, 90),
                                         ),
                                       ),
-                                      controller: nomController,
-                                      readOnly: true,
                                     ),
+                                    controller: nomController,
+                                    readOnly: true,
                                   ),
                                 ),
+                                const SizedBox(
+                                  width: 75,
+                                )
                               ],
                             ),
                             Row(
                               children: [
-                                const Padding(
-                                  padding: EdgeInsets.only(left: 20),
-                                  child: Text('Prenom:',style: TextStyle(fontSize: 14,)),
+                                Container(
+                                  padding: const EdgeInsets.only(left: 20),
+                                  child: const Text('Prenom:',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                      )),
                                 ),
-                                Padding(
-                                  padding: const EdgeInsets.only(left: 41),
-                                  child: Container(
-                                    width:
-                                        MediaQuery.of(context).size.width / 2.5,
-                                    child: TextField(
-                                      style: TextStyle(fontSize: 15),
-                                      decoration: const InputDecoration(
-                                        focusedBorder: UnderlineInputBorder(
-                                          borderSide: BorderSide(
-                                            color:
-                                                Color.fromARGB(230, 20, 20, 90),
-                                          ),
+                                const Spacer(),
+                                Container(
+                                  padding: const EdgeInsets.only(left: 15),
+                                  width:
+                                      MediaQuery.of(context).size.width / 2.3,
+                                  child: TextField(
+                                    style: TextStyle(fontSize: 15),
+                                    decoration: const InputDecoration(
+                                      focusedBorder: UnderlineInputBorder(
+                                        borderSide: BorderSide(
+                                          color:
+                                              Color.fromARGB(230, 20, 20, 90),
                                         ),
                                       ),
-                                      controller: prenomController,
-                                      readOnly: true,
                                     ),
+                                    controller: prenomController,
+                                    readOnly: true,
                                   ),
                                 ),
+                                const SizedBox(
+                                  width: 75,
+                                )
                               ],
                             ),
                             Row(
                               children: [
-                                const Padding(
-                                  padding: EdgeInsets.only(left: 20),
-                                  child: Text('Email:',style: TextStyle(fontSize: 14,)),
+                                Container(
+                                  padding: const EdgeInsets.only(left: 20),
+                                  child: const Text('Email:',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                      )),
                                 ),
-                                Padding(
-                                  padding: const EdgeInsets.only(left: 55),
-                                  child: Container(
-                                    width:
-                                        MediaQuery.of(context).size.width / 2.5,
-                                    child: TextField(
-                                      style: TextStyle(fontSize: 15),
-                                      decoration: const InputDecoration(
-                                        focusedBorder: UnderlineInputBorder(
-                                          borderSide: BorderSide(
-                                            color:
-                                                Color.fromARGB(230, 20, 20, 90),
-                                          ),
+                                const Spacer(),
+                                Container(
+                                  padding: const EdgeInsets.only(left: 15),
+                                  width:
+                                      MediaQuery.of(context).size.width / 2.3,
+                                  child: TextField(
+                                    style: TextStyle(fontSize: 15),
+                                    decoration: const InputDecoration(
+                                      focusedBorder: UnderlineInputBorder(
+                                        borderSide: BorderSide(
+                                          color:
+                                              Color.fromARGB(230, 20, 20, 90),
                                         ),
                                       ),
-                                      controller: emailController,
-                                      readOnly: EditEmail ? false : true,
                                     ),
+                                    controller: emailController,
+                                    readOnly: EditEmail ? false : true,
                                   ),
                                 ),
                                 IconButton(
@@ -799,13 +786,14 @@ class _AdminDetailsState extends State<AdminDetails> {
                                         nodeEmail.requestFocus();
                                       }
                                     },
-                                    icon: const Icon(Icons.edit))
+                                    icon: const Icon(Icons.edit)),
+                                const SizedBox(width: 25)
                               ],
                             ),
                             if (EditEmail) ...[
                               Padding(
                                 padding:
-                                    const EdgeInsets.only(left: 160, right: 10),
+                                    const EdgeInsets.only(left: 110, right: 30),
                                 child: ElevatedButton(
                                   style: ButtonStyle(
                                     backgroundColor: MaterialStateProperty.all(
@@ -870,40 +858,40 @@ class _AdminDetailsState extends State<AdminDetails> {
                             ],
                             Row(
                               children: [
-                                const Padding(
-                                  padding: EdgeInsets.only(left: 20),
-                                  child: Text('Telephone:',style: TextStyle(fontSize: 14,)),
+                                Container(
+                                  padding: const EdgeInsets.only(left: 20),
+                                  child: const Text('Telephone:',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                      )),
                                 ),
-                                Padding(
-                                  padding: const EdgeInsets.only(left: 18),
-                                  child: Container(
-                                    width:
-                                        MediaQuery.of(context).size.width / 2.5,
-                                    child: TextField(
-                                      inputFormatters: [
-                                        FilteringTextInputFormatter.digitsOnly,
-                                        LengthLimitingTextInputFormatter(9)
-                                      ],
-                                      style: TextStyle(fontSize: 15),
-                                      maxLength: 12,
-                                      keyboardType: TextInputType.number,
-                                      decoration: InputDecoration(
-                                        prefixText: '+261 ',
-                                        prefixStyle: TextStyle(
-                                            fontWeight: FontWeight.w500,
-                                            color:
-                                                Colors.black.withOpacity(0.7)),
-                                        focusedBorder:
-                                            const UnderlineInputBorder(
-                                          borderSide: BorderSide(
-                                            color:
-                                                Color.fromARGB(230, 20, 20, 90),
-                                          ),
+                                const Spacer(),
+                                Container(
+                                  padding: const EdgeInsets.only(left: 15),
+                                  width:
+                                      MediaQuery.of(context).size.width / 2.3,
+                                  child: TextField(
+                                    inputFormatters: [
+                                      FilteringTextInputFormatter.digitsOnly,
+                                      LengthLimitingTextInputFormatter(9)
+                                    ],
+                                    style: TextStyle(fontSize: 15),
+                                    maxLength: 12,
+                                    keyboardType: TextInputType.number,
+                                    decoration: InputDecoration(
+                                      prefixText: '+261 ',
+                                      prefixStyle: TextStyle(
+                                          fontWeight: FontWeight.w500,
+                                          color: Colors.black.withOpacity(0.7)),
+                                      focusedBorder: const UnderlineInputBorder(
+                                        borderSide: BorderSide(
+                                          color:
+                                              Color.fromARGB(230, 20, 20, 90),
                                         ),
                                       ),
-                                      controller: phoneNumberController,
-                                      readOnly: EditPhone ? false : true,
                                     ),
+                                    controller: phoneNumberController,
+                                    readOnly: EditPhone ? false : true,
                                   ),
                                 ),
                                 IconButton(
@@ -916,13 +904,16 @@ class _AdminDetailsState extends State<AdminDetails> {
                                         }
                                       });
                                     },
-                                    icon: const Icon(Icons.edit))
+                                    icon: const Icon(Icons.edit)),
+                                const SizedBox(
+                                  width: 25,
+                                )
                               ],
                             ),
                             if (EditPhone) ...[
                               Padding(
                                 padding:
-                                    const EdgeInsets.only(left: 160, right: 10),
+                                    const EdgeInsets.only(left: 110, right: 30),
                                 child: ElevatedButton(
                                   style: ButtonStyle(
                                     backgroundColor: MaterialStateProperty.all(
@@ -996,7 +987,7 @@ class _AdminDetailsState extends State<AdminDetails> {
                                 child: GestureDetector(
                                   onTap: () {
                                     authProvider.logout();
-                                    //Provider.of<AuthProviderUser>(context).dispose();
+
                                     authProviderUser.logout();
 
                                     Navigator.pushAndRemoveUntil(

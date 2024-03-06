@@ -95,8 +95,6 @@ class _PatientDetailsState extends State<PatientDetails> {
   Stream<bool> get permissionStatusStream => _permissionStatusController.stream;
 
   Future<bool> _requestGalleryPermission() async {
-
-
     PermissionStatus status = await Permission.storage.request();
     bool isGranted = status.isGranted;
 
@@ -137,7 +135,7 @@ class _PatientDetailsState extends State<PatientDetails> {
   Future<void> _cropImage(File? file) async {
     CroppedFile? croppedFile = await ImageCropper().cropImage(
       sourcePath: file!.path,
-      aspectRatio: CropAspectRatio(ratioX: 1, ratioY: 1),
+      aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
       maxWidth: 500,
       maxHeight: 500,
       cropStyle: CropStyle.circle,
@@ -147,9 +145,9 @@ class _PatientDetailsState extends State<PatientDetails> {
       uiSettings: [
         AndroidUiSettings(
             showCropGrid: false,
-            backgroundColor: Color.fromARGB(1000, 238, 239, 244),
+            backgroundColor: const Color.fromARGB(1000, 238, 239, 244),
             toolbarTitle: 'Recadrez votre profil',
-            toolbarColor: Color.fromARGB(230, 20, 20, 90),
+            toolbarColor: const Color.fromARGB(230, 20, 20, 90),
             toolbarWidgetColor: Colors.white,
             initAspectRatio: CropAspectRatioPreset.ratio3x2,
             lockAspectRatio: true),
@@ -268,7 +266,6 @@ class _PatientDetailsState extends State<PatientDetails> {
             ConnectionError("Une erreur de connexion s'est produite!"));
       } else {
         // Gérer d'autres exceptions
-        print('Une erreur inattendue s\'est produite: $e');
       }
       throw Exception('-- CATCH Failed to update Image');
     }
@@ -407,7 +404,6 @@ class _PatientDetailsState extends State<PatientDetails> {
         utilities!.ErrorConnexion();
       } else {
         // Gérer d'autres exceptions
-        print('Une erreur inattendue s\'est produite: $e');
       }
       throw Exception('-- CATCH Failed to add user. Error: $e');
     }
@@ -417,8 +413,6 @@ class _PatientDetailsState extends State<PatientDetails> {
   void didChangeDependencies() {
     // TODO: implement didChangeDependencies
     super.didChangeDependencies();
-
-    print('DEP');
 
     authProviderUser = Provider.of<AuthProviderUser>(context, listen: false);
 
@@ -431,13 +425,13 @@ class _PatientDetailsState extends State<PatientDetails> {
 
       if (mounted) {
         setState(() {
-
           profilImage = (utilisateur.imageName != null)
               ? File(utilisateur.imageName!)
               : null;
           nomController.text = utilisateur.firstName;
           prenomController.text = utilisateur.lastName;
-          phoneNumberController.text = utilisateur.phone.replaceFirst('+261', '');
+          phoneNumberController.text =
+              utilisateur.phone.replaceFirst('+261', '');
           emailController.text = utilisateur.email;
           categorieController.text = (utilisateur.category != null)
               ? categorieSet(utilisateur.category!)
@@ -569,7 +563,7 @@ class _PatientDetailsState extends State<PatientDetails> {
                                               imageUrl:
                                                   '$baseUrl${utilisateur.imageName}',
                                               placeholder: (context, url) =>
-                                                  CircularProgressIndicator(
+                                                  const CircularProgressIndicator(
                                                 color: Colors.redAccent,
                                               ), // Affiche un indicateur de chargement en attendant l'image
                                               errorWidget:
@@ -626,13 +620,11 @@ class _PatientDetailsState extends State<PatientDetails> {
 
                                                         _cropImage(
                                                             originalFile);
-
                                                       } else {
                                                         print(
                                                             'Aucun fichier sélectionné');
                                                       }
-                                                    } else {
-                                                    }
+                                                    } else {}
                                                   },
                                                   icon: const Icon(
                                                     Icons.add_a_photo,
@@ -654,84 +646,96 @@ class _PatientDetailsState extends State<PatientDetails> {
                             ),
                             Row(
                               children: [
-                                const Padding(
-                                  padding: EdgeInsets.only(left: 20),
-                                  child: Text('Nom:',style: TextStyle(fontSize: 14,)),
+                                Container(
+                                  padding: const EdgeInsets.only(left: 20),
+                                  child: const Text('Nom:',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                      )),
                                 ),
-                                Padding(
-                                  padding: const EdgeInsets.only(left: 60),
-                                  child: Container(
-                                    width:
-                                        MediaQuery.of(context).size.width / 2.5,
-                                    child: TextField(
-                                      style: TextStyle(fontSize: 15),
-                                      decoration: const InputDecoration(
-                                        focusedBorder: UnderlineInputBorder(
-                                          borderSide: BorderSide(
-                                            color:
-                                                Color.fromARGB(230, 20, 20, 90),
-                                          ),
+                                const Spacer(),
+                                Container(
+                                  padding: const EdgeInsets.only(left: 15),
+                                  width:
+                                      MediaQuery.of(context).size.width / 2.3,
+                                  child: TextField(
+                                    style: const TextStyle(fontSize: 15),
+                                    decoration: const InputDecoration(
+                                      focusedBorder: UnderlineInputBorder(
+                                        borderSide: BorderSide(
+                                          color:
+                                              Color.fromARGB(230, 20, 20, 90),
                                         ),
                                       ),
-                                      controller: nomController,
-                                      readOnly: true,
                                     ),
+                                    controller: nomController,
+                                    readOnly: true,
                                   ),
                                 ),
+                                const SizedBox(
+                                  width: 80,
+                                )
                               ],
                             ),
                             Row(
                               children: [
-                                const Padding(
-                                  padding: EdgeInsets.only(left: 20),
-                                  child: Text('Prenom:',style: TextStyle(fontSize: 14,)),
+                                Container(
+                                  padding: const EdgeInsets.only(left: 20),
+                                  child: const Text('Prenom:',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                      )),
                                 ),
-                                Padding(
-                                  padding: const EdgeInsets.only(left: 36),
-                                  child: Container(
-                                    width:
-                                        MediaQuery.of(context).size.width / 2.5,
-                                    child: TextField(
-                                      style: TextStyle(fontSize: 15),
-                                      decoration: const InputDecoration(
-                                        focusedBorder: UnderlineInputBorder(
-                                          borderSide: BorderSide(
-                                            color:
-                                                Color.fromARGB(230, 20, 20, 90),
-                                          ),
+                                const Spacer(),
+                                Container(
+                                  padding: const EdgeInsets.only(left: 15),
+                                  width:
+                                      MediaQuery.of(context).size.width / 2.3,
+                                  child: TextField(
+                                    style: const TextStyle(fontSize: 15),
+                                    decoration: const InputDecoration(
+                                      focusedBorder: UnderlineInputBorder(
+                                        borderSide: BorderSide(
+                                          color:
+                                              Color.fromARGB(230, 20, 20, 90),
                                         ),
                                       ),
-                                      controller: prenomController,
-                                      readOnly: true,
                                     ),
+                                    controller: prenomController,
+                                    readOnly: true,
                                   ),
                                 ),
+                                const SizedBox(
+                                  width: 80,
+                                )
                               ],
                             ),
                             Row(
                               children: [
-                                const Padding(
-                                  padding: EdgeInsets.only(left: 20),
-                                  child: Text('Email:',style: TextStyle(fontSize: 14,)),
+                                Container(
+                                  padding: const EdgeInsets.only(left: 20),
+                                  child: const Text('Email:',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                      )),
                                 ),
-                                Padding(
-                                  padding: const EdgeInsets.only(left: 53),
-                                  child: Container(
-                                    width:
-                                        MediaQuery.of(context).size.width / 2.5,
-                                    child: TextField(
-                                      style: TextStyle(fontSize: 15),
-                                      decoration: const InputDecoration(
-                                        focusedBorder: UnderlineInputBorder(
-                                          borderSide: BorderSide(
-                                            color:
-                                                Color.fromARGB(230, 20, 20, 90),
-                                          ),
+                                const Spacer(),
+                                Container(
+                                  padding: const EdgeInsets.only(left: 15),
+                                  width:
+                                      MediaQuery.of(context).size.width / 2.3,
+                                  child: TextField(
+                                    style: const TextStyle(fontSize: 15),
+                                    decoration: const InputDecoration(
+                                      focusedBorder: UnderlineInputBorder(
+                                        borderSide: BorderSide(
+                                          color:
+                                              Color.fromARGB(230, 20, 20, 90),
                                         ),
                                       ),
-                                      controller: emailController,
-                                      readOnly: EditEmail ? false : true,
                                     ),
+                                    controller: emailController,
+                                    readOnly: EditEmail ? false : true,
                                   ),
                                 ),
                                 IconButton(
@@ -745,13 +749,16 @@ class _PatientDetailsState extends State<PatientDetails> {
                                         EditPhone = false;
                                       }
                                     },
-                                    icon: const Icon(Icons.edit))
+                                    icon: const Icon(Icons.edit)),
+                                const SizedBox(
+                                  width: 30,
+                                )
                               ],
                             ),
                             if (EditEmail) ...[
                               Padding(
                                 padding:
-                                    const EdgeInsets.only(left: 160, right: 10),
+                                    const EdgeInsets.only(left: 100, right: 30),
                                 child: ElevatedButton(
                                   style: ButtonStyle(
                                     backgroundColor: MaterialStateProperty.all(
@@ -807,7 +814,8 @@ class _PatientDetailsState extends State<PatientDetails> {
                                         }
                                       } else {
                                         emailInvalide();
-                                        Future.delayed(Duration(seconds: 6));
+                                        Future.delayed(
+                                            const Duration(seconds: 6));
                                       }
                                     }
                                   },
@@ -824,40 +832,40 @@ class _PatientDetailsState extends State<PatientDetails> {
                             ],
                             Row(
                               children: [
-                                const Padding(
-                                  padding: EdgeInsets.only(left: 20),
-                                  child: Text('Telephone:',style: TextStyle(fontSize: 14,)),
+                                Container(
+                                  padding: const EdgeInsets.only(left: 20),
+                                  child: const Text('Telephone:',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                      )),
                                 ),
-                                Padding(
-                                  padding: const EdgeInsets.only(left: 17),
-                                  child: Container(
-                                    width:
-                                        MediaQuery.of(context).size.width / 2.5,
-                                    child: TextField(
-                                      inputFormatters: [
-                                        FilteringTextInputFormatter.digitsOnly,
-                                        LengthLimitingTextInputFormatter(9)
-                                      ],
-                                      style: TextStyle(fontSize: 15),
-                                      maxLength: 12,
-                                      keyboardType: TextInputType.number,
-                                      decoration: InputDecoration(
-                                        prefixStyle: TextStyle(
-                                            fontWeight: FontWeight.w500,
-                                            color:
-                                                Colors.black.withOpacity(0.7)),
-                                        prefixText: '+261 ',
-                                        focusedBorder:
-                                            const UnderlineInputBorder(
-                                          borderSide: BorderSide(
-                                            color:
-                                                Color.fromARGB(230, 20, 20, 90),
-                                          ),
+                                const Spacer(),
+                                Container(
+                                  padding: const EdgeInsets.only(left: 15),
+                                  width:
+                                      MediaQuery.of(context).size.width / 2.3,
+                                  child: TextField(
+                                    inputFormatters: [
+                                      FilteringTextInputFormatter.digitsOnly,
+                                      LengthLimitingTextInputFormatter(9)
+                                    ],
+                                    style: const TextStyle(fontSize: 15),
+                                    maxLength: 12,
+                                    keyboardType: TextInputType.number,
+                                    decoration: InputDecoration(
+                                      prefixStyle: TextStyle(
+                                          fontWeight: FontWeight.w500,
+                                          color: Colors.black.withOpacity(0.7)),
+                                      prefixText: '+261 ',
+                                      focusedBorder: const UnderlineInputBorder(
+                                        borderSide: BorderSide(
+                                          color:
+                                              Color.fromARGB(230, 20, 20, 90),
                                         ),
                                       ),
-                                      controller: phoneNumberController,
-                                      readOnly: EditPhone ? false : true,
                                     ),
+                                    controller: phoneNumberController,
+                                    readOnly: EditPhone ? false : true,
                                   ),
                                 ),
                                 IconButton(
@@ -871,13 +879,14 @@ class _PatientDetailsState extends State<PatientDetails> {
                                         }
                                       });
                                     },
-                                    icon: const Icon(Icons.edit))
+                                    icon: const Icon(Icons.edit)),
+                                const SizedBox(width: 30)
                               ],
                             ),
                             if (EditPhone) ...[
                               Padding(
                                 padding:
-                                    const EdgeInsets.only(left: 160, right: 10),
+                                    const EdgeInsets.only(left: 100, right: 30),
                                 child: ElevatedButton(
                                   style: ButtonStyle(
                                     backgroundColor: MaterialStateProperty.all(
@@ -895,9 +904,9 @@ class _PatientDetailsState extends State<PatientDetails> {
                                   onPressed: () {
                                     FocusScope.of(context).unfocus();
 
-                                    String phone = phoneNumberController.text.replaceFirst('+261', '');
+                                    String phone = phoneNumberController.text
+                                        .replaceFirst('+261', '');
                                     if (phone.replaceAll(' ', '').length != 9) {
-
                                       utilities!.ModificationError(
                                           'Veuillez inserer un numero valide');
                                     } else {
@@ -934,9 +943,9 @@ class _PatientDetailsState extends State<PatientDetails> {
                                           });
                                         }
                                       } else {
-    utilities!.ModificationError(
-    'Veuillez inserer un numero valide');
-    }
+                                        utilities!.ModificationError(
+                                            'Veuillez inserer un numero valide');
+                                      }
                                     }
                                   },
                                   child: const Text(
@@ -952,30 +961,35 @@ class _PatientDetailsState extends State<PatientDetails> {
                             ],
                             Row(
                               children: [
-                                const Padding(
-                                  padding: EdgeInsets.only(left: 20),
-                                  child: Text('Categorie:',style: TextStyle(fontSize: 14,)),
+                                Container(
+                                  padding: const EdgeInsets.only(left: 20),
+                                  child: const Text('Categorie:',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                      )),
                                 ),
-                                Padding(
-                                  padding: const EdgeInsets.only(left: 22),
-                                  child: Container(
-                                    width:
-                                        MediaQuery.of(context).size.width / 2.5,
-                                    child: TextField(
-                                      style: TextStyle(fontSize: 15),
-                                      decoration: const InputDecoration(
-                                        focusedBorder: UnderlineInputBorder(
-                                          borderSide: BorderSide(
-                                            color:
-                                                Color.fromARGB(230, 20, 20, 90),
-                                          ),
+                                const Spacer(),
+                                Container(
+                                  padding: const EdgeInsets.only(left: 15),
+                                  width:
+                                      MediaQuery.of(context).size.width / 2.3,
+                                  child: TextField(
+                                    style: const TextStyle(fontSize: 15),
+                                    decoration: const InputDecoration(
+                                      focusedBorder: UnderlineInputBorder(
+                                        borderSide: BorderSide(
+                                          color:
+                                              Color.fromARGB(230, 20, 20, 90),
                                         ),
                                       ),
-                                      controller: categorieController,
-                                      readOnly: true,
                                     ),
+                                    controller: categorieController,
+                                    readOnly: true,
                                   ),
                                 ),
+                                const SizedBox(
+                                  width: 80,
+                                )
                               ],
                             ),
                             Padding(

@@ -66,8 +66,6 @@ class _AccueilPatientState extends State<AccueilPatient> {
   ScrollController scrollController = ScrollController();
 
   Future<List<Medecin>> loadMoreData() async {
-
-
     try {
       List<Medecin> moreMedecins = await userRepository!.getAllMedecin(
           currentPage,
@@ -378,7 +376,6 @@ class _AccueilPatientState extends State<AccueilPatient> {
     initializeCalendar();
     if (mounted) {
       getAll();
-      print('LOADED: $dataLoaded');
     }
   }
 

@@ -38,6 +38,7 @@ class _LoginState extends State<Login> {
     baseRepository = BaseRepository(context: context, utilities: utilities!);
   }
 
+// La fonction pour verifier si l'utilisateur existe
   Future<void> getUserByUsernameAndPassword(
       String email, String password) async {
     setState(() {
@@ -56,7 +57,6 @@ class _LoginState extends State<Login> {
       final jsonEncode = json.encode(requestData);
 
       final response = await http.post(url, headers: headers, body: jsonEncode);
-      print(response.statusCode);
 
       if (response.statusCode == 200) {
         if (response.body == null || response.body.isEmpty) {
@@ -84,6 +84,7 @@ class _LoginState extends State<Login> {
             isLoading = false;
           });
 
+          // ignore: use_build_context_synchronously
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
@@ -122,9 +123,7 @@ class _LoginState extends State<Login> {
     setState(() {
       isLoading = isLoading;
     });
-
   }
-
 
   TextEditingController passwordController = TextEditingController();
   TextEditingController identifiantController = TextEditingController();
@@ -149,6 +148,7 @@ class _LoginState extends State<Login> {
   final FocusNode _focusNodepass = FocusNode();
   final FocusNode _focusNodemail = FocusNode();
 
+// On affiche ceci lors du chargement d'authentification
   Widget scafWithLoading() {
     return Stack(
       children: [
@@ -301,8 +301,6 @@ class _LoginState extends State<Login> {
                         style: TextStyle(color: Colors.redAccent),
                       ),
                       onPressed: () {
-
-
                         Navigator.push(
                             context,
                             MaterialPageRoute(
@@ -354,10 +352,10 @@ class _LoginState extends State<Login> {
                           }
                         }
                       } else {
-                    utilities!.emailInvalide();
+                        utilities!.emailInvalide();
                       }
                     } else {
-                    utilities!.ChampsIncomplets();
+                      utilities!.ChampsIncomplets();
                     }
                   },
                   child: const Text(
@@ -379,8 +377,6 @@ class _LoginState extends State<Login> {
                   style: TextStyle(color: Colors.redAccent),
                 ),
                 onPressed: () {
-                  print('Inscription');
-
                   Navigator.push(context,
                       MaterialPageRoute(builder: (context) => Registration()));
                 },
@@ -401,6 +397,7 @@ class _LoginState extends State<Login> {
     );
   }
 
+// Widget de chargement
   Widget loadingWidget() {
     return Center(
         child: Container(
@@ -422,9 +419,9 @@ class _LoginState extends State<Login> {
     ));
   }
 
+// Le corps pour entrer les données d'authentification
   @override
   Widget build(BuildContext context) {
-
     return PopScope(
       canPop: false,
       child: Scaffold(
@@ -498,6 +495,8 @@ class _LoginState extends State<Login> {
                       ),
                     ),
                   ),
+
+                  // Champs de l'identifiant
                   Padding(
                     padding:
                         const EdgeInsets.only(left: 35, right: 35, bottom: 35),
@@ -530,6 +529,8 @@ class _LoginState extends State<Login> {
                       ),
                     ),
                   ),
+
+                  // Champs du mot de passe
                   Padding(
                     padding:
                         const EdgeInsets.only(left: 35, right: 35, bottom: 20),
@@ -573,6 +574,8 @@ class _LoginState extends State<Login> {
                       ),
                     ),
                   ),
+
+                  // Lien de recuperation mot de passe
                   Padding(
                       padding: const EdgeInsets.only(left: 35, right: 35),
                       child: Row(
@@ -584,8 +587,6 @@ class _LoginState extends State<Login> {
                               style: TextStyle(color: Colors.redAccent),
                             ),
                             onPressed: () {
-                              print('Inscription');
-
                               Navigator.push(
                                   context,
                                   MaterialPageRoute(
@@ -594,6 +595,8 @@ class _LoginState extends State<Login> {
                           ),
                         ],
                       )),
+
+                  // Button de connection
                   Padding(
                       padding:
                           const EdgeInsets.only(top: 20.0, left: 40, right: 40),
@@ -620,6 +623,8 @@ class _LoginState extends State<Login> {
                           ),
                         ),
                       )),
+
+                  // Lien pour aller vers une page d'inscription
                   Padding(
                     padding: const EdgeInsets.only(
                         top: 15, left: 35, right: 35, bottom: 30),
@@ -630,8 +635,6 @@ class _LoginState extends State<Login> {
                         style: TextStyle(color: Colors.redAccent),
                       ),
                       onPressed: () {
-                        print('Inscription');
-
                         Navigator.push(
                             context,
                             MaterialPageRoute(
@@ -648,47 +651,35 @@ class _LoginState extends State<Login> {
     );
   }
 
+// Fonction pour se connecter
   void Connecter() {
-
+    // On enleve le clavier
     FocusScope.of(context).unfocus();
 
+// On verifie si les champs ne sont pas vides
     if (identifiantController.text != "" && passwordController.text != "") {
+      // On verifie la validation du mail(si return null => Valider Sinon => Invalide)
       String? mail = _validateEmail(identifiantController.text);
 
+// Si le mail est null(Valider)
       if (mail == null) {
-        if (identifiantController.text == "Admin@gmail.com" &&
-            passwordController.text == "Admin") {
-          //Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>IndexBottom()));
-        } else {
-          /// Validation du format E-Mail
+        // On stock les valuers des champs dans des variables
+        String email = identifiantController.text;
+        String motdepasse = passwordController.text;
 
-          if (mail == null) {
-            String email = identifiantController.text;
-            String motdepasse = passwordController.text;
-            SystemChrome.setPreferredOrientations(
-                [DeviceOrientation.portraitDown, DeviceOrientation.portraitUp]);
+        // On Specifie l'orientation de l'écram en portrait normal seulement
+        SystemChrome.setPreferredOrientations(
+            [DeviceOrientation.portraitDown, DeviceOrientation.portraitUp]);
 
-            getUserByUsernameAndPassword(email, motdepasse);
-
-
-
-          } else {
-            utilities!.emailInvalide();
-
-
-          }
-        }
+        // On appel la fonction de post avec les données
+        getUserByUsernameAndPassword(email, motdepasse);
       } else {
+        // Sinon, on affiche une  erreur d'invalidité du mail
         utilities!.emailInvalide();
-
-
       }
     } else {
+      // Sinon, on affiche l'erreur d'incompatibilité
       utilities!.ChampsIncomplets();
-
     }
   }
-
-
-
 }

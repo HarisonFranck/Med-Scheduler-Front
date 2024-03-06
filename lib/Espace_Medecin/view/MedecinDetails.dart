@@ -118,8 +118,6 @@ class _MedecinDetailsState extends State<MedecinDetails> {
   Stream<bool> get permissionStatusStream => _permissionStatusController.stream;
 
   Future<bool> _requestGalleryPermission() async {
-    print("Autorisation");
-
     PermissionStatus status = await Permission.storage.request();
     bool isGranted = status.isGranted;
 
@@ -133,7 +131,6 @@ class _MedecinDetailsState extends State<MedecinDetails> {
 
     return true;
   }
-
 
   Future<List<int>> _resizeImage(String imagePath) async {
     final bytes = await File(imagePath).readAsBytes();
@@ -162,8 +159,6 @@ class _MedecinDetailsState extends State<MedecinDetails> {
 
     return resizedBytes;
   }
-
-
 
   void AutorisationParametre() {
     // L'utilisateur a refusé la permission, afficher un message d'information
@@ -200,8 +195,6 @@ class _MedecinDetailsState extends State<MedecinDetails> {
       ),
     );
   }
-
-
 
   late AuthProviderUser authProviderUser;
   late AuthProvider authProvider;
@@ -243,7 +236,6 @@ class _MedecinDetailsState extends State<MedecinDetails> {
         });
   }
 
-
   bool dataLoaded = false;
   bool isLoading = false;
 
@@ -253,7 +245,7 @@ class _MedecinDetailsState extends State<MedecinDetails> {
     super.didChangeDependencies();
 
     authProviderUser = Provider.of<AuthProviderUser>(context, listen: false);
-    user = Provider.of<AuthProviderUser>(context,listen: false).utilisateur;
+    user = Provider.of<AuthProviderUser>(context, listen: false).utilisateur;
 
     authProvider = Provider.of<AuthProvider>(context, listen: false);
     token = authProvider.token;
@@ -268,7 +260,8 @@ class _MedecinDetailsState extends State<MedecinDetails> {
               : null;
           nomController.text = utilisateur.firstName;
           prenomController.text = utilisateur.lastName;
-          phoneController.text = utilities!.formatPhoneNumber(utilisateur.phone);
+          phoneController.text =
+              utilities!.formatPhoneNumber(utilisateur.phone);
           emailController.text = utilisateur.email;
           centreController.text =
               (utilisateur.center != null) ? utilisateur.center!.label : '';
@@ -280,9 +273,7 @@ class _MedecinDetailsState extends State<MedecinDetails> {
           EditCenter = false;
           EditPhone = false;
           dataLoaded = true;
-      //didChangeDependencies();
-
-
+          //didChangeDependencies();
         });
       }
     });
@@ -303,8 +294,6 @@ class _MedecinDetailsState extends State<MedecinDetails> {
   FocusNode nodeEmail = FocusNode();
   FocusNode nodePhone = FocusNode();
   FocusNode nodeCenter = FocusNode();
-
-
 
   void error(String description) {
     showDialog(
@@ -331,8 +320,6 @@ class _MedecinDetailsState extends State<MedecinDetails> {
     });
   }
 
-
-
 // Déterminez la longueur maximale parmi tous les textes devant
   List<String> textBehind = [
     'Nom:',
@@ -345,11 +332,8 @@ class _MedecinDetailsState extends State<MedecinDetails> {
 // Définissez une marge de base pour tous les textes devant
   double basePaddingLeft = 20.0;
 
-
-
   void formatPhoneNumberText() {
-    final unformattedText =
-    phoneController.text.replaceAll(RegExp(r'\D'), '');
+    final unformattedText = phoneController.text.replaceAll(RegExp(r'\D'), '');
 
     String formattedText = '';
     int index = 0;
@@ -381,8 +365,6 @@ class _MedecinDetailsState extends State<MedecinDetails> {
 
   @override
   Widget build(BuildContext context) {
-
-
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
     return PopScope(
@@ -444,187 +426,202 @@ class _MedecinDetailsState extends State<MedecinDetails> {
                             Row(
                               children: [
                                 Padding(
-                                  padding: const EdgeInsets.only(left:30, top: 20,bottom: 50),
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(60),
-                                    child: Container(
-                                      width: 120,
-                                      height: 120,
-                                      child: CachedNetworkImage(
-                                        imageUrl:
-                                        '$baseUrl${utilities!.ajouterPrefixe(user!.imageName!)}',
-                                        placeholder: (context, url) =>
-                                            const CircularProgressIndicator(
-                                              color: Colors.redAccent,
-                                            ), // Affiche un indicateur de chargement en attendant l'image
-                                        errorWidget:
-                                            (context, url, error) =>
-                                            Image.asset(
-                                              'assets/images/medecin.png',
-                                              fit: BoxFit.cover,
-                                              width: 50,
-                                              height: 50,
-                                            ),// Affiche une icône d'erreur si le chargement échoue
+                                    padding: const EdgeInsets.only(
+                                        left: 30, top: 20, bottom: 50),
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(60),
+                                      child: Container(
+                                        width: 120,
+                                        height: 120,
+                                        child: CachedNetworkImage(
+                                          imageUrl:
+                                              '$baseUrl${utilities!.ajouterPrefixe(user!.imageName!)}',
+                                          placeholder: (context, url) =>
+                                              const CircularProgressIndicator(
+                                            color: Colors.redAccent,
+                                          ), // Affiche un indicateur de chargement en attendant l'image
+                                          errorWidget: (context, url, error) =>
+                                              Image.asset(
+                                            'assets/images/medecin.png',
+                                            fit: BoxFit.cover,
+                                            width: 50,
+                                            height: 50,
+                                          ), // Affiche une icône d'erreur si le chargement échoue
+                                        ),
                                       ),
-                                    ),
-                                  )
-                              ),
+                                    )),
                                 const Spacer()
                               ],
                             ),
                             Row(
                               children: [
-                                const Padding(
-                                  padding: EdgeInsets.only(left: 20,right: 60),
-                                  child: Text('Nom:',style: TextStyle(fontSize: 14,)),
+                                Container(
+                                  padding: const EdgeInsets.only(left: 20),
+                                  child: const Text('Nom:',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                      )),
                                 ),
-                                Padding(
-                                  padding: const EdgeInsets.only(left: 0),
-                                  child: Container(
-                                    width:
-                                        MediaQuery.of(context).size.width / 2.5,
-                                    child: TextField(
-                                      style: const TextStyle(
-                                          fontSize: 15
-                                      ),
-                                      decoration: const InputDecoration(
-                                        focusedBorder: UnderlineInputBorder(
-                                          borderSide: BorderSide(
-                                            color:
-                                                Color.fromARGB(230, 20, 20, 90),
-                                          ),
+                                const Spacer(),
+                                Container(
+                                  padding: const EdgeInsets.only(left: 15),
+                                  width:
+                                      MediaQuery.of(context).size.width / 2.3,
+                                  child: TextField(
+                                    style: const TextStyle(fontSize: 15),
+                                    decoration: const InputDecoration(
+                                      focusedBorder: UnderlineInputBorder(
+                                        borderSide: BorderSide(
+                                          color:
+                                              Color.fromARGB(230, 20, 20, 90),
                                         ),
                                       ),
-                                      controller: nomController,
-                                      readOnly: true,
                                     ),
+                                    controller: nomController,
+                                    readOnly: true,
                                   ),
+                                ),
+                                const SizedBox(
+                                  width: 75,
                                 ),
                               ],
                             ),
                             Row(
                               children: [
-                                const Padding(
-                                  padding: EdgeInsets.only(left: 20,right: 37),
-                                  child: Text('Prenom:',style: TextStyle(fontSize: 14,)),
+                                Container(
+                                  padding: const EdgeInsets.only(left: 20),
+                                  child: const Text('Prenom:',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                      )),
                                 ),
-                                Padding(
-                                  padding: const EdgeInsets.only(left:  0),
-                                  child: Container(
-                                    width:
-                                        MediaQuery.of(context).size.width / 2.5,
-                                    child: TextField(
-                                      style: const TextStyle(
-                                          fontSize: 15
-                                      ),
-                                      decoration: const InputDecoration(
-                                        focusedBorder: UnderlineInputBorder(
-                                          borderSide: BorderSide(
-                                            color:
-                                                Color.fromARGB(230, 20, 20, 90),
-                                          ),
+                                const Spacer(),
+                                Container(
+                                  padding: const EdgeInsets.only(left: 15),
+                                  width:
+                                      MediaQuery.of(context).size.width / 2.3,
+                                  child: TextField(
+                                    style: const TextStyle(fontSize: 15),
+                                    decoration: const InputDecoration(
+                                      focusedBorder: UnderlineInputBorder(
+                                        borderSide: BorderSide(
+                                          color:
+                                              Color.fromARGB(230, 20, 20, 90),
                                         ),
                                       ),
-                                      controller: prenomController,
-                                      readOnly: true,
                                     ),
+                                    controller: prenomController,
+                                    readOnly: true,
                                   ),
                                 ),
+                                const SizedBox(
+                                  width: 75,
+                                )
                               ],
                             ),
                             Row(
                               children: [
-                                const Padding(
-                                  padding: EdgeInsets.only(left: 20,right: 53),
-                                  child: Text('Email:',style: TextStyle(fontSize: 14,)),
+                                Container(
+                                  padding: const EdgeInsets.only(left: 20),
+                                  child: const Text('Email:',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                      )),
                                 ),
-                                Padding(
-                                  padding: const EdgeInsets.only(left: 0),
-                                  child: Container(
-                                    width: MediaQuery.of(context).size.width /
-                                        2.5,
-                                    child: TextField(
-                                      style: const TextStyle(
-                                          fontSize: 15
-                                      ),
-                                      decoration: const InputDecoration(
-                                        focusedBorder: UnderlineInputBorder(
-                                          borderSide: BorderSide(
-                                            color:
-                                                Color.fromARGB(230, 20, 20, 90),
-                                          ),
+                                const Spacer(),
+                                Container(
+                                  padding: const EdgeInsets.only(left: 15),
+                                  width:
+                                      MediaQuery.of(context).size.width / 2.3,
+                                  child: TextField(
+                                    style: const TextStyle(fontSize: 15),
+                                    decoration: const InputDecoration(
+                                      focusedBorder: UnderlineInputBorder(
+                                        borderSide: BorderSide(
+                                          color:
+                                              Color.fromARGB(230, 20, 20, 90),
                                         ),
                                       ),
-                                      controller: emailController,
-                                      readOnly: EditEmail ? false : true,
                                     ),
+                                    controller: emailController,
+                                    readOnly: EditEmail ? false : true,
                                   ),
                                 ),
+                                const SizedBox(
+                                  width: 75,
+                                )
                               ],
                             ),
                             Row(
                               children: [
-                                const Padding(
-                                  padding: EdgeInsets.only(left: 20,right: 16),
-                                  child: Text('Telephone:'),
+                                Container(
+                                  padding: const EdgeInsets.only(left: 20),
+                                  child: const Text('Telephone:'),
                                 ),
-                                Padding(
-                                  padding: const EdgeInsets.only(left: 0),
-                                  child: Container(
-                                    width: MediaQuery.of(context).size.width /
-                                        2.5,
-                                    child: TextField(
-
-                                      style: const TextStyle(
-                                          fontSize: 15
-                                      ),
-                                      keyboardType: TextInputType.number,
-                                      decoration: InputDecoration(
-                                        prefixText: '+261 ',
-                                        prefixStyle: TextStyle(fontWeight: FontWeight.w500,color: Colors.black.withOpacity(0.7)),
-                                        focusedBorder:const UnderlineInputBorder(
-                                          borderSide: BorderSide(
-                                            color:
-                                                Color.fromARGB(230, 20, 20, 90),
-                                          ),
+                                const Spacer(),
+                                Container(
+                                  padding: const EdgeInsets.only(left: 15),
+                                  width:
+                                      MediaQuery.of(context).size.width / 2.3,
+                                  child: TextField(
+                                    style: const TextStyle(fontSize: 15),
+                                    keyboardType: TextInputType.number,
+                                    decoration: InputDecoration(
+                                      prefixText: '+261 ',
+                                      prefixStyle: TextStyle(
+                                          fontWeight: FontWeight.w500,
+                                          color: Colors.black.withOpacity(0.7)),
+                                      focusedBorder: const UnderlineInputBorder(
+                                        borderSide: BorderSide(
+                                          color:
+                                              Color.fromARGB(230, 20, 20, 90),
                                         ),
                                       ),
-                                      controller: phoneController,
-                                      readOnly: EditPhone ? false : true,
                                     ),
+                                    controller: phoneController,
+                                    readOnly: EditPhone ? false : true,
                                   ),
                                 ),
+                                const SizedBox(
+                                  width: 75,
+                                )
                               ],
                             ),
                             Row(
                               children: [
-                                const Padding(
-                                  padding: EdgeInsets.only(left: 20,right: 43),
-                                  child: Text('Centre:',style: TextStyle(fontSize: 14,),textAlign: TextAlign.start,),
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.only(left:0),
-                                  child: Container(
-                                    width: MediaQuery.of(context).size.width /
-                                        2.5,
-                                    child: TextField(
-                                      style: const TextStyle(
-                                        fontSize: 15
-                                      ),
-                                      keyboardType: TextInputType.name,
-                                      decoration: const InputDecoration(
-                                        focusedBorder: UnderlineInputBorder(
-                                          borderSide: BorderSide(
-                                            color:
-                                                Color.fromARGB(230, 20, 20, 90),
-                                          ),
-                                        ),
-                                      ),
-                                      controller: centreController,
-                                      readOnly: true,
+                                Container(
+                                  padding: const EdgeInsets.only(left: 20),
+                                  child: const Text(
+                                    'Centre:',
+                                    style: TextStyle(
+                                      fontSize: 14,
                                     ),
+                                    textAlign: TextAlign.start,
                                   ),
                                 ),
+                                const Spacer(),
+                                Container(
+                                  padding: const EdgeInsets.only(left: 15),
+                                  width:
+                                      MediaQuery.of(context).size.width / 2.3,
+                                  child: TextField(
+                                    style: const TextStyle(fontSize: 15),
+                                    keyboardType: TextInputType.name,
+                                    decoration: const InputDecoration(
+                                      focusedBorder: UnderlineInputBorder(
+                                        borderSide: BorderSide(
+                                          color:
+                                              Color.fromARGB(230, 20, 20, 90),
+                                        ),
+                                      ),
+                                    ),
+                                    controller: centreController,
+                                    readOnly: true,
+                                  ),
+                                ),
+                                const SizedBox(
+                                  width: 75,
+                                )
                               ],
                             ),
                             Padding(
@@ -643,31 +640,25 @@ class _MedecinDetailsState extends State<MedecinDetails> {
                                   minimumSize: MaterialStateProperty.all(
                                       const Size(100.0, 40.0)),
                                 ),
-                                onPressed: ()async{
-
-
+                                onPressed: () async {
                                   bool isReturned = await Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                          builder: (context) =>
-                                              UpdateMedecin(),
+                                          builder: (context) => UpdateMedecin(),
                                           settings: RouteSettings(
-                                              arguments:
-                                                  utilisateur)));
-
+                                              arguments: utilisateur)));
 
                                   if (isReturned) {
                                     didChangeDependencies();
                                     setState(() {
                                       isLoading = true;
                                     });
-                                    await Future.delayed(const Duration(seconds: 4));
+                                    await Future.delayed(
+                                        const Duration(seconds: 4));
                                     setState(() {
                                       isLoading = false;
                                     });
                                   }
-
-
                                 },
                                 child: const Text(
                                   'Modifier les informations',
@@ -679,25 +670,21 @@ class _MedecinDetailsState extends State<MedecinDetails> {
                                 ),
                               ),
                             ),
-
                             Padding(
                                 padding: const EdgeInsets.only(
                                     top: 30, left: 30, bottom: 30),
                                 child: GestureDetector(
-                                  onTap: ()async {
+                                  onTap: () async {
                                     authProvider.logout();
                                     authProviderUser.logout();
 
-                                    print(
-                                        'TOKEN PRVIDED: ${authProvider.token}');
-                                     Navigator.pushAndRemoveUntil(
+                                    Navigator.pushAndRemoveUntil(
                                       context,
                                       MaterialPageRoute(
                                         builder: (context) => const MyApp(),
                                       ),
                                       (route) => false,
                                     );
-
                                   },
                                   child: const Row(
                                     children: [

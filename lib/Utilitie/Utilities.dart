@@ -274,17 +274,20 @@ class Utilities {
   void ErrorConnexion() {
     AwesomeDialog(
       context: context,
-      dialogBackgroundColor: Colors.redAccent,
-      dialogType: DialogType.info,
+      dialogType: DialogType.warning,
       btnCancelColor: Colors.grey,
+      buttonsTextStyle:
+          TextStyle(letterSpacing: 2, fontSize: 17, color: Colors.white),
+      btnOkColor: Color.fromARGB(230, 20, 20, 90).withOpacity(0.6),
       animType: AnimType.rightSlide,
-      titleTextStyle: const TextStyle(letterSpacing: 2, color: Colors.white),
+      titleTextStyle:
+          const TextStyle(letterSpacing: 2, color: Colors.black, fontSize: 17),
       descTextStyle: TextStyle(
-          letterSpacing: 2, color: Colors.white.withOpacity(0.8), fontSize: 16),
+          letterSpacing: 2, color: Colors.black.withOpacity(0.6), fontSize: 16),
       title: 'Erreur de connexion',
       desc:
           'Il y a peut-etre une erreur de connexion.\n\n Verifier votre connexion',
-      btnCancelOnPress: () {},
+      btnCancelOnPress: null,
       btnOkOnPress: () {},
     ).show();
   }
@@ -494,7 +497,6 @@ class Utilities {
     ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 
-
   String formatPhoneNumber(String phoneNumber) {
     // Supprimer les espaces inutiles
     phoneNumber = phoneNumber.replaceAll(' ', '');
@@ -520,14 +522,12 @@ class Utilities {
         toastLength: Toast.LENGTH_LONG);
   }
 
-   void copyText(BuildContext context, String text) {
+  void copyText(BuildContext context, String text) {
     Clipboard.setData(ClipboardData(text: text));
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text('numero copié dans le presse-papiers'),
     ));
   }
-
-
 
   bool isToday(DateTime startAt, DateTime timeStart) {
     DateTime now = DateTime.now();
@@ -546,8 +546,6 @@ class Utilities {
 
     return isIt;
   }
-
-
 
   String formatTimeAppointmentNotif(
       DateTime startDateTime, DateTime timeStart, DateTime timeEnd) {
@@ -606,5 +604,23 @@ class Utilities {
     return resultat;
   }
 
+  String formatRelativeTime(DateTime dateTime) {
+    Duration difference = DateTime.now().difference(dateTime);
 
+    if (difference.inSeconds < 60) {
+      return "maintenant";
+    } else if (difference.inMinutes == 1) {
+      return "il y a 1 min";
+    } else if (difference.inMinutes < 60) {
+      return "il y a ${difference.inMinutes} min";
+    } else if (difference.inHours == 1) {
+      return "il y a 1 H";
+    } else if (difference.inHours < 24) {
+      return "il y a ${difference.inHours} H";
+    } else if (difference.inDays == 1) {
+      return "il y a 1 J";
+    } else {
+      return "il y a ${difference.inDays} J";
+    }
+  }
 }

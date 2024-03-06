@@ -63,7 +63,6 @@ class _MedecinDetailsState extends State<MedecinDetails> {
     utilities = Utilities(context: context);
   }
 
-
   @override
   void dispose() {
     phoneController.removeListener(formatPhoneNumberText);
@@ -72,8 +71,7 @@ class _MedecinDetailsState extends State<MedecinDetails> {
   }
 
   void formatPhoneNumberText() {
-    final unformattedText =
-    phoneController.text.replaceAll(RegExp(r'\D'), '');
+    final unformattedText = phoneController.text.replaceAll(RegExp(r'\D'), '');
 
     String formattedText = '';
     int index = 0;
@@ -105,282 +103,279 @@ class _MedecinDetailsState extends State<MedecinDetails> {
 
   @override
   Widget build(BuildContext context) {
-
     return PopScope(
-        canPop: false,
-        child: Scaffold(
-            backgroundColor: const Color.fromARGB(1000, 238, 239, 244),
-            body: ListView(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(top: 10, left: 10),
-                  child: Row(
-                    children: [
-                      GestureDetector(
-                        child: const Row(
-                          children: [
-                            Icon(
-                              Icons.keyboard_arrow_left,
-                              size: 40,
-                            ),
-                            Text('Retour'),
-                          ],
-                        ),
-                        onTap: () {
-                          authProviderUser.logout();
-                          Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => IndexAccueilAdmin()));
-                        },
+      canPop: false,
+      child: Scaffold(
+          backgroundColor: const Color.fromARGB(1000, 238, 239, 244),
+          body: ListView(
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(top: 10, left: 10),
+                child: Row(
+                  children: [
+                    GestureDetector(
+                      child: const Row(
+                        children: [
+                          Icon(
+                            Icons.keyboard_arrow_left,
+                            size: 40,
+                          ),
+                          Text('Retour'),
+                        ],
                       ),
-                      const Spacer(),
-                      Center(
-                        child: Container(
-                          width: 60,
-                          height: 60,
-                          child: Card(
-                            color: Colors.transparent,
-                            elevation: 0,
-                            child: Image.asset(
-                              'assets/images/logo2.png',
-                              fit: BoxFit.cover,
-                            ),
+                      onTap: () {
+                        authProviderUser.logout();
+                        Navigator.pop(context);
+                      },
+                    ),
+                    const Spacer(),
+                    Center(
+                      child: Container(
+                        width: 60,
+                        height: 60,
+                        child: Card(
+                          color: Colors.transparent,
+                          elevation: 0,
+                          child: Image.asset(
+                            'assets/images/logo2.png',
+                            fit: BoxFit.cover,
                           ),
                         ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(
+                    top: 30, right: 15, left: 15, bottom: 20),
+                child: Card(
+                  elevation: 0,
+                  color: Colors.white,
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.only(
+                                top: 20, left: 30, bottom: 50),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(60),
+                              child: Container(
+                                width: 120,
+                                height: 120,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(60),
+                                ),
+                                child: CachedNetworkImage(
+                                  imageUrl:
+                                      '$baseUrl${utilities!.ajouterPrefixe(utilisateur.imageName!)}',
+                                  placeholder: (context, url) =>
+                                      const CircularProgressIndicator(
+                                    color: Colors.redAccent,
+                                  ), // Affiche un indicateur de chargement en attendant l'image
+                                  errorWidget: (context, url, error) =>
+                                      Image.asset(
+                                    'assets/images/medecin.png',
+                                    fit: BoxFit.cover,
+                                    width: 50,
+                                    height: 50,
+                                  ), // Affiche une icône d'erreur si le chargement échoue
+                                ),
+                              ),
+                            ),
+                          ),
+                          const Spacer()
+                        ],
+                      ),
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.only(left: 20),
+                            child: Text('Nom:', style: TextStyle(fontSize: 14)),
+                          ),
+                          Spacer(),
+                          Container(
+                            padding: const EdgeInsets.only(left: 15),
+                            width: MediaQuery.of(context).size.width / 2.2,
+                            child: TextField(
+                              style: TextStyle(fontSize: 15),
+                              decoration: const InputDecoration(
+                                focusedBorder: UnderlineInputBorder(
+                                  borderSide: BorderSide(
+                                    color: Color.fromARGB(230, 20, 20, 90),
+                                  ),
+                                ),
+                              ),
+                              controller: nomController,
+                              readOnly: true,
+                            ),
+                          ),
+                          SizedBox(
+                            width: 50,
+                          )
+                        ],
+                      ),
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.only(left: 20),
+                            child:
+                                Text('Prenom:', style: TextStyle(fontSize: 14)),
+                          ),
+                          Spacer(),
+                          Container(
+                            padding: const EdgeInsets.only(left: 15),
+                            width: MediaQuery.of(context).size.width / 2.2,
+                            child: TextField(
+                              style: TextStyle(fontSize: 15),
+                              decoration: const InputDecoration(
+                                focusedBorder: UnderlineInputBorder(
+                                  borderSide: BorderSide(
+                                    color: Color.fromARGB(230, 20, 20, 90),
+                                  ),
+                                ),
+                              ),
+                              controller: prenomController,
+                              readOnly: true,
+                            ),
+                          ),
+                          SizedBox(
+                            width: 50,
+                          )
+                        ],
+                      ),
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.only(left: 20),
+                            child: Text('Specialite:',
+                                style: TextStyle(fontSize: 14)),
+                          ),
+                          Spacer(),
+                          Container(
+                            padding: const EdgeInsets.only(left: 15),
+                            width: MediaQuery.of(context).size.width / 2.2,
+                            child: TextField(
+                              style: TextStyle(fontSize: 15),
+                              decoration: const InputDecoration(
+                                focusedBorder: UnderlineInputBorder(
+                                  borderSide: BorderSide(
+                                    color: Color.fromARGB(230, 20, 20, 90),
+                                  ),
+                                ),
+                              ),
+                              controller: specController,
+                              readOnly: true,
+                            ),
+                          ),
+                          SizedBox(
+                            width: 50,
+                          )
+                        ],
+                      ),
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.only(left: 20),
+                            child:
+                                Text('Email:', style: TextStyle(fontSize: 14)),
+                          ),
+                          Spacer(),
+                          Container(
+                            padding: const EdgeInsets.only(left: 15),
+                            width: MediaQuery.of(context).size.width / 2.2,
+                            child: TextField(
+                              style: TextStyle(fontSize: 15),
+                              decoration: const InputDecoration(
+                                focusedBorder: UnderlineInputBorder(
+                                  borderSide: BorderSide(
+                                    color: Color.fromARGB(230, 20, 20, 90),
+                                  ),
+                                ),
+                              ),
+                              controller: emailController,
+                              readOnly: true,
+                            ),
+                          ),
+                          SizedBox(
+                            width: 50,
+                          )
+                        ],
+                      ),
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.only(left: 20),
+                            child: Text('Telephone:',
+                                style: TextStyle(fontSize: 14)),
+                          ),
+                          Spacer(),
+                          Container(
+                            padding: const EdgeInsets.only(left: 15),
+                            width: MediaQuery.of(context).size.width / 2.2,
+                            child: TextField(
+                              style: TextStyle(fontSize: 15),
+                              decoration: InputDecoration(
+                                prefixText: '+261 ',
+                                prefixStyle: TextStyle(
+                                    color: Colors.black.withOpacity(0.7),
+                                    fontWeight: FontWeight.w500),
+                                focusedBorder: UnderlineInputBorder(
+                                  borderSide: BorderSide(
+                                    color: Color.fromARGB(230, 20, 20, 90),
+                                  ),
+                                ),
+                              ),
+                              controller: phoneController,
+                              readOnly: true,
+                            ),
+                          ),
+                          SizedBox(
+                            width: 50,
+                          )
+                        ],
+                      ),
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.only(left: 20),
+                            child:
+                                Text('Ville:', style: TextStyle(fontSize: 14)),
+                          ),
+                          Spacer(),
+                          Container(
+                            padding: const EdgeInsets.only(left: 15),
+                            width: MediaQuery.of(context).size.width / 2.2,
+                            child: TextField(
+                              style: TextStyle(fontSize: 15),
+                              decoration: const InputDecoration(
+                                focusedBorder: UnderlineInputBorder(
+                                  borderSide: BorderSide(
+                                    color: Color.fromARGB(230, 20, 20, 90),
+                                  ),
+                                ),
+                              ),
+                              controller: villeController,
+                              readOnly: true,
+                            ),
+                          ),
+                          SizedBox(
+                            width: 50,
+                          )
+                        ],
+                      ),
+                      Padding(
+                        padding: EdgeInsets.only(top: 20),
+                        child: SizedBox(height: 40),
                       ),
                     ],
                   ),
                 ),
-                Padding(
-                  padding:
-                      const EdgeInsets.only(top: 30, right: 15, left: 15, bottom: 20),
-                  child: Card(
-                    elevation: 0,
-                    color: Colors.white,
-                    child: Column(
-                      children: [
-                        Row(
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.only(
-                                  top: 20, left: 30, bottom: 50),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(60),
-                                child: Container(
-                                    width: 120,
-                                    height: 120,
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(60),
-                                    ),
-                                    child: CachedNetworkImage(
-                                        imageUrl:
-                                        '$baseUrl${utilities!.ajouterPrefixe(utilisateur.imageName!)}',
-                                  placeholder: (context,
-                                      url) =>
-                                  const CircularProgressIndicator(
-                                    color: Colors
-                                        .redAccent,
-                                  ), // Affiche un indicateur de chargement en attendant l'image
-                                  errorWidget: (context,
-                                      url,
-                                      error) =>
-                                      Image.asset(
-                                        'assets/images/medecin.png',
-                                        fit: BoxFit
-                                            .cover,
-                                        width: 50,
-                                        height: 50,
-                                      ), // Affiche une icône d'erreur si le chargement échoue
-                                ),
-                              ),
-                              ),
-                            ),
-                            const Spacer()
-                          ],
-                        ),
-                        Row(
-                          children: [
-                            const Padding(
-                              padding: EdgeInsets.only(left: 20),
-                              child: Text('Nom:',style: TextStyle(fontSize: 14,)),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.only(left: 68),
-                              child: Container(
-                                width: MediaQuery.of(context).size.width / 2.2,
-                                child: TextField(
-                                  style: const TextStyle(
-                                      fontSize: 15
-                                  ),
-                                  decoration: const InputDecoration(
-                                    focusedBorder: UnderlineInputBorder(
-                                      borderSide: BorderSide(
-                                        color: Color.fromARGB(230, 20, 20, 90),
-                                      ),
-                                    ),
-                                  ),
-                                  controller: nomController,
-                                  readOnly: true,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        Row(
-                          children: [
-                            const Padding(
-                              padding: EdgeInsets.only(left: 20),
-                              child: Text('Prenom:',style: TextStyle(fontSize: 14,)),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.only(left: 45),
-                              child: Container(
-                                width: MediaQuery.of(context).size.width / 2.2,
-                                child: TextField(
-                                  style: const TextStyle(
-                                      fontSize: 15
-                                  ),
-                                  decoration: const InputDecoration(
-                                    focusedBorder: UnderlineInputBorder(
-                                      borderSide: BorderSide(
-                                        color: Color.fromARGB(230, 20, 20, 90),
-                                      ),
-                                    ),
-                                  ),
-                                  controller: prenomController,
-                                  readOnly: true,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        Row(
-                          children: [
-                            const Padding(
-                              padding: EdgeInsets.only(left: 20),
-                              child: Text('Specialite:',style: TextStyle(fontSize: 14,)),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.only(left: 30),
-                              child: Container(
-                                width: MediaQuery.of(context).size.width / 2.2,
-                                child: TextField(
-                                  style: const TextStyle(
-                                      fontSize: 15
-                                  ),
-                                  decoration: const InputDecoration(
-                                    focusedBorder: UnderlineInputBorder(
-                                      borderSide: BorderSide(
-                                        color: Color.fromARGB(230, 20, 20, 90),
-                                      ),
-                                    ),
-                                  ),
-                                  controller: specController,
-                                  readOnly: true,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        Row(
-                          children: [
-                            const Padding(
-                              padding: EdgeInsets.only(left: 20),
-                              child: Text('Email:',style: TextStyle(fontSize: 14,)),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.only(left: 62),
-                              child: Container(
-                                width: MediaQuery.of(context).size.width / 2.2,
-                                child: TextField(
-                                  style: const TextStyle(
-                                    fontSize: 15
-                                  ),
-                                  decoration: const InputDecoration(
-                                    focusedBorder: UnderlineInputBorder(
-                                      borderSide: BorderSide(
-                                        color: Color.fromARGB(230, 20, 20, 90),
-                                      ),
-                                    ),
-                                  ),
-                                  controller: emailController,
-                                  readOnly: true,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        Row(
-                          children: [
-                            const Padding(
-                              padding: EdgeInsets.only(left: 20),
-                              child: Text('Telephone:',style: TextStyle(fontSize: 14,)),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.only(left: 25),
-                              child: Container(
-                                width: MediaQuery.of(context).size.width / 2.2,
-                                child: TextField(
-                                  style: const TextStyle(
-                                      fontSize: 15
-                                  ),
-                                  decoration: InputDecoration(
-                                    prefixText: '+261 ',
-                                    prefixStyle: TextStyle(color: Colors.black.withOpacity(0.7),fontWeight: FontWeight.w500),
-                                    focusedBorder:const UnderlineInputBorder(
-                                      borderSide: BorderSide(
-                                        color: Color.fromARGB(230, 20, 20, 90),
-                                      ),
-                                    ),
-                                  ),
-                                  controller: phoneController,
-                                  readOnly: true,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        Row(
-                          children: [
-                            const Padding(
-                              padding: EdgeInsets.only(left: 20),
-                              child: Text('Ville:',style: TextStyle(fontSize: 14,)),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.only(left: 70),
-                              child: Container(
-                                width: MediaQuery.of(context).size.width / 2.2,
-                                child: TextField(
-                                  style: const TextStyle(
-                                      fontSize: 15
-                                  ),
-                                  decoration: const InputDecoration(
-                                    focusedBorder: UnderlineInputBorder(
-                                      borderSide: BorderSide(
-                                        color: Color.fromARGB(230, 20, 20, 90),
-                                      ),
-                                    ),
-                                  ),
-                                  controller: villeController,
-                                  readOnly: true,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const Padding(
-                          padding: EdgeInsets.only(top: 20),
-                          child: SizedBox(
-                            height: 40,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                )
-              ],
-            )),);
+              ),
+            ],
+          )),
+    );
   }
 
   void ModificationUtilisateur() {

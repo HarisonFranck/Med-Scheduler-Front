@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:med_scheduler_front/Espace_Client/view/BienvenuePage.dart';
+import 'package:med_scheduler_front/Models/AuthProviderNotif.dart';
 import 'package:provider/provider.dart';
 import 'AuthProvider.dart';
 import 'package:timezone/data/latest.dart' as tz;
@@ -9,23 +10,23 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/services.dart';
 
-
-
-
-void main()async {
+void main() async {
   tz.initializeTimeZones();
 
   WidgetsFlutterBinding.ensureInitialized();
   AppLifecycleManager().startListening();
 
-  ByteData data = await PlatformAssetBundle().load('assets/ca/lets-encrypt-r3.pem');
-  SecurityContext.defaultContext.setTrustedCertificatesBytes(data.buffer.asUint8List());
+  ByteData data =
+      await PlatformAssetBundle().load('assets/ca/lets-encrypt-r3.pem');
+  SecurityContext.defaultContext
+      .setTrustedCertificatesBytes(data.buffer.asUint8List());
 
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => AuthProviderUser()),
+        ChangeNotifierProvider(create: (_) => AuthProviderNotif()),
         // D'autres providers peuvent être ajoutés ici selon vos besoins.
       ],
       child: MyApp(),
@@ -41,15 +42,12 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Med Scheduler',
-
-
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home:BienvenuePage(),
+      home: BienvenuePage(),
     );
   }
 }

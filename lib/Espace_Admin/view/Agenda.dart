@@ -26,7 +26,6 @@ class AgendaState extends State<Agenda> {
   late String token;
   late AuthProviderUser authProviderUser;
 
-
   BaseRepository? baseRepository;
   Utilities? utilities;
 
@@ -77,7 +76,7 @@ class AgendaState extends State<Agenda> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     calculateBlackoutDates();
-    print('FETCH DEPENDENCIES');
+
     authProviderUser = Provider.of<AuthProviderUser>(context, listen: false);
     authProvider = Provider.of<AuthProvider>(context, listen: false);
     token = authProvider.token;
@@ -91,7 +90,6 @@ class AgendaState extends State<Agenda> {
       listUnavalaibleAppointment =
           await baseRepository!.getAllUnavalaibleAppointment(medecinClicked!);
       if (listAppointment.isEmpty) {
-        print('EMPTY O');
         setState(() {
           dataLoaded = true;
         });
@@ -286,7 +284,6 @@ class AgendaState extends State<Agenda> {
 
   DateTime parseTimeSlot(DateTime startAt, String timeSlot) {
     int startHour = int.parse(timeSlot.substring(0, 2));
-    print('START HOUR PARSED: $startHour');
     return DateTime(startAt.year, startAt.month, startAt.day, startHour, 0);
   }
 
@@ -363,7 +360,6 @@ class AgendaState extends State<Agenda> {
   @override
   Widget build(BuildContext context) {
     AppointWidth = MediaQuery.of(context).size.width / 1.40;
-    print('AppointWidth: $AppointWidth');
 
     return PopScope(
       canPop: false,
@@ -557,9 +553,7 @@ class AgendaState extends State<Agenda> {
                                                                 details.date!))
                                                     .toList();
 
-
                                             if (list.length >= 1) {
-
                                               setState(() {
                                                 istoAddAppointment = false;
                                                 isAppointment = true;
@@ -754,8 +748,6 @@ class AgendaState extends State<Agenda> {
   }
 
   String formatDT(DateTime Date) {
-
-
     // Liste des mois de l'année
     final List<String> mois = [
       '',
@@ -775,7 +767,6 @@ class AgendaState extends State<Agenda> {
 
     // Extraire les composants de la date et de l'heure
     int moisIndex = Date.month;
-
 
     // Formater le mois
     String nomMois = mois[moisIndex];
@@ -1115,13 +1106,11 @@ class AgendaState extends State<Agenda> {
     int moisIndex = dateTime.month;
     int annee = dateTime.year;
 
-
     // Formater le jour de la semaine
     String jourSemaine = jours[dateTime.weekday - 1];
 
     // Formater le mois
     String nomMois = mois[moisIndex];
-
 
     // Construire la chaîne lisible
     String resultat = '$jourSemaine, $jour $nomMois $annee';
@@ -1444,8 +1433,6 @@ class AgendaState extends State<Agenda> {
     );
   }
 
-
-
   String DateTimeFormatAppointment(DateTime startDateTime, DateTime timeEnd) {
     // Liste des jours de la semaine
     final List<String> jours = [
@@ -1486,7 +1473,6 @@ class AgendaState extends State<Agenda> {
     // Formater le mois
     String nomMois = mois[moisIndex];
 
-
     // Construire la chaîne lisible
     String resultat = '$jourSemaine, $jour $nomMois $annee';
 
@@ -1495,11 +1481,7 @@ class AgendaState extends State<Agenda> {
 
   String formatDateTimeAppointment(
       DateTime startAt, DateTime startDateTime, DateTime timeEnd) {
-
-
-
     // Extraire les composants de la date et de l'heure
-
 
     int heureStart = startDateTime.hour;
     int minuteStart = startDateTime.minute;

@@ -51,7 +51,6 @@ class _ConfirmAppointmentState extends State<ConfirmAppointment> {
     };
 
     try {
-
       String jsonUser = jsonEncode(appointment.toJson());
       final response = await http.post(url, headers: headers, body: jsonUser);
 
@@ -70,12 +69,11 @@ class _ConfirmAppointmentState extends State<ConfirmAppointment> {
             reason: raison.text,
             createdAt: DateTime.now());
 
-
-        if(appointment.medecin!.token!=null&&appointment.medecin!.token!=""){
-         userRepository!.sendPushMessage(recipientToken: appointment.medecin!.token!);
-        }else{
-          print('---- TOKEN NULL ----');
-    }
+        if (appointment.medecin!.token != null &&
+            appointment.medecin!.token != "") {
+          userRepository!
+              .sendPushMessage(recipientToken: appointment.medecin!.token!);
+        }
         addAppointmentUnavailable(
             newUnavailableAppointment, widget.appointment);
 
@@ -104,7 +102,6 @@ class _ConfirmAppointmentState extends State<ConfirmAppointment> {
           setState(() {
             isLoading = false;
           });
-
         } else {
           setState(() {
             isLoading = false;
@@ -120,7 +117,6 @@ class _ConfirmAppointmentState extends State<ConfirmAppointment> {
             setState(() {
               isLoading = false;
             });
-
           }
 
           // Gestion des erreurs HTTP
@@ -131,13 +127,11 @@ class _ConfirmAppointmentState extends State<ConfirmAppointment> {
       setState(() {
         isLoading = false;
       });
-    if (e is http.ClientException) {
-
-    utilities!.handleConnectionError(ConnectionError("Une erreur de connexion s'est produite!"));
-
-    }else {
+      if (e is http.ClientException) {
+        utilities!.handleConnectionError(
+            ConnectionError("Une erreur de connexion s'est produite!"));
+      } else {
         // Gérer d'autres exceptions
-        print('Une erreur inattendue s\'est produite: $e');
       }
       throw e;
     }
@@ -160,11 +154,11 @@ class _ConfirmAppointmentState extends State<ConfirmAppointment> {
 
     try {
       String jsonUser = jsonEncode(appointment.toJson());
-     final response = await http.post(url, headers: headers, body: jsonUser);
+      final response = await http.post(url, headers: headers, body: jsonUser);
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonResponse = json.decode(response.body);
-       setState(() {
+        setState(() {
           isLoading = false;
         });
         // ignore: use_build_context_synchronously
@@ -223,13 +217,11 @@ class _ConfirmAppointmentState extends State<ConfirmAppointment> {
       setState(() {
         isLoading = false;
       });
-    if (e is http.ClientException) {
-
-    utilities!.handleConnectionError(ConnectionError("Une erreur de connexion s'est produite!"));
-
-    }else {
+      if (e is http.ClientException) {
+        utilities!.handleConnectionError(
+            ConnectionError("Une erreur de connexion s'est produite!"));
+      } else {
         // Gérer d'autres exceptions
-        print('Une erreur inattendue s\'est produite: $e');
       }
       throw e;
     }
@@ -403,7 +395,6 @@ class _ConfirmAppointmentState extends State<ConfirmAppointment> {
     // Formater le mois
     String nomMois = mois[moisIndex];
 
-
     // Construire la chaîne lisible
     String resultat = '$jourSemaine, $jour $nomMois $annee';
 
@@ -411,14 +402,11 @@ class _ConfirmAppointmentState extends State<ConfirmAppointment> {
   }
 
   String formatTimeAppointment(DateTime startDateTime, DateTime timeEnd) {
-
-
     // Extraire les composants de la date et de l'heure
     int heureStart = startDateTime.hour;
     int minuteStart = startDateTime.minute;
     int heureEnd = timeEnd.hour;
     int minuteEnd = timeEnd.minute;
-
 
     // Formater l'heure
     String formatHeureStart =
@@ -733,7 +721,6 @@ class _ConfirmAppointmentState extends State<ConfirmAppointment> {
 
                                         if (raison.text.isEmpty) {
                                         } else {
-
                                           CustomAppointment newAppointment =
                                               CustomAppointment(
                                                   id: '',
@@ -749,7 +736,6 @@ class _ConfirmAppointmentState extends State<ConfirmAppointment> {
                                                       .appointment.timeEnd,
                                                   reason: raison.text.trim(),
                                                   createdAt: DateTime.now());
-
 
                                           addAppointment(newAppointment,
                                               widget.appointment);
@@ -1067,10 +1053,6 @@ class _ConfirmAppointmentState extends State<ConfirmAppointment> {
                                           TimeOfDay.fromDateTime(
                                               widget.appointment.timeEnd);
 
-                                      print(
-                                          ' timeOfDayStart: $timeOfDayStart ');
-                                      print(' timeOfDayEnd: $timeOfDayEnd ');
-
                                       CustomAppointment newAppointment =
                                           CustomAppointment(
                                               id: '',
@@ -1089,8 +1071,6 @@ class _ConfirmAppointmentState extends State<ConfirmAppointment> {
                                       addAppointment(
                                           newAppointment, widget.appointment);
                                       //addAppointmentUnavailable(newUnavailableAppointment, widget.appointment);
-
-                                      print('--- APPOINTMENT CREATED ---');
                                     }
                                   },
                                   child: const Text(

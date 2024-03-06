@@ -20,20 +20,15 @@ class IndexAccueilAdmin extends StatefulWidget {
 }
 
 class _IndexAccueilAdminState extends State<IndexAccueilAdmin> {
-
-
   late AuthProvider authProvider;
   late AuthProviderUser authProviderUser;
   late String token;
   String baseUrl = UrlBase().baseUrl;
 
-
   BaseRepository? baseRepository;
   Utilities? utilities;
 
-
   Utilisateur? userPassed;
-
 
   List<Map<String, dynamic>>? _pages;
   int _selectedPageIndex = 0;
@@ -56,15 +51,13 @@ class _IndexAccueilAdminState extends State<IndexAccueilAdmin> {
     user = baseRepository!.getUser(idUser);
 
     userGetted();
-
-
   }
 
   void userGetted() async {
-    if(utilisateur==null){
+    if (utilisateur == null) {
       utilisateur = await user;
       authProviderUser.setUser(utilisateur!);
- }
+    }
     // Maintenant que l'utilisateur est récupéré, initialisez les pages
     initPages();
   }
@@ -74,7 +67,6 @@ class _IndexAccueilAdminState extends State<IndexAccueilAdmin> {
       _pages = [
         {
           'page': AccueilAdmin(),
-
         },
         {
           'page': SearchMedecin(),
@@ -97,25 +89,19 @@ class _IndexAccueilAdminState extends State<IndexAccueilAdmin> {
 
   @override
   void initState() {
-
-
     super.initState();
     utilities = Utilities(context: context);
-    baseRepository = BaseRepository(context: context,utilities: utilities!);
-
+    baseRepository = BaseRepository(context: context, utilities: utilities!);
   }
 
   void _selectPage(int index) {
     setState(() {
       _selectedPageIndex = index;
     });
-
-    print('WIDGET: ${_pages![_selectedPageIndex]['page']}');
   }
 
   @override
   Widget build(BuildContext context) {
-
     return PopScope(
       canPop: false,
       child: Scaffold(
@@ -123,23 +109,24 @@ class _IndexAccueilAdminState extends State<IndexAccueilAdmin> {
         body: (authProviderUser.isLoggedIn)
             ? _pages![_selectedPageIndex]['page']
             : Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              loadingWidget(),
-              const SizedBox(
-                height: 30,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    loadingWidget(),
+                    const SizedBox(
+                      height: 30,
+                    ),
+                    Text(
+                      style: TextStyle(
+                          color: Colors.black.withOpacity(0.5),
+                          letterSpacing: 2),
+                      'Chargement des données..\n Assurez-vous d\'avoir une connexion internet',
+                      textAlign: TextAlign.center,
+                    )
+                  ],
+                ),
               ),
-              Text(
-                style:TextStyle(color: Colors.black.withOpacity(0.5),letterSpacing: 2),
-                'Chargement des données..\n Assurez-vous d\'avoir une connexion internet',
-                textAlign: TextAlign.center,
-              )
-            ],
-          ),
-        ),
         bottomNavigationBar: BottomNavigationBar(
-
           showSelectedLabels: true,
           showUnselectedLabels: false,
           elevation: 5,
@@ -150,7 +137,10 @@ class _IndexAccueilAdminState extends State<IndexAccueilAdmin> {
           currentIndex: _selectedPageIndex,
           items: const [
             BottomNavigationBarItem(
-              icon: Icon(FontAwesome.house,size: 17,),
+              icon: Icon(
+                FontAwesome.house,
+                size: 17,
+              ),
               label: 'Accueil',
             ),
             BottomNavigationBarItem(
@@ -180,24 +170,24 @@ class _IndexAccueilAdminState extends State<IndexAccueilAdmin> {
     );
   }
 
-
-
-  Widget loadingWidget(){
+  Widget loadingWidget() {
     return Center(
-        child:Container(
-          width: 100,
-          height: 100,
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-
-              LoadingAnimationWidget.hexagonDots(
-                  color: Colors.redAccent,
-                  size: 120),
-
-              Image.asset('assets/images/logo2.png',width: 80,height: 80,fit: BoxFit.cover,)
-            ],
-          ),
-        ));
+        child: Container(
+      width: 100,
+      height: 100,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          LoadingAnimationWidget.hexagonDots(
+              color: Colors.redAccent, size: 120),
+          Image.asset(
+            'assets/images/logo2.png',
+            width: 80,
+            height: 80,
+            fit: BoxFit.cover,
+          )
+        ],
+      ),
+    ));
   }
 }

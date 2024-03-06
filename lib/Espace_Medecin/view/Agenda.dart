@@ -115,7 +115,7 @@ class AgendaState extends State<Agenda> {
                 false;
 
             if (!eventExists) {
-             await deviceCalendarPlugin.createOrUpdateEvent(event);
+              await deviceCalendarPlugin.createOrUpdateEvent(event);
             }
           }
         });
@@ -142,7 +142,6 @@ class AgendaState extends State<Agenda> {
           appointment.timeStart.hour,
           appointment.timeStart.minute,
           appointment.timeStart.second);
-
 
       if (startDate.isAfter(now) &&
           isInCurrentWeek(startDate, rendezVousList.elementAt(i).timeStart)) {
@@ -744,7 +743,11 @@ class AgendaState extends State<Agenda> {
                                                                 details.date!))
                                                     .toList();
                                             if (list.length >= 1) {
-
+                                              setState(() {
+                                                istoAddAppointment = false;
+                                                isAppointment = true;
+                                                AlltheAppoint = list;
+                                              });
                                             } else {
                                               String dtClick =
                                                   DateFormat('yyyy-MM-dd')
@@ -932,8 +935,6 @@ class AgendaState extends State<Agenda> {
   }
 
   String formatDT(DateTime Date) {
-
-
     // Liste des mois de l'année
     final List<String> mois = [
       '',
@@ -954,9 +955,6 @@ class AgendaState extends State<Agenda> {
     // Extraire les composants de la date et de l'heure
 
     int moisIndex = Date.month;
-
-
-
 
     // Formater le mois
     String nomMois = mois[moisIndex];
@@ -1317,13 +1315,11 @@ class AgendaState extends State<Agenda> {
     int moisIndex = dateTime.month;
     int annee = dateTime.year;
 
-
     // Formater le jour de la semaine
     String jourSemaine = jours[dateTime.weekday - 1];
 
     // Formater le mois
     String nomMois = mois[moisIndex];
-
 
     // Construire la chaîne lisible
     String resultat = '$jourSemaine, $jour $nomMois $annee';
@@ -1686,7 +1682,6 @@ class AgendaState extends State<Agenda> {
     // Formater le mois
     String nomMois = mois[moisIndex];
 
-
     // Construire la chaîne lisible
     String resultat = '$jourSemaine, $jour $nomMois $annee';
 
@@ -1695,17 +1690,12 @@ class AgendaState extends State<Agenda> {
 
   String formatDateTimeAppointment(
       DateTime startAt, DateTime startDateTime, DateTime timeEnd) {
-
-
     // Extraire les composants de la date et de l'heure
-
 
     int heureStart = startDateTime.hour;
     int minuteStart = startDateTime.minute;
     int heureEnd = timeEnd.hour;
     int minuteEnd = timeEnd.minute;
-
-
 
     // Formater l'heure
     String formatHeureStart =
