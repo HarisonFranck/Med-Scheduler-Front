@@ -101,7 +101,7 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
               false;
 
           if (!eventExists) {
-                await deviceCalendarPlugin.createOrUpdateEvent(event);
+            await deviceCalendarPlugin.createOrUpdateEvent(event);
           }
         });
       }
@@ -127,7 +127,6 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
           appointment.timeStart.hour,
           appointment.timeStart.minute,
           appointment.timeStart.second);
-
 
       if (startDate.isAfter(now) &&
           isInCurrentWeek(startDate, rendezVousList.elementAt(i).timeStart)) {
@@ -191,13 +190,10 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
 
   String formatDateTimeAppointment(
       DateTime startAt, DateTime startDateTime, DateTime timeEnd) {
-
-
     int heureStart = startDateTime.hour;
     int minuteStart = startDateTime.minute;
     int heureEnd = timeEnd.hour;
     int minuteEnd = timeEnd.minute;
-
 
     // Formater l'heure
     String formatHeureStart =
@@ -217,7 +213,7 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
 
     if (match != null) {
       String val = match.group(0)!;
-      print('VAL: $val');
+
       return val;
     } else {
       // Aucun nombre trouvé dans la chaîne
@@ -241,14 +237,13 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
             (appointment.medecin!.lastName == medecin.lastName) &&
             (appointment.startAt.year >= now.year &&
                 appointment.startAt.month >= now.month &&
-                appointment.startAt.isAfter(now.subtract(const Duration(days: 1))))) {
+                appointment.startAt
+                    .isAfter(now.subtract(const Duration(days: 1))))) {
           setState(() {
             AppointmentList.add(appointment);
           });
         }
       }
-
-      print('APOINTS TENA IZY SIZE: ${AppointmentList.length}');
 
       return AppointmentList;
     } catch (e) {
@@ -375,13 +370,11 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
     int moisIndex = startDateTime.month;
     int annee = startDateTime.year;
 
-
     // Formater le jour de la semaine
     String jourSemaine = jours[startDateTime.weekday - 1];
 
     // Formater le mois
     String nomMois = mois[moisIndex];
-
 
     // Construire la chaîne lisible
     String resultat = '$jourSemaine, $jour $nomMois $annee';
@@ -422,7 +415,6 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
     int jour = dateTime.day;
     int moisIndex = dateTime.month;
     int annee = dateTime.year;
-
 
     // Formater le jour de la semaine
     String jourSemaine = jours[dateTime.weekday - 1];
@@ -810,9 +802,7 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
         weekdays.add(currentDay);
       }
     }
-    weekdays.forEach((element) {
-      print('DAY: $element');
-    });
+    weekdays.forEach((element) {});
     return weekdays;
   }
 
@@ -1398,7 +1388,6 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
                             ),
                           ],
                         ),
-
                         Row(
                           mainAxisAlignment: MainAxisAlignment.start,
                           children: [
@@ -1428,25 +1417,26 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
                                 child: Container(
                                   width: 35,
                                   height: 30,
-                                  margin: EdgeInsets.only(top: 10,bottom: 10),
-                                  padding: const EdgeInsets.only(left: 4,right: 4),
+                                  margin: EdgeInsets.only(top: 10, bottom: 10),
+                                  padding:
+                                      const EdgeInsets.only(left: 4, right: 4),
                                   decoration: BoxDecoration(
-                                  color: const Color.fromARGB(230, 20, 20, 90).withOpacity(0.2),
+                                      color:
+                                          const Color.fromARGB(230, 20, 20, 90)
+                                              .withOpacity(0.2),
                                       borderRadius: BorderRadius.circular(3),
                                       border: Border.all(
-                                          color: const Color.fromARGB(230, 20, 20, 90)
+                                          color: const Color.fromARGB(
+                                                  230, 20, 20, 90)
                                               .withOpacity(0.4),
                                           width: 1)),
-                                  child:
-                                      Icon(
-                                        size: 16,
-                                        Icons.copy,
-                                        color: Colors.black.withOpacity(0.5),
-                                      ),
-
+                                  child: Icon(
+                                    size: 16,
+                                    Icons.copy,
+                                    color: Colors.black.withOpacity(0.5),
+                                  ),
                                 )),
-                                      const Spacer()
-
+                            const Spacer()
                           ],
                         ),
                       ],
@@ -1460,8 +1450,6 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
   }
 
   String formatDT(DateTime Date) {
-
-
     // Liste des mois de l'année
     final List<String> mois = [
       '',
@@ -1482,7 +1470,6 @@ class _PriseDeRendezVousState extends State<PriseDeRendezVous> {
     // Extraire les composants de la date et de l'heure
 
     int moisIndex = Date.month;
-
 
     // Formater le mois
     String nomMois = mois[moisIndex];

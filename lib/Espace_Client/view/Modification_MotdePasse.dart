@@ -74,8 +74,12 @@ class _Modification_MotdePasseState extends State<Modification_MotdePasse> {
         });
         if (response.statusCode == 401) {
           authProvider.logout();
-          Navigator.pushReplacement(
-              context, MaterialPageRoute(builder: (context) => const MyApp()));
+          // ignore: use_build_context_synchronously
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => const MyApp()),
+            (route) => false,
+          );
         }
         throw Exception('ANOTHER ERROR');
       }
@@ -88,7 +92,6 @@ class _Modification_MotdePasseState extends State<Modification_MotdePasse> {
             ConnectionError("Une erreur de connexion s'est produite!"));
       } else {
         // Gérer d'autres exceptions
-        print('Une erreur inattendue s\'est produite: $e');
       }
       throw Exception('-- Failed to load data. Error: $e');
     }
@@ -319,7 +322,7 @@ class _Modification_MotdePasseState extends State<Modification_MotdePasse> {
       content: AwesomeSnackbarContent(
         color: Colors.redAccent,
         title: 'Erreur!',
-        message: 'Le nouveau mot de passe et confirmation ne correspond pas.',
+        message: 'Les mots de passe ne correspondent pas.',
 
         /// change contentType to ContentType.success, ContentType.warning or ContentType.help for variants
         contentType: ContentType.failure,

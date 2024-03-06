@@ -85,13 +85,10 @@ class _ListAppointmentState extends State<ListAppointment> {
 
   Future<List<CustomAppointment>> filterToday(
       Future<List<CustomAppointment>> appointmentFuture) async {
-
     List<CustomAppointment> filteredAppointments = [];
 
     // Attendre la résolution du Future<List<CustomAppointment>>
     List<CustomAppointment> appointments = await appointmentFuture;
-
-    print('FILTERED SIZE: ${appointments.length}');
 
     // Filtrer les appointments de la semaine actuelle
     List<CustomAppointment> appointmentsInCurrentWeek =
@@ -107,7 +104,6 @@ class _ListAppointmentState extends State<ListAppointment> {
 
   Future<List<CustomAppointment>> filterNext(
       Future<List<CustomAppointment>> appointmentFuture) async {
-
     List<CustomAppointment> filteredAppointments = [];
 
     // Attendre la résolution du Future<List<CustomAppointment>>
@@ -127,7 +123,6 @@ class _ListAppointmentState extends State<ListAppointment> {
 
   Future<List<CustomAppointment>> filterFinished(
       Future<List<CustomAppointment>> appointmentFuture) async {
-
     List<CustomAppointment> filteredAppointments = [];
 
     // Attendre la résolution du Future<List<CustomAppointment>>
@@ -379,18 +374,18 @@ class _ListAppointmentState extends State<ListAppointment> {
                         } else {
                           // Trier les appointments par startAt et timeStart
                           snapshot.data!.sort((a, b) {
-                          // Compare les dates startAt
-                          int dateComparison = a.startAt.compareTo(b.startAt);
-                          if (dateComparison != 0) {
-                          return dateComparison;
-                          } else {
-                          // Si les dates sont égales, compare les heures timeStart
-                          return a.timeStart.compareTo(b.timeStart);
-                          }
+                            // Compare les dates startAt
+                            int dateComparison = a.startAt.compareTo(b.startAt);
+                            if (dateComparison != 0) {
+                              return dateComparison;
+                            } else {
+                              // Si les dates sont égales, compare les heures timeStart
+                              return a.timeStart.compareTo(b.timeStart);
+                            }
                           });
 
                           return ListView.builder(
-    physics: BouncingScrollPhysics(),
+                            physics: BouncingScrollPhysics(),
                             padding: const EdgeInsets.only(
                                 top: 50, left: 20, right: 20),
                             itemCount: snapshot.data!.length,
@@ -604,19 +599,19 @@ class _ListAppointmentState extends State<ListAppointment> {
                         } else {
                           // Trier les appointments par startAt et timeStart
                           snapshot.data!.sort((a, b) {
-                          // Compare les dates startAt
-                          int dateComparison = a.startAt.compareTo(b.startAt);
-                          if (dateComparison != 0) {
-                          return dateComparison;
-                          } else {
-                          // Si les dates sont égales, compare les heures timeStart
-                          return a.timeStart.compareTo(b.timeStart);
-                          }
+                            // Compare les dates startAt
+                            int dateComparison = a.startAt.compareTo(b.startAt);
+                            if (dateComparison != 0) {
+                              return dateComparison;
+                            } else {
+                              // Si les dates sont égales, compare les heures timeStart
+                              return a.timeStart.compareTo(b.timeStart);
+                            }
                           });
 
                           // Construisez votre ListView avec les données obtenues
                           return ListView.builder(
-    physics: BouncingScrollPhysics(),
+                            physics: BouncingScrollPhysics(),
                             padding: const EdgeInsets.only(
                                 top: 50, left: 20, right: 20),
                             itemCount: snapshot.data!.length,
@@ -841,7 +836,7 @@ class _ListAppointmentState extends State<ListAppointment> {
 
                           // Construisez votre ListView avec les données obtenues
                           return ListView.builder(
-    physics: BouncingScrollPhysics(),
+                            physics: BouncingScrollPhysics(),
                             padding: const EdgeInsets.only(
                                 top: 50, left: 20, right: 20),
                             itemCount: snapshot.data!.length,

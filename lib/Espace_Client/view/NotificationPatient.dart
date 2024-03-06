@@ -8,8 +8,11 @@ import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:med_scheduler_front/Repository/UserRepository.dart';
 import 'package:med_scheduler_front/Utilitie/Utilities.dart';
 import 'package:med_scheduler_front/Models/AuthProviderUser.dart';
+import 'package:med_scheduler_front/Models/AuthProviderNotif.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class NotificationPatient extends StatefulWidget {
   _NotificationPatientState createState() => _NotificationPatientState();
@@ -21,10 +24,15 @@ class _NotificationPatientState extends State<NotificationPatient> {
 
   Utilisateur? user;
 
+  String title = "";
+  String body = "";
+  String sentTime = "";
+
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
+
     utilities = Utilities(context: context);
     userRepository = UserRepository(context: context, utilities: utilities!);
   }
@@ -36,23 +44,36 @@ class _NotificationPatientState extends State<NotificationPatient> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+
     user = Provider.of<AuthProviderUser>(context).utilisateur;
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      SharedPreferences sharedPreferences =
+          await SharedPreferences.getInstance();
+
+      String? message = sharedPreferences.getString('notificationPatient');
+      if (message != "" && message != null) {
+        List<String> notifSplitted = message.split(",");
+        setState(() {
+          title = notifSplitted.first;
+          body = notifSplitted[1];
+          sentTime = notifSplitted[2];
+        });
+      }
+    });
   }
 
   Future<List<CustomAppointment>> filterAppointments(
       Future<List<CustomAppointment>> appointmentsFuture) async {
-
     List<CustomAppointment> allAppointments = await appointmentsFuture;
 
-    // Filtrer les rendez-vous avec startAt égal à DateTime.now()
+    // Filtrer les rendez-vous avec startAt égal à DateTime.now() et timeStart inferieur à now.hour
     List<CustomAppointment> filteredAppointments = allAppointments
         .where((appointment) =>
-    utilities!.isToday(appointment.startAt, appointment.timeStart))
+            utilities!.isToday(appointment.startAt, appointment.timeStart))
         .toList();
 
     return filteredAppointments;
   }
-
 
   String abbreviateName(String fullName) {
     List<String> nameParts = fullName.split(' ');
@@ -98,10 +119,10 @@ class _NotificationPatientState extends State<NotificationPatient> {
       canPop: false,
       child: Scaffold(
           backgroundColor: const Color.fromARGB(1000, 238, 239, 244),
-          body: ListView(
+          body: Column(
             children: [
               Padding(
-                padding: const EdgeInsets.only(top: 10, left: 10),
+                padding: const EdgeInsets.only(top: 50, left: 10),
                 child: Row(
                   children: [
                     GestureDetector(
@@ -140,358 +161,127 @@ class _NotificationPatientState extends State<NotificationPatient> {
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.only(
-                    top: 10, bottom: 20, right: 5, left: 5),
-                child: FutureBuilder<List<CustomAppointment>>(
-                  future: filterAppointments(userRepository!
-                      .getAllAppointmentByPatient(
-                          user!)), // Appelez votre fonction de récupération de données ici
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      // Affichez un indicateur de chargement pendant le chargement
-                      return Padding(
-                        padding: EdgeInsets.only(
-                            top: MediaQuery.of(context).size.height / 3),
-                        child: Center(child: loadingWidget()),
-                      );
-                    } else if (snapshot.hasError) {
-                      // Gérez les erreurs de requête ici
-                      return const Center(
-                          child: Text('Erreur de chargement des données'));
-                    } else {
-                      if (snapshot.data!.length == 0) { return Center(
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(6),
-                            child: Container(
-                              color: Colors.transparent,
-                              width: MediaQuery.of(context).size.width / 1.2,
-                              height: MediaQuery.of(context).size.height / 1.4,
-                              child: Card(
-                                  color: Colors.transparent,
-                                  elevation: 0,
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Padding(
-                                        padding: const EdgeInsets.only(
-                                            bottom: 20, top: 10),
-                                        child: Center(
-                                          child: Container(
-                                              width: MediaQuery.of(context)
-                                                  .size
-                                                  .width -
-                                                  90,
-                                              height: 50,
-                                              decoration: BoxDecoration(
-                                                borderRadius:
-                                                BorderRadius.circular(6),
-                                                border: Border.all(
-                                                    color: Colors.redAccent,
-                                                    width: 1),
-                                              ),
-                                              child: const Row(
-                                                children: [
-                                                  Icon(
-                                                    Icons.notifications,
-                                                    color: Colors.redAccent,
-                                                  ),
-                                                  Spacer(),
-                                                  Text(
-                                                    'Historique des notifications',
-                                                    textAlign: TextAlign.center,
-                                                    style: TextStyle(
-                                                        color: Colors.redAccent,
-                                                        letterSpacing: 2),
-                                                  ),
-                                                  Spacer()
-                                                ],
-                                              )),
-                                        ),
-                                      ),
-                                      SizedBox(
-                                        height: 20,
-                                      ),
-                                      Container(
-                                        decoration: BoxDecoration(
-                                          borderRadius: BorderRadius.circular(6),
-                                          color: Colors.white,
-                                        ),
-                                        height: 130,
-                                        width: MediaQuery.of(context).size.width -
-                                            90,
-                                        child: const Column(
-                                          crossAxisAlignment:
-                                          CrossAxisAlignment.center,
-                                          children: [
-
-                                            Padding(
-                                              padding: EdgeInsets.only(top: 30,bottom: 10),
-                                              child: Text(
-                                                'Aucune notification récente.',
-                                                textAlign: TextAlign.center,
-                                                style: TextStyle(
-                                                    letterSpacing: 2,
-                                                    color: Colors.black,
-                                                    fontSize: 15),
-                                              ),
-                                            ),
-                                            Icon(
-                                              Icons.update,
-                                              size: 30,
-                                              color: Color.fromARGB(
-                                                  230, 20, 20, 90),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      const Spacer()
-                                    ],
-                                  )),
-                            ),
-                          ));
-                      } else {
-                        return Center(
-                          child: Container(
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(6),
-                                color: Colors.transparent,
-                              ),
-                              width: MediaQuery.of(context).size.width / 1.2,
-                              height: MediaQuery.of(context).size.height / 1.4,
-                              child: Card(
-                                  color: Colors.transparent,
-                                  elevation: 0,
-                                  child: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Padding(
-                                          padding: const EdgeInsets.only(
-                                              bottom: 20, top: 10),
-                                          child: Center(
-                                            child: Container(
-                                                width: MediaQuery.of(context)
-                                                        .size
-                                                        .width -
-                                                    90,
-                                                height: 50,
-                                                decoration: BoxDecoration(
-                                                  borderRadius:
-                                                      BorderRadius.circular(6),
-                                                  border: Border.all(
-                                                      color: Colors.redAccent,
-                                                      width: 1),
-                                                ),
-                                                child: const Row(
-                                                  children: [
-                                                    Icon(
-                                                      Icons.notifications,
-                                                      color: Colors.redAccent,
-                                                    ),
-                                                    Spacer(),
-                                                    Text(
-                                                      'Historique des notifications',
-                                                      textAlign:
-                                                          TextAlign.center,
-                                                      style: TextStyle(
-                                                          color:
-                                                              Colors.redAccent,
-                                                          letterSpacing: 2),
-                                                    ),
-                                                    Spacer()
-                                                  ],
-                                                )),
-                                          ),
-                                        ),
-                                        Expanded(
-                                            child: ListView.builder(
-                                              physics: BouncingScrollPhysics(),
-                                          padding:
-                                              const EdgeInsets.only(top: 30),
-                                          itemCount: snapshot.data!.length,
-                                          itemBuilder: (context, index) {
-                                            List<CustomAppointment> listRDV =
-                                                snapshot.data!;
-                                            // Utilisez snapshot.data[index] pour accéder aux éléments de la liste
-
-                                            listRDV.sort((a, b) {
-                                            // Compare les dates startAt
-                                            int dateComparison = b.startAt.compareTo(a.startAt);
-                                            if (dateComparison != 0) {
-                                            return dateComparison;
-                                            } else {
-                                            // Si les dates sont égales, compare les heures timeStart
-                                            return b.timeStart.compareTo(a.timeStart);
-                                            }
-                                            });
-
-                                            return Padding(
-                                                padding: const EdgeInsets.only(
-                                                    bottom: 15,
-                                                    left: 5,
-                                                    right: 5),
-                                                child: Container(
-                                                    width: 440,
-                                                    height: 220,
-                                                    decoration: BoxDecoration(
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              6),
-                                                    ),
-                                                    child: Card(
-                                                      elevation: 0,
-                                                      color: Colors.white,
-                                                      child: Column(
-                                                        children: [
-                                                          const SizedBox(
-                                                            height: 10,
-                                                          ),
-                                                          Row(
-                                                            mainAxisAlignment:
-                                                                MainAxisAlignment
-                                                                    .spaceEvenly,
-                                                            children: [
-                                                              ClipRRect(
-                                                                borderRadius:
-                                                                    BorderRadius
-                                                                        .circular(
-                                                                            50),
-                                                                child:
-                                                                    Container(
-                                                                  width: 60,
-                                                                  height: 60,
-                                                                  decoration:
-                                                                      BoxDecoration(
-                                                                    borderRadius:
-                                                                        BorderRadius
-                                                                            .circular(5),
-                                                                  ),
-                                                                  child:
-                                                                      CachedNetworkImage(
-                                                                    imageUrl:
-                                                                        '$baseUrl${utilities!.ajouterPrefixe(listRDV.elementAt(index).medecin!.imageName!)}',
-                                                                    placeholder:
-                                                                        (context,
-                                                                                url) =>
-                                                                            const CircularProgressIndicator(
-                                                                      color: Colors
-                                                                          .redAccent,
-                                                                    ), // Affiche un indicateur de chargement en attendant l'image
-                                                                    errorWidget: (context,
-                                                                            url,
-                                                                            error) =>
-                                                                        Icon(
-                                                                      Icons
-                                                                          .account_circle,
-                                                                      size: 60,
-                                                                      color: Colors
-                                                                          .black
-                                                                          .withOpacity(
-                                                                              0.6),
-                                                                    ), // Affiche une icône d'erreur si le chargement échoue
-                                                                  ),
-                                                                ),
-                                                              ),
-                                                              Column(
-                                                                children: [
-                                                                  Text(
-                                                                    'Dr ${listRDV.elementAt(index).medecin!.lastName[0]}.${abbreviateName(listRDV.elementAt(index).medecin!.firstName)}',
-                                                                    style: const TextStyle(
-                                                                        color: Color.fromARGB(
-                                                                            1000,
-                                                                            60,
-                                                                            70,
-                                                                            120),
-                                                                        fontWeight:
-                                                                            FontWeight.w500),
-                                                                  ),
-                                                                  Text(
-                                                                    '${abreviateRaison(listRDV.elementAt(index).reason)}',
-                                                                    style: const TextStyle(
-                                                                        color: Color.fromARGB(
-                                                                            1000,
-                                                                            60,
-                                                                            70,
-                                                                            120),
-                                                                        fontWeight:
-                                                                            FontWeight.w300),
-                                                                  )
-                                                                ],
-                                                              ),
-                                                              const SizedBox(
-                                                                width: 10,
-                                                              ),
-                                                            ],
-                                                          ),
-                                                          const Opacity(
-                                                            opacity: 0.4,
-                                                            child: Divider(
-                                                              thickness: 1,
-                                                              indent: 20,
-                                                              endIndent: 20,
-                                                              color:
-                                                                  Colors.grey,
-                                                            ),
-                                                          ),
-                                                          Row(children: [
-                                                            const SizedBox(
-                                                                width: 25),
-                                                            Expanded(
-                                                                child: Text(
-                                                                    'Vous avez eu un rendez-vous avec le Dr ${listRDV.elementAt(index).medecin!.lastName} ${abbreviateName(listRDV.elementAt(index).medecin!.firstName)}.',
-                                                                    style: TextStyle(
-                                                                        color: Colors
-                                                                            .black
-                                                                            .withOpacity(0.5)))),
-                                                            const SizedBox(
-                                                                width: 25),
-                                                          ]),
-                                                          const Spacer(),
-                                                          Row(
-                                                            mainAxisAlignment:
-                                                                MainAxisAlignment
-                                                                    .center,
-                                                            children: [
-                                                              const Spacer(),
-                                                              Image.asset(
-                                                                'assets/images/date-limite.png',
-                                                                width: 20,
-                                                                height: 20,
-                                                              ),
-                                                              const SizedBox(
-                                                                  width: 10),
-                                                              Text(
-                                                                '${utilities!.formatTimeAppointmentNotif(listRDV.elementAt(index).startAt, listRDV.elementAt(index).timeStart, listRDV.elementAt(index).timeEnd)}',
-                                                                textAlign:
-                                                                    TextAlign
-                                                                        .center,
-                                                                style: const TextStyle(
-                                                                    color: Color
-                                                                        .fromARGB(
-                                                                            1000,
-                                                                            60,
-                                                                            70,
-                                                                            120)),
-                                                              ),
-                                                              const Spacer(),
-                                                            ],
-                                                          ),
-                                                          const SizedBox(
-                                                            height: 10,
-                                                          ),
-                                                        ],
-                                                      ),
-                                                    )));
-                                          },
-                                        )),
-                                      ]))),
-                        );
-                      }
-                      // Construisez votre ListView avec les données obtenues
-                    }
-                  },
+                padding: const EdgeInsets.only(bottom: 20, top: 10),
+                child: Center(
+                  child: Container(
+                      width: MediaQuery.of(context).size.width - 90,
+                      height: 50,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(color: Colors.redAccent, width: 1),
+                      ),
+                      child: const Row(
+                        children: [
+                          Icon(
+                            Icons.notifications,
+                            color: Colors.redAccent,
+                          ),
+                          Spacer(),
+                          Text(
+                            'Historique des notifications',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                                color: Colors.redAccent, letterSpacing: 2),
+                          ),
+                          Spacer()
+                        ],
+                      )),
                 ),
               ),
+              if (title != "" && body != "") ...[
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 15),
+                  child: Container(
+                    width: MediaQuery.of(context).size.width - 90,
+                    height: 250,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Card(
+                      elevation: 0,
+                      color: Colors.white,
+                      child: Column(
+                        children: [
+                          Row(children: [
+                            Spacer(),
+                            Padding(
+                              padding: EdgeInsets.only(top: 10, right: 10),
+                              child: Text(
+                                  '${utilities!.formatRelativeTime(DateTime.parse(sentTime))}'),
+                            ),
+                          ]),
+                          const Spacer(),
+                          Padding(
+                            padding: EdgeInsets.only(
+                                top: 10, left: 10, right: 10, bottom: 10),
+                            child: Text(
+                              textAlign: TextAlign.center,
+                              '$title',
+                              style: TextStyle(
+                                  letterSpacing: 2,
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w500),
+                            ),
+                          ),
+                          Divider(
+                            thickness: 1,
+                            indent: 50,
+                            endIndent: 50,
+                            color: Colors.black.withOpacity(0.2),
+                          ),
+                          Padding(
+                            padding: EdgeInsets.only(
+                                left: 20, right: 20, top: 20, bottom: 10),
+                            child: Text(
+                              '$body',
+                              style: TextStyle(letterSpacing: 2, fontSize: 15),
+                            ),
+                          ),
+                          const Spacer()
+                        ],
+                      ),
+                    ),
+                  ),
+                )
+              ] else ...[
+                SizedBox(
+                  height: 20,
+                ),
+                Padding(
+                  padding: EdgeInsets.only(left: 40, right: 40),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(6),
+                      color: Colors.white,
+                    ),
+                    height: 130,
+                    width: 400,
+                    child: const Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Padding(
+                          padding: EdgeInsets.only(top: 30, bottom: 10),
+                          child: Text(
+                            'Aucune notification récente.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                                letterSpacing: 2,
+                                color: Colors.black,
+                                fontSize: 15),
+                          ),
+                        ),
+                        Icon(
+                          Icons.update,
+                          size: 30,
+                          color: Color.fromARGB(230, 20, 20, 90),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const Spacer()
+              ],
+              const Spacer()
             ],
           )),
     );

@@ -32,21 +32,18 @@ class _AppointmentDialogState extends State<AppointmentDialog> {
 
   bool isLoaded = false;
 
-
   BaseRepository? baseRepository;
   MedecinRepository? medecinRepository;
   Utilities? utilities;
 
-
-
   @override
-  initState(){
+  initState() {
     super.initState();
     utilities = Utilities(context: context);
     baseRepository = BaseRepository(context: context, utilities: utilities!);
-    medecinRepository = MedecinRepository(context: context, utilities: utilities!);
+    medecinRepository =
+        MedecinRepository(context: context, utilities: utilities!);
   }
-
 
   List<CustomAppointment> listAppointment = [];
   List<CustomAppointment> listUnavalaibleAppointment = [];
@@ -55,7 +52,6 @@ class _AppointmentDialogState extends State<AppointmentDialog> {
   List<bool> isDisableIndex = List.generate(6, (index) => false);
 
   bool isDayClicked(DateTime startAt) {
-
     bool val = DateFormat('yyyy-MM-dd').format(startAt) ==
         DateFormat('yyyy-MM-dd').format(currentJour!);
 
@@ -64,12 +60,10 @@ class _AppointmentDialogState extends State<AppointmentDialog> {
 
   Future<List<CustomAppointment>> filterDayClicked(
       Future<List<CustomAppointment>> appointmentFuture) async {
-
     List<CustomAppointment> filteredAppointments = [];
 
     // Attendre la résolution du Future<List<CustomAppointment>>
     List<CustomAppointment> appointments = await appointmentFuture;
-
 
     // Filtrer les appointments de la semaine actuelle
     List<CustomAppointment> appointmentsInCurrentWeek =
@@ -82,8 +76,6 @@ class _AppointmentDialogState extends State<AppointmentDialog> {
 
     return filteredAppointments;
   }
-
-
 
   List<CustomAppointment> getAllUnavalaibleByDate(
       List<CustomAppointment> list, DateTime dt) {
@@ -99,7 +91,6 @@ class _AppointmentDialogState extends State<AppointmentDialog> {
     return filteredList;
   }
 
-
   @override
   void didChangeDependencies() {
     // TODO: implement didChangeDependencies
@@ -114,9 +105,21 @@ class _AppointmentDialogState extends State<AppointmentDialog> {
     currentJour = ModalRoute.of(context)?.settings.arguments as DateTime;
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      listAppointment = (getAvailableAppointments(currentJour!, await baseRepository!.getAllUnavalaibleAppointment(widget.medecin), widget.medecin) != null) ? getAvailableAppointments(currentJour!, await baseRepository!.getAllUnavalaibleAppointment(widget.medecin), widget.medecin)!: [];
+      listAppointment = (getAvailableAppointments(
+                  currentJour!,
+                  await baseRepository!
+                      .getAllUnavalaibleAppointment(widget.medecin),
+                  widget.medecin) !=
+              null)
+          ? getAvailableAppointments(
+              currentJour!,
+              await baseRepository!
+                  .getAllUnavalaibleAppointment(widget.medecin),
+              widget.medecin)!
+          : [];
       listUnavalaibleAppointment = getAllUnavalaibleByDate(
-          await baseRepository!.getAllUnavalaibleAppointment(widget.medecin), currentJour!);
+          await baseRepository!.getAllUnavalaibleAppointment(widget.medecin),
+          currentJour!);
       setBoolDisabled(listAppointment);
       appointsList = await medecinRepository!.getAllAppointment(widget.medecin);
 
@@ -132,7 +135,6 @@ class _AppointmentDialogState extends State<AppointmentDialog> {
     for (int a = 0; a < listAppointment.length; a++) {
       CustomAppointment appointment = listAppointment.elementAt(a);
       if (appointment.appType == "Desactiver") {
-
         setState(() {
           isDisableIndex[a] = false;
         });
@@ -169,13 +171,10 @@ class _AppointmentDialogState extends State<AppointmentDialog> {
     });
   }
 
-
-
   bool areAllAppointmentsDesactiver(List<CustomAppointment> appointments) {
     return appointments
         .every((appointment) => appointment.appType == "Desactiver");
   }
-
 
   List<CustomAppointment>? getAvailableAppointments(DateTime journeeCliquer,
       List<CustomAppointment> appointments, Medecin medecin) {
@@ -299,7 +298,6 @@ class _AppointmentDialogState extends State<AppointmentDialog> {
     // Formater le mois
     String nomMois = mois[moisIndex];
 
-
     // Construire la chaîne lisible
     String resultat = '$jourSemaine, $jour $nomMois $annee';
 
@@ -308,14 +306,11 @@ class _AppointmentDialogState extends State<AppointmentDialog> {
 
   String formatDateTimeAppointment(
       DateTime startAt, DateTime startDateTime, DateTime timeEnd) {
-
-
     // Extraire les composants de la date et de l'heure
     int heureStart = startDateTime.hour;
     int minuteStart = startDateTime.minute;
     int heureEnd = timeEnd.hour;
     int minuteEnd = timeEnd.minute;
-
 
     // Formater l'heure
     String formatHeureStart =
@@ -332,9 +327,9 @@ class _AppointmentDialogState extends State<AppointmentDialog> {
   bool isDayDisabled = false;
   List<bool> switchEnfants = [];
 
-  CustomAppointment? isInUnavalaiblePrise(List<CustomAppointment> listUnavalaibleAppointment,
+  CustomAppointment? isInUnavalaiblePrise(
+      List<CustomAppointment> listUnavalaibleAppointment,
       CustomAppointment appointment) {
-
     CustomAppointment? unavAppointFinded;
 
     for (int unavIndex = 0;
@@ -354,16 +349,16 @@ class _AppointmentDialogState extends State<AppointmentDialog> {
     return unavAppointFinded;
   }
 
-  CustomAppointment? isInUnavalaibleDesactiver(List<CustomAppointment> listUnavalaibleAppointment,
+  CustomAppointment? isInUnavalaibleDesactiver(
+      List<CustomAppointment> listUnavalaibleAppointment,
       CustomAppointment appointment) {
-
     CustomAppointment? unavAppointFinded;
 
     for (int unavIndex = 0;
-    unavIndex < listUnavalaibleAppointment.length;
-    unavIndex++) {
+        unavIndex < listUnavalaibleAppointment.length;
+        unavIndex++) {
       CustomAppointment unavAppoint =
-      listUnavalaibleAppointment.elementAt(unavIndex);
+          listUnavalaibleAppointment.elementAt(unavIndex);
       bool isEqualTime =
           unavAppoint.timeStart.hour == appointment.timeStart.hour &&
               unavAppoint.timeEnd.hour == appointment.timeEnd.hour;
@@ -375,26 +370,20 @@ class _AppointmentDialogState extends State<AppointmentDialog> {
     return unavAppointFinded;
   }
 
-
-
-  CustomAppointment? getAppointmentDoctorPrise(CustomAppointment appointment){
+  CustomAppointment? getAppointmentDoctorPrise(CustomAppointment appointment) {
     CustomAppointment? appointmentFinded;
-    for(int ap=0;ap<appointsList.length;ap++){
+    for (int ap = 0; ap < appointsList.length; ap++) {
       CustomAppointment appoint = appointsList.elementAt(ap);
-      bool isEqualTime =
-          appoint.timeStart.hour == appointment.timeStart.hour &&
-              appoint.timeEnd.hour == appointment.timeEnd.hour;
+      bool isEqualTime = appoint.timeStart.hour == appointment.timeStart.hour &&
+          appoint.timeEnd.hour == appointment.timeEnd.hour;
       bool isEqualPatient = appoint.patient!.id == appointment.patient!.id;
 
-    if(isEqualPatient&&isEqualTime){
-    appointmentFinded = appoint;
+      if (isEqualPatient && isEqualTime) {
+        appointmentFinded = appoint;
+      }
     }
-
-  }
     return appointmentFinded;
   }
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -445,18 +434,15 @@ class _AppointmentDialogState extends State<AppointmentDialog> {
                                   ? false
                                   : true,
                               onChanged: (val) {
-
                                 /// Liste des appointment qui sont uniques(ne sont pas enregistrés)
                                 List<CustomAppointment> appointsList = [];
 
                                 setState(() {
-
                                   isLoaded = false;
                                   isDayDisabled = val;
 
                                   /// Si le switch devient false(desactivation)
-                                  if (isDayDisabled==false) {
-
+                                  if (isDayDisabled == false) {
                                     /// On boucle tous les plages crées par défaut
                                     for (var appointment in listAppointment) {
                                       /// On initialise un variable boolean en isUnique = true a chaque appointment(par defaut activer)
@@ -470,48 +456,50 @@ class _AppointmentDialogState extends State<AppointmentDialog> {
                                                     .timeStart.hour ==
                                                 appointment.timeStart.hour &&
                                             unavAppoint.timeEnd.hour ==
-                                                appointment.timeEnd.hour && (unavAppoint.appType=="Prise"||unavAppoint.appType=="Pris");
-
+                                                appointment.timeEnd.hour &&
+                                            (unavAppoint.appType == "Prise" ||
+                                                unavAppoint.appType == "Pris");
 
                                         /// Si l'appointment a desactiver est unique, on affecte isUnique en false
                                         if (isEqualTimeAndPrise) {
                                           isUnique = false;
                                         }
+                                      } // On sort du boucle de list Appointment
 
-                                      }// On sort du boucle de list Appointment
+                                      if (isUnique == false) {
+                                        if (isInUnavalaibleDesactiver(
+                                                listUnavalaibleAppointment,
+                                                appointment) ==
+                                            null) {
+                                          CustomAppointment? unavAppointFinded =
+                                              isInUnavalaiblePrise(
+                                                  listUnavalaibleAppointment,
+                                                  appointment);
+                                          if (unavAppointFinded != null) {
+                                            CustomAppointment?
+                                                appointmentPrise =
+                                                getAppointmentDoctorPrise(
+                                                    unavAppointFinded);
 
-                                      if (isUnique==false) {
-
-
-                                        if(isInUnavalaibleDesactiver(listUnavalaibleAppointment,appointment)==null){
-
-                                          CustomAppointment? unavAppointFinded = isInUnavalaiblePrise(listUnavalaibleAppointment, appointment);
-                                          if(unavAppointFinded!=null){
-                                            CustomAppointment? appointmentPrise = getAppointmentDoctorPrise(unavAppointFinded);
-
-                                            ConfirmDisableAppointmentBoucle(appointmentPrise!);
-
+                                            ConfirmDisableAppointmentBoucle(
+                                                appointmentPrise!);
                                           }
-
 
                                           /// On actualise l'état
                                           didChangeDependencies();
                                         }
-
-
-                                      }else{
-
-                                        print('app ADD: ${appointment.timeStart.hour}');
-                                        if(isInUnavalaibleDesactiver(listUnavalaibleAppointment,appointment)==null){
+                                      } else {
+                                        print(
+                                            'app ADD: ${appointment.timeStart.hour}');
+                                        if (isInUnavalaibleDesactiver(
+                                                listUnavalaibleAppointment,
+                                                appointment) ==
+                                            null) {
                                           /// On ajoute l'appointment dans la liste a desctiver après
                                           appointsList.add(appointment);
                                         }
-
                                       }
-
-                                    }// On sort de la boucle de appointment indisponible
-
-
+                                    } // On sort de la boucle de appointment indisponible
 
                                     /// Maintenant qu'on a eu tous les appointments uniques, on boucle pour les desactiver un a un
                                     for (var appoint in appointsList) {
@@ -526,44 +514,70 @@ class _AppointmentDialogState extends State<AppointmentDialog> {
                                         timeEnd: appoint.timeEnd,
                                         reason: "",
                                         createdAt: appoint.createdAt,
-                                        appType:
-                                            'Desactiver',
+                                        appType: 'Desactiver',
                                       );
 
+                                      /// On cree l'appointment avec un type "Desactiver" vers le serveur(On desactive l'appointment)
+                                      medecinRepository!
+                                          .createUnavalaibleAppointment(
+                                              customAppointment);
 
-
-                                        /// On cree l'appointment avec un type "Desactiver" vers le serveur(On desactive l'appointment)
-                                        medecinRepository!.createUnavalaibleAppointment(customAppointment);
-
-                                        /// On actualise l'état
-                                        didChangeDependencies();
-
+                                      /// On actualise l'état
+                                      didChangeDependencies();
                                     } // On sort du boucle
 
                                     /// Si le Switch est desactiver ou bien le jour est reactiver de nouveau
                                   } else {
-
-
                                     /// On boucle de nouveau les appointments par defaut crée
                                     for (var appointment in listAppointment) {
+                                      CustomAppointment? unavAppointFinded =
+                                          isInUnavalaiblePrise(
+                                              listUnavalaibleAppointment,
+                                              appointment);
+                                      if (unavAppointFinded != null) {
+                                        CustomAppointment? appointmentPrise =
+                                            getAppointmentDoctorPrise(
+                                                unavAppointFinded);
+                                        if (appointmentPrise != null) {
+                                          CustomAppointment
+                                              appointmentPatchFalse =
+                                              CustomAppointment(
+                                                  id: appointmentPrise.id,
+                                                  medecin:
+                                                      appointmentPrise.medecin,
+                                                  patient:
+                                                      appointmentPrise.patient,
+                                                  type: appointmentPrise.type,
+                                                  startAt:
+                                                      appointmentPrise.startAt,
+                                                  timeStart: appointmentPrise
+                                                      .timeStart,
+                                                  timeEnd:
+                                                      appointmentPrise.timeEnd,
+                                                  reason:
+                                                      appointmentPrise.reason,
+                                                  updatedAt: DateTime.now(),
+                                                  createdAt: appointmentPrise
+                                                      .createdAt,
+                                                  isDeleted: false);
 
-                                      CustomAppointment? unavAppointFinded = isInUnavalaiblePrise(listUnavalaibleAppointment, appointment);
-                                      if(unavAppointFinded!=null){
-                                        CustomAppointment? appointmentPrise = getAppointmentDoctorPrise(unavAppointFinded);
-                                        if(appointmentPrise!=null){
+                                          medecinRepository!.patchAppointment(
+                                              appointmentPatchFalse);
 
-                                          CustomAppointment appointmentPatchFalse = CustomAppointment(id: appointmentPrise.id,medecin: appointmentPrise.medecin,patient: appointmentPrise.patient,type: appointmentPrise.type, startAt: appointmentPrise.startAt, timeStart: appointmentPrise.timeStart, timeEnd: appointmentPrise.timeEnd, reason: appointmentPrise.reason, updatedAt: DateTime.now(),createdAt: appointmentPrise.createdAt,isDeleted: false);
-
-                                  medecinRepository!.patchAppointment(appointmentPatchFalse);
-
-                                  medecinRepository!.deleteUnavalaibleAppointment(appointment);
-                                        }else{
+                                          medecinRepository!
+                                              .deleteUnavalaibleAppointment(
+                                                  appointment);
+                                        } else {
                                           /// On supprime l'appointment de type "Desactiver" dans la base de donnée(on reactive le plage horaire)
-                                          medecinRepository!.deleteUnavalaibleAppointment(appointment);
+                                          medecinRepository!
+                                              .deleteUnavalaibleAppointment(
+                                                  appointment);
                                         }
-                                      }else{
+                                      } else {
                                         /// On supprime l'appointment de type "Desactiver" dans la base de donnée(on reactive le plage horaire)
-                                        medecinRepository!.deleteUnavalaibleAppointment(appointment);
+                                        medecinRepository!
+                                            .deleteUnavalaibleAppointment(
+                                                appointment);
                                       }
 
                                       /// On actualise l'état
@@ -596,209 +610,273 @@ class _AppointmentDialogState extends State<AppointmentDialog> {
                               itemCount: listAppointment.length,
                               itemBuilder: (context, i) {
                                 CustomAppointment appointment =
-                                listAppointment.elementAt(i);
+                                    listAppointment.elementAt(i);
 
-                                CustomAppointment? unavAppointFinded = isInUnavalaiblePrise(listUnavalaibleAppointment, appointment);
-                                CustomAppointment? unavAppointFindedDesactiver = isInUnavalaibleDesactiver(listUnavalaibleAppointment, appointment);
+                                CustomAppointment? unavAppointFinded =
+                                    isInUnavalaiblePrise(
+                                        listUnavalaibleAppointment,
+                                        appointment);
+                                CustomAppointment? unavAppointFindedDesactiver =
+                                    isInUnavalaibleDesactiver(
+                                        listUnavalaibleAppointment,
+                                        appointment);
 
                                 //CustomAppointment? appointmentPrise = getAppointmentDoctorPrise(unavAppointFinded!);
 
                                 return Column(
-                                    children: [
-                                    (unavAppointFinded==null)
-                                    ? Container(
-                                  height: 60,
-                                  decoration: BoxDecoration(
-                                      color:Colors.transparent,
-                                      borderRadius:
-                                      BorderRadius.circular(6)),
-                                  child: Row(
-                                    children: [
-                                      Padding(
-                                        padding:
-                                        const EdgeInsets.only(
-                                            left: 15),
-                                        child: Text(
-                                          '${formatDateTimeAppointment(appointment.startAt, appointment.timeStart, appointment.timeEnd)}',
+                                  children: [
+                                    (unavAppointFinded == null)
+                                        ? Container(
+                                            height: 60,
+                                            decoration: BoxDecoration(
+                                                color: Colors.transparent,
+                                                borderRadius:
+                                                    BorderRadius.circular(6)),
+                                            child: Row(
+                                              children: [
+                                                Padding(
+                                                  padding:
+                                                      const EdgeInsets.only(
+                                                          left: 15),
+                                                  child: Text(
+                                                    '${formatDateTimeAppointment(appointment.startAt, appointment.timeStart, appointment.timeEnd)}',
+                                                    style: const TextStyle(
+                                                        color: Color.fromARGB(
+                                                            230, 20, 20, 90),
+                                                        fontWeight:
+                                                            FontWeight.w400,
+                                                        letterSpacing: 1.5,
+                                                        fontSize: 16),
+                                                  ),
+                                                ),
+                                                const Spacer(),
+                                                Switch(
+                                                  thumbColor: (appointment
+                                                              .appType ==
+                                                          "Desactiver")
+                                                      ? MaterialStateProperty
+                                                          .all(Colors.redAccent)
+                                                      : MaterialStateProperty
+                                                          .all(Colors.green),
+                                                  activeColor: Colors.grey
+                                                      .withOpacity(0.3),
+                                                  inactiveThumbColor:
+                                                      Colors.redAccent,
+                                                  inactiveTrackColor: Colors
+                                                      .redAccent
+                                                      .withOpacity(0.3),
+                                                  value: (appointment.appType ==
+                                                          null)
+                                                      ? true
+                                                      : ((appointment.appType ==
+                                                              "Desactiver")
+                                                          ? false
+                                                          : true),
+                                                  onChanged: (val) {
+                                                    setState(() {
+                                                      isDisableIndex[i] = val;
 
-                                          style:const TextStyle(
-                                              color: Color
-                                                  .fromARGB(
-                                                  230, 20, 20, 90),
-                                              fontWeight: FontWeight.w400
-                                              ,
-                                              letterSpacing: 1.5,
-                                              fontSize: 16),
-                                        ),
-                                      ),
-                                      const Spacer(),
-                                      Switch(
-                                        thumbColor: (appointment
-                                            .appType ==
-                                            "Desactiver")
-                                            ? MaterialStateProperty
-                                            .all(Colors.redAccent)
-                                            : MaterialStateProperty
-                                            .all(Colors.green),
-                                        activeColor: Colors.grey
-                                            .withOpacity(0.3),
-                                        inactiveThumbColor:
-                                        Colors.redAccent,
-                                        inactiveTrackColor: Colors
-                                            .redAccent
-                                            .withOpacity(0.3),
-                                        value: (appointment.appType ==
-                                            null)
-                                            ? true
-                                            : ((appointment.appType ==
-                                            "Desactiver")
-                                            ? false
-                                            : true),
-                                        onChanged: (val) {
-                                          setState(() {
+                                                      if (isDisableIndex[i] ==
+                                                          true) {
+                                                        medecinRepository!
+                                                            .deleteUnavalaibleAppointment(
+                                                                appointment);
 
-                                            isDisableIndex[i] = val;
+                                                        didChangeDependencies();
+                                                      } else {
+                                                        CustomAppointment
+                                                            appoint =
+                                                            CustomAppointment(
+                                                                medecin: widget
+                                                                    .medecin,
+                                                                id: '',
+                                                                type: appointment
+                                                                    .type,
+                                                                startAt:
+                                                                    currentJour!,
+                                                                timeStart:
+                                                                    appointment
+                                                                        .timeStart,
+                                                                timeEnd:
+                                                                    appointment
+                                                                        .timeEnd,
+                                                                reason: "",
+                                                                createdAt:
+                                                                    appointment
+                                                                        .createdAt,
+                                                                appType:
+                                                                    isDisableIndex[
+                                                                            i]
+                                                                        ? ""
+                                                                        : "Desactiver");
 
-                                            if (isDisableIndex[i] ==
-                                                true) {
-                                             medecinRepository!.deleteUnavalaibleAppointment(
-                                                  appointment);
+                                                        medecinRepository!
+                                                            .createUnavalaibleAppointment(
+                                                                appoint);
+                                                        didChangeDependencies();
+                                                      }
+                                                    });
+                                                  },
+                                                ),
+                                              ],
+                                            ),
+                                          )
+                                        : GestureDetector(
+                                            onTap: () {
+                                              Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                      builder: (context) =>
+                                                          AppointmentDetails(),
+                                                      settings: RouteSettings(
+                                                          arguments:
+                                                              unavAppointFinded)));
+                                            },
+                                            child: Container(
+                                              height: 60,
+                                              decoration: BoxDecoration(
+                                                  color: (getAppointmentDoctorPrise(
+                                                                      unavAppointFinded)!
+                                                                  .isDeleted !=
+                                                              null &&
+                                                          getAppointmentDoctorPrise(
+                                                                      unavAppointFinded)!
+                                                                  .isDeleted ==
+                                                              true)
+                                                      ? Color.fromARGB(
+                                                          1000, 238, 239, 244)
+                                                      : Colors.redAccent
+                                                          .withOpacity(0.3),
+                                                  borderRadius:
+                                                      BorderRadius.circular(6)),
+                                              child: Row(
+                                                children: [
+                                                  Padding(
+                                                    padding:
+                                                        const EdgeInsets.only(
+                                                            left: 15),
+                                                    child: Text(
+                                                      (getAppointmentDoctorPrise(
+                                                                          unavAppointFinded)!
+                                                                      .isDeleted !=
+                                                                  null &&
+                                                              getAppointmentDoctorPrise(
+                                                                          unavAppointFinded)!
+                                                                      .isDeleted ==
+                                                                  true)
+                                                          ? 'Rendez-vous annulé \n ${formatDateTimeAppointment(appointment.startAt, appointment.timeStart, appointment.timeEnd)}'
+                                                          : ' Rendez-vous en cours \n ${formatDateTimeAppointment(appointment.startAt, appointment.timeStart, appointment.timeEnd)}',
+                                                      style: const TextStyle(
+                                                          color: Color.fromARGB(
+                                                              230, 20, 20, 90),
+                                                          fontWeight:
+                                                              FontWeight.w500,
+                                                          letterSpacing: 1.5,
+                                                          fontSize: 16),
+                                                    ),
+                                                  ),
+                                                  const Spacer(),
+                                                  Switch(
+                                                    thumbColor: (appointment
+                                                                .appType ==
+                                                            "Desactiver")
+                                                        ? MaterialStateProperty
+                                                            .all(Colors
+                                                                .redAccent)
+                                                        : MaterialStateProperty
+                                                            .all(Colors.green),
+                                                    activeColor: Colors.grey
+                                                        .withOpacity(0.3),
+                                                    inactiveThumbColor:
+                                                        Colors.redAccent,
+                                                    inactiveTrackColor: Colors
+                                                        .redAccent
+                                                        .withOpacity(0.3),
+                                                    value: (appointment
+                                                                .appType ==
+                                                            null)
+                                                        ? true
+                                                        : ((appointment
+                                                                    .appType ==
+                                                                "Desactiver")
+                                                            ? false
+                                                            : true),
+                                                    onChanged: (val) {
+                                                      setState(() {
+                                                        isDisableIndex[i] = val;
 
-                                              didChangeDependencies();
-                                            } else {
+                                                        if (isDisableIndex[i] ==
+                                                            true) {
+                                                          CustomAppointment?
+                                                              appointmentPrise =
+                                                              getAppointmentDoctorPrise(
+                                                                  unavAppointFinded);
 
+                                                          CustomAppointment appointmentPatchFalse = CustomAppointment(
+                                                              id: appointmentPrise!
+                                                                  .id,
+                                                              medecin:
+                                                                  appointmentPrise
+                                                                      .medecin,
+                                                              patient:
+                                                                  appointmentPrise
+                                                                      .patient,
+                                                              type: appointmentPrise
+                                                                  .type,
+                                                              startAt:
+                                                                  appointmentPrise
+                                                                      .startAt,
+                                                              timeStart:
+                                                                  appointmentPrise
+                                                                      .timeStart,
+                                                              timeEnd:
+                                                                  appointmentPrise
+                                                                      .timeEnd,
+                                                              reason:
+                                                                  appointmentPrise
+                                                                      .reason,
+                                                              updatedAt: DateTime
+                                                                  .now(),
+                                                              createdAt:
+                                                                  appointmentPrise
+                                                                      .createdAt,
+                                                              isDeleted: false);
 
-                                              CustomAppointment appoint = CustomAppointment(
-                                                  medecin: widget
-                                                      .medecin,
-                                                  id: '',
-                                                  type: appointment
-                                                      .type,
-                                                  startAt:
-                                                  currentJour!,
-                                                  timeStart:
-                                                  appointment
-                                                      .timeStart,
-                                                  timeEnd:
-                                                  appointment
-                                                      .timeEnd,
-                                                  reason: "",
-                                                  createdAt:
-                                                  appointment
-                                                      .createdAt,
-                                                  appType:
-                                                  isDisableIndex[
-                                                  i]
-                                                      ? ""
-                                                      : "Desactiver");
+                                                          medecinRepository!
+                                                              .patchAppointment(
+                                                                  appointmentPatchFalse);
 
-                                            medecinRepository!.createUnavalaibleAppointment(
-                                                  appoint);
-                                              didChangeDependencies();
+                                                          medecinRepository!
+                                                              .deleteUnavalaibleAppointment(
+                                                                  unavAppointFindedDesactiver!);
 
-                                            }
-                                          });
-                                        },
-                                      ),
-                                    ],
-                                  ),
-                                )
-                                    : GestureDetector(
-                                  onTap: (){
-                                    Navigator.push(context, MaterialPageRoute(builder: (context)=>AppointmentDetails(),settings: RouteSettings(arguments: unavAppointFinded)));
-                                  },
-                                  child: Container(
-                                      height: 60,
-                                      decoration: BoxDecoration(
-                                          color: (getAppointmentDoctorPrise(unavAppointFinded)!.isDeleted!=null&&getAppointmentDoctorPrise(unavAppointFinded)!.isDeleted==true)? Color.fromARGB(1000, 238, 239, 244):Colors.redAccent
-                                          .withOpacity(0.3),
-                                      borderRadius:
-                                      BorderRadius.circular(6)),
-                                  child: Row(
-                                      children: [
-                                  Padding(
-                                  padding:
-                                  const EdgeInsets.only(
-                                      left: 15),
-                                  child: Text(
-                                      (getAppointmentDoctorPrise(unavAppointFinded)!.isDeleted!=null&&getAppointmentDoctorPrise(unavAppointFinded)!.isDeleted==true)?'Rendez-vous annulé \n ${formatDateTimeAppointment(appointment.startAt, appointment.timeStart, appointment.timeEnd)}':' Rendez-vous en cours \n ${formatDateTimeAppointment(appointment.startAt, appointment.timeStart, appointment.timeEnd)}',
-                                  style:const TextStyle(
-                                      color: Color
-                                          .fromARGB(
-                                          230, 20, 20, 90),
-                                      fontWeight: FontWeight.w500,
-                                      letterSpacing: 1.5,
-                                      fontSize: 16),
-                                ),
-                                ),
-                                const Spacer(),
-                                Switch(
-                                thumbColor: (appointment
-                                    .appType ==
-                                "Desactiver")
-                                ? MaterialStateProperty
-                                    .all(Colors.redAccent)
-                                    : MaterialStateProperty
-                                    .all(Colors.green),
-                                activeColor: Colors.grey
-                                    .withOpacity(0.3),
-                                inactiveThumbColor:
-                                Colors.redAccent,
-                                inactiveTrackColor: Colors
-                                    .redAccent
-                                    .withOpacity(0.3),
-                                value: (appointment.appType ==
-                                null)
-                                ? true
-                                    : ((appointment.appType ==
-                                "Desactiver")
-                                ? false
-                                    : true),
-                                onChanged: (val) {
-                                setState(() {
+                                                          didChangeDependencies();
+                                                        } else {
+                                                          CustomAppointment?
+                                                              appointmentPrise =
+                                                              getAppointmentDoctorPrise(
+                                                                  unavAppointFinded);
 
-                            isDisableIndex[i] = val;
-
-                                if (isDisableIndex[i] ==
-                                true) {
-
-                                CustomAppointment? appointmentPrise = getAppointmentDoctorPrise(unavAppointFinded);
-
-                                CustomAppointment appointmentPatchFalse = CustomAppointment(id: appointmentPrise!.id,medecin: appointmentPrise.medecin,patient: appointmentPrise.patient,type: appointmentPrise.type, startAt: appointmentPrise.startAt, timeStart: appointmentPrise.timeStart, timeEnd: appointmentPrise.timeEnd, reason: appointmentPrise.reason, updatedAt: DateTime.now(),createdAt: appointmentPrise.createdAt,isDeleted: false);
-
-                                medecinRepository!.patchAppointment(appointmentPatchFalse);
-
-                                medecinRepository!.deleteUnavalaibleAppointment(
-                                unavAppointFindedDesactiver!);
-
-                                didChangeDependencies();
-                                } else {
-
-
-                               CustomAppointment? appointmentPrise = getAppointmentDoctorPrise(unavAppointFinded);
-
-
-
-                                ConfirmDisableAppointment(appointmentPrise!);
-
-                                }
-                                });
-                                },
-                                ),
-                                ],
-                                ),
-                                ),
-                                ),
-                                const Divider(
-                                thickness: 1,
-                                color: Colors.grey,
-                                indent: 10,
-                                endIndent: 10,
-                                ),
-                                const SizedBox(
-                                height: 10,
-                                ),
-                                ],
+                                                          ConfirmDisableAppointment(
+                                                              appointmentPrise!);
+                                                        }
+                                                      });
+                                                    },
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                    const Divider(
+                                      thickness: 1,
+                                      color: Colors.grey,
+                                      indent: 10,
+                                      endIndent: 10,
+                                    ),
+                                    const SizedBox(
+                                      height: 10,
+                                    ),
+                                  ],
                                 );
                               },
                             ),
@@ -832,37 +910,57 @@ class _AppointmentDialogState extends State<AppointmentDialog> {
                       ],
                     ),
                   ))
-              :  loadingWidget()),
+              : loadingWidget()),
     );
   }
 
-
-  Widget loadingWidget(){
+  Widget loadingWidget() {
     return Center(
-        child:Container(
-          width: 100,
-          height: 100,
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-
-              LoadingAnimationWidget.hexagonDots(
-                  color: Colors.redAccent,
-                  size: 120),
-
-              Image.asset('assets/images/logo2.png',width: 80,height: 80,fit: BoxFit.cover,)
-            ],
+      child: Column(
+        children: [
+          const Spacer(),
+          Container(
+            width: 100,
+            height: 100,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                LoadingAnimationWidget.hexagonDots(
+                    color: Colors.redAccent, size: 120),
+                Image.asset(
+                  'assets/images/logo2.png',
+                  width: 80,
+                  height: 80,
+                  fit: BoxFit.cover,
+                )
+              ],
+            ),
           ),
-        ));
+          Padding(
+            padding: EdgeInsets.only(top: 30, left: 10, right: 10),
+            child: Text(
+              'Veuillez attendre pendant que les données sont récupérées.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                  color: Colors.black.withOpacity(0.5), letterSpacing: 2),
+            ),
+          ),
+          const Spacer()
+        ],
+      ),
+    );
   }
 
   void ConfirmDisableAppointmentBoucle(CustomAppointment appointment) {
-
     AwesomeDialog(
       dialogBackgroundColor: Colors.redAccent,
       btnCancelColor: Colors.grey,
-      titleTextStyle: const TextStyle(letterSpacing: 2,color: Colors.white),
-      descTextStyle: TextStyle(letterSpacing: 2,color: Colors.white.withOpacity(0.8),fontWeight: FontWeight.w500,fontSize: 16),
+      titleTextStyle: const TextStyle(letterSpacing: 2, color: Colors.white),
+      descTextStyle: TextStyle(
+          letterSpacing: 2,
+          color: Colors.white.withOpacity(0.8),
+          fontWeight: FontWeight.w500,
+          fontSize: 16),
       context: context,
       autoDismiss: true,
       dialogType: DialogType.info,
@@ -870,60 +968,46 @@ class _AppointmentDialogState extends State<AppointmentDialog> {
       btnOkText: 'Confirmer',
       btnCancelText: 'Annuler',
       animType: AnimType.rightSlide,
-
       title: 'Confirmation',
-      desc: 'Confirmez-vous votre choix de désactiver cette plage horaire, qui inclut un rendez-vous prévu ?',
-      btnCancelOnPress: () {
-
-      },
+      desc:
+          'Confirmez-vous votre choix de désactiver cette plage horaire, qui inclut un rendez-vous prévu ?',
+      btnCancelOnPress: () {},
       btnOkOnPress: () {
-
-
-        CustomAppointment appointPatch =
-        CustomAppointment(
+        CustomAppointment appointPatch = CustomAppointment(
             medecin: widget.medecin,
             patient: appointment.patient,
             id: appointment.id,
             type: appointment.type,
             startAt: currentJour!,
-            timeStart:
-            appointment.timeStart,
-            timeEnd:
-            appointment.timeEnd,
+            timeStart: appointment.timeStart,
+            timeEnd: appointment.timeEnd,
             reason: appointment.reason,
-            createdAt:
-            appointment.createdAt,
+            createdAt: appointment.createdAt,
             updatedAt: DateTime.now(),
             isDeleted: true);
 
-
-        CustomAppointment appoint =
-        CustomAppointment(
+        CustomAppointment appoint = CustomAppointment(
             medecin: widget.medecin,
             id: '',
             type: appointment.type,
             startAt: currentJour!,
-            timeStart:
-            appointment.timeStart,
-            timeEnd:
-            appointment.timeEnd,
+            timeStart: appointment.timeStart,
+            timeEnd: appointment.timeEnd,
             reason: "",
-            createdAt:
-            appointment.createdAt,
-            appType:'Desactiver');
+            createdAt: appointment.createdAt,
+            appType: 'Desactiver');
 
         medecinRepository!.patchAppointment(appointPatch);
 
-        medecinRepository!.createUnavalaibleAppointment(
-            appoint);
-        if(appointment.patient!.token!=null){
-
-        baseRepository!.sendNotificationDisableAppointment(doctorName: appointment.medecin!.lastName,recipientToken: appointment.patient!.token!);
+        medecinRepository!.createUnavalaibleAppointment(appoint);
+        if (appointment.patient!.token != null) {
+          baseRepository!.sendNotificationDisableAppointment(
+              doctorName: appointment.medecin!.lastName,
+              recipientToken: appointment.patient!.token!);
         }
         didChangeDependencies();
       },
     ).show();
-
   }
 
   void ConfirmDisableAppointment(CustomAppointment appointment) {
@@ -945,11 +1029,9 @@ class _AppointmentDialogState extends State<AppointmentDialog> {
       animType: AnimType.rightSlide,
       title: 'Confirmation',
       desc:
-      'Confirmez-vous votre choix de désactiver cette plage horaire, qui inclut un rendez-vous prévu ?',
+          'Confirmez-vous votre choix de désactiver cette plage horaire, qui inclut un rendez-vous prévu ?',
       btnCancelOnPress: () {},
       btnOkOnPress: () {
-
-
         CustomAppointment appointPatch = CustomAppointment(
             medecin: widget.medecin,
             patient: appointment.patient,
@@ -963,9 +1045,6 @@ class _AppointmentDialogState extends State<AppointmentDialog> {
             updatedAt: DateTime.now(),
             isDeleted: true);
 
-
-
-
         CustomAppointment appoint = CustomAppointment(
             medecin: widget.medecin,
             id: '',
@@ -975,13 +1054,15 @@ class _AppointmentDialogState extends State<AppointmentDialog> {
             timeEnd: appointment.timeEnd,
             reason: "",
             createdAt: appointment.createdAt,
-            appType:'Desactiver');
+            appType: 'Desactiver');
 
         medecinRepository!.patchAppointment(appointPatch);
 
         medecinRepository!.createUnavalaibleAppointment(appoint);
-        if(appointment.patient!.token!=null){
-        baseRepository!.sendNotificationDisableAppointment(doctorName: appointment.medecin!.lastName,recipientToken: appointment.patient!.token!);
+        if (appointment.patient!.token != null) {
+          baseRepository!.sendNotificationDisableAppointment(
+              doctorName: appointment.medecin!.lastName,
+              recipientToken: appointment.patient!.token!);
         }
         didChangeDependencies();
       },

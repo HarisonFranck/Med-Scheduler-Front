@@ -1233,7 +1233,6 @@ class _AccueilAdminState extends State<AccueilAdmin> {
                         GestureDetector(
                           onTap: () {
                             if (_formKeyAddCenter.currentState!.validate()) {
-                              print('ADD CENTER');
                               String nomCenter = centerController.text;
                               String descCenter = centerDescController.text;
                               if (nomCenter.isNotEmpty) {
@@ -1787,7 +1786,6 @@ class _AccueilAdminState extends State<AccueilAdmin> {
         String jsonSpec = jsonEncode(medecin.toJson());
 
         final response = await http.post(url, headers: headers, body: jsonSpec);
-        print(response.statusCode);
 
         if (response.statusCode == 200) {
           final Map<String, dynamic> jsonResponse = json.decode(response.body);
@@ -2656,7 +2654,6 @@ class _AccueilAdminState extends State<AccueilAdmin> {
         String jsonSpec = jsonEncode(centre.toJson());
 
         final response = await http.post(url, headers: headers, body: jsonSpec);
-        print(response.statusCode);
 
         if (response.statusCode == 200) {
           final Map<String, dynamic> jsonResponse = json.decode(response.body);
@@ -2727,7 +2724,6 @@ class _AccueilAdminState extends State<AccueilAdmin> {
 
         final response =
             await http.patch(url, headers: headers, body: jsonSpec);
-        print(response.statusCode);
 
         if (response.statusCode == 200) {
           final Map<String, dynamic> jsonResponse = json.decode(response.body);
@@ -2794,7 +2790,6 @@ class _AccueilAdminState extends State<AccueilAdmin> {
         String jsonSpec = jsonEncode(specialite.toJson());
 
         final response = await http.post(url, headers: headers, body: jsonSpec);
-        print(response.statusCode);
 
         if (response.statusCode == 200) {
           final Map<String, dynamic> jsonResponse = json.decode(response.body);
@@ -2865,7 +2860,6 @@ class _AccueilAdminState extends State<AccueilAdmin> {
 
         final response =
             await http.patch(url, headers: headers, body: jsonSpec);
-        print(response.statusCode);
 
         if (response.statusCode == 200) {
           final Map<String, dynamic> jsonResponse = json.decode(response.body);

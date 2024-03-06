@@ -43,22 +43,18 @@ class _NotificationAdminState extends State<NotificationAdmin> {
     user = Provider.of<AuthProviderUser>(context).utilisateur;
   }
 
-
   Future<List<CustomAppointment>> filterAppointments(
       Future<List<CustomAppointment>> appointmentsFuture) async {
     List<CustomAppointment> allAppointments = await appointmentsFuture;
 
-    print('APP FILTERD SIZE: ${allAppointments.length}');
-
     // Filtrer les rendez-vous avec startAt égal à DateTime.now()
     List<CustomAppointment> filteredAppointments = allAppointments
         .where((appointment) =>
-    utilities!.isToday(appointment.startAt, appointment.timeStart))
+            utilities!.isToday(appointment.startAt, appointment.timeStart))
         .toList();
 
     return filteredAppointments;
   }
-
 
   String abbreviateName(String fullName) {
     List<String> nameParts = fullName.split(' ');
@@ -101,25 +97,23 @@ class _NotificationAdminState extends State<NotificationAdmin> {
   Future<List<CustomAppointment>> addAllAppointmentPage() async {
     List<CustomAppointment> allAppointments = [];
 
-
     while (true) {
       // Obtenir la page courante d'appointments
-      List<CustomAppointment> appointments = await baseRepository!.getAllAppointmentPerPage(currentPage);
+      List<CustomAppointment> appointments =
+          await baseRepository!.getAllAppointmentPerPage(currentPage);
 
-    // Si la page est vide, on a fini
-    if (appointments.isEmpty) {
+      // Si la page est vide, on a fini
+      if (appointments.isEmpty) {
+        break;
+      }
 
-    break;
+      // Ajouter les appointments de la page courante à la liste de toutes les appointments
+      allAppointments.addAll(appointments);
+
+      // Incrémenter la page courante
+      currentPage++;
     }
-
-    // Ajouter les appointments de la page courante à la liste de toutes les appointments
-    allAppointments.addAll(appointments);
-
-    // Incrémenter la page courante
-    currentPage++;
-  }
     return allAppointments;
-
   }
 
   int currentPage = 1;
@@ -134,14 +128,11 @@ class _NotificationAdminState extends State<NotificationAdmin> {
       List<CustomAppointment> moreAppoints =
           await baseRepository!.getAllAppointmentPerPage(currentPage);
       if (moreAppoints.isNotEmpty) {
-
         currentPage++;
         setState(() {
           addAllAppointmentPage();
         });
-      }else{
-
-    }
+      } else {}
       return moreAppoints;
     } catch (e) {
       // Gérez les erreurs de chargement de données supplémentaires ici
@@ -385,14 +376,16 @@ class _NotificationAdminState extends State<NotificationAdmin> {
                                               // Utilisez snapshot.data[index] pour accéder aux éléments de la liste
 
                                               listRDV.sort((a, b) {
-                                              // Compare les dates startAt
-                                              int dateComparison = b.startAt.compareTo(a.startAt);
-                                              if (dateComparison != 0) {
-                                              return dateComparison;
-                                              } else {
-                                              // Si les dates sont égales, compare les heures timeStart
-                                              return b.timeStart.compareTo(a.timeStart);
-                                              }
+                                                // Compare les dates startAt
+                                                int dateComparison = b.startAt
+                                                    .compareTo(a.startAt);
+                                                if (dateComparison != 0) {
+                                                  return dateComparison;
+                                                } else {
+                                                  // Si les dates sont égales, compare les heures timeStart
+                                                  return b.timeStart
+                                                      .compareTo(a.timeStart);
+                                                }
                                               });
 
                                               return Padding(
