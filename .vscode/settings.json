@@ -1,3 +1,4 @@
 {
-    "DockerRun.DisableAutoGenerateConfig": true
+    "DockerRun.DisableAutoGenerateConfig": true,
+    "cmake.sourceDirectory": "/home/franck/Stage/med_scheduler_front/linux"
 }
