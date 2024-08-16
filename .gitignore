@@ -8,6 +8,7 @@
 .buildlog/
 .history
 .svn/
+.json
 migrate_working_dir/
 
 # IntelliJ related
@@ -41,3 +42,4 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+assets/data/med-scheduler-front-d86b24fcb422.json
